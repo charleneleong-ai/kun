@@ -51,3 +51,7 @@ cv2.destroyAllWindows()
 # apply OCR to it - convert to PNG for size
 thresholded_filename = "imgs/thresholded/{}-thresholded.png".format(raw_filename.split('.')[0])
 cv2.imwrite(thresholded_filename, gray)
+
+image = Image.open('test.png')
+code = pytesseract.image_to_string(image, lang='chi_sim')
+print(code)
