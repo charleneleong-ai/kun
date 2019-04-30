@@ -24,6 +24,6 @@ Ya-Wen Ho - Waiteata Press Publication Assistant and Language Expert [[ya-wen.ho
 
 ## Content
 
-1. [Project Proposal](https://v2.overleaf.com/3513197212ymjrcbfyqzbz) (Overleaf project) added as submodule
+1. Docs added as (Overleaf project) added as submodules
    - ```git submodule init```
    - ```git submodule update```

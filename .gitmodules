@@ -1,3 +1,6 @@
 [submodule "docs/project_proposal"]
 	path = docs/project_proposal
 	url = https://git.overleaf.com/5cb519ef4b7ea271799d73d7
+[submodule "docs/lit_review"]
+	path = docs/lit_review
+	url = https://git.overleaf.com/5cbbd009dc8abc4e20cc29b0
