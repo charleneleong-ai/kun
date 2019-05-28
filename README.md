@@ -1,4 +1,6 @@
-# [Kun](https://en.wikipedia.org/wiki/Peng_(mythology)) 鯤
+# [
+
+# Kun](https://en.wikipedia.org/wiki/Peng_(mythology)) 鯤
 
 A shape-shifter – a giant fish that can transform into a bird, a good omen
 
@@ -30,3 +32,21 @@ Ya-Wen Ho - Waiteata Press Publication Assistant and Language Expert [[ya-wen.ho
 
    - [Project Proposal](https://v2.overleaf.com/3513197212ymjrcbfyqzbz) 
    - [Literature View]()
+
+
+
+## Solution
+
+![process](./imgs/process.png)
+
+
+
+#### OCR Preprocessing
+
+![ocr-preprocessing](./imgs/ocr-preprocessing.png)
+
+
+
+#### Unsupervised Learning for Clustering Analysis
+
+![unsupervised_learning](./imgs/unsupervised_learning.png)
