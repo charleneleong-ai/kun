@@ -1,6 +1,4 @@
-# [
-
-# Kun](https://en.wikipedia.org/wiki/Peng_(mythology)) 鯤
+# [Kun](https://en.wikipedia.org/wiki/Peng_(mythology)) 鯤
 
 A shape-shifter – a giant fish that can transform into a bird, a good omen
 
