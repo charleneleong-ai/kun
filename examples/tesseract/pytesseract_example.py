@@ -4,7 +4,7 @@
 # Created Date: Tuesday, April 23rd 2019, 3:16:10 pm
 # Author: Charlene Leong
 # -----
-# Last Modified: Tuesday, April 23rd 2019, 5:59:17 pm
+# Last Modified: Monday, June 3rd 2019, 10:48:02 am
 # Modified By: Charlene Leong
 # -----
 # Copyright (c) 2019 Deloitte NZ
@@ -44,6 +44,7 @@ if args["preprocess"] == "thresh":
 # 	gray = cv2.medianBlur(gray, 3)
 
 cv2.imshow('image', gray)
+
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
