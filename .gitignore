@@ -2,6 +2,8 @@
 .DS_Store
 
 # VSCode
-*.code-workspace
+#*.code-workspace
 .vscode
 
+# Not include the raw data
+data

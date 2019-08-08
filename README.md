@@ -28,8 +28,8 @@ Ya-Wen Ho - Waiteata Press Publication Assistant and Language Expert [[ya-wen.ho
    - ```git submodule init```
    - ```git submodule update```
 
-   - [Project Proposal](https://v2.overleaf.com/3513197212ymjrcbfyqzbz) 
-   - [Literature View]()
+   - [Project Proposal](https://v2.overleaf.com/read/ssnghxggtttq) 
+   - [Literature Review](https://v2.overleaf.com/read/ssnghxggtttq)
 
 
 
