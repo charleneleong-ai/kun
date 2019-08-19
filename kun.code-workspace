@@ -4,10 +4,13 @@
 			"path": "."
 		},
 		{
-			"path": "/Users/chaleong/Google Drive/ENGR489 2019/kun.wiki"
+			"path": "/Users/chaleong/Google Drive/engr489-2019/kun.wiki"
 		},
 		{
-			"path": "/Users/chaleong/Google Drive/ENGR489 2019/simple-chinese-ocr-with-opencv"
+			"path": "/root/gdrive/engr489-2019/examples/torch/dec-pytorch"
+		},
+		{
+			"path": "/root/gdrive/engr489-2019/examples/torch/DEC_nord_torch"
 		}
 	],
 	"settings": {}
