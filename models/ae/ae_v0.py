@@ -1,3 +1,15 @@
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
+###
+# Created Date: Thursday, August 22nd 2019, 5:13:18 am
+# Author: Charlene Leong leongchar@myvuw.ac.nz
+# Last Modified: Thu Aug 22 2019
+# -----
+# Copyright (c) 2019 Victoria University of Wellington ECS
+###
+
+
+import os
 import torch
 from torch import nn
 from torch.autograd import Variable
@@ -6,12 +18,10 @@ from torchvision import transforms
 from torchvision.datasets import MNIST
 from torchvision.utils import save_image
 
-import os
-
 # Create output folder
-OUTPUT_PATH = './ae_output_v0'
-if not os.path.exists(OUTPUT_PATH):
-    os.mkdir(OUTPUT_PATH)
+OUTPUT_DIR = './ae_v0_output'
+if not os.path.exists(OUTPUT_DIR):
+    os.mkdir(OUTPUT_DIR)
 
 # Device configuration
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -56,7 +66,7 @@ LEARNING_RATE = 1e-3
 # MNIST dataset
 # Download from torchvision.datasets.mnist
 # https://pytorch.org/docs/stable/torchvision/datasets.html#mnist
-dataset = MNIST('../',                         # Download dir
+dataset = MNIST('../',                      # Download dir
         train=True,                         # Download training data only
         transform=transforms.ToTensor(),    # Converts a PIL.Image or numpy.ndarray (H x W x C) [0, 255]
                                             # to a torch.FloatTensor of shape (C x H x W) in the range [0.0, 1.0].
@@ -77,7 +87,7 @@ class autoencoder(nn.Module):
             nn.Linear(64, 256),
             nn.ReLU(True),
             nn.Linear(256, 28 * 28),
-            nn.Sigmoid())       # classification 
+            nn.Sigmoid())        
 
     def forward(self, x):
         x = self.encoder(x)
@@ -103,21 +113,22 @@ for epoch in range(NUM_EPOCHS):
         img, _ = data
         img = img.view(img.size(0), -1)
         img = Variable(img).to(device)
-        # ===================forward=====================
+        # =================== forward =====================
         output = model(img)
         loss = criterion(output, img)
         MSE_loss = nn.MSELoss()(output, img)
-        # ===================backward====================
+        # =================== backward ====================
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
     # ===================log========================
     print('epoch [{}/{}], loss:{:.4f}, MSE_loss:{:.4f}'
           .format(epoch + 1, NUM_EPOCHS, loss.data, MSE_loss.data))
-    if epoch % 10 == 0:
+
+    if epoch % 10 == 0:     # Saving image progesss
         x = to_img(img.cpu().data)
         x_hat = to_img(output.cpu().data)
-        save_image(x, OUTPUT_PATH+'/x_{}.png'.format(epoch))
-        save_image(x_hat, OUTPUT_PATH+'/x_hat_{}.png'.format(epoch))
+        save_image(x, OUTPUT_DIR+'/x_{}.png'.format(epoch))
+        save_image(x_hat, OUTPUT_DIR+'/x_hat_{}.png'.format(epoch))
 
-torch.save(model.state_dict(), '/ae_weights.pth')
+torch.save(model.state_dict(), './' + os.path.basename(__file__).split('.')[0] + '.pth')
