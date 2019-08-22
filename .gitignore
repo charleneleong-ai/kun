@@ -1,11 +1,15 @@
-# MacOS
+# ====== MacOS ====== #
 .DS_Store
 
-# VSCode
+# ====== VSCode ====== #
 #*.code-workspace
 .vscode
 
-# Not include the raw data
+# ====== Data ====== #
 data
-
+MNIST
 *output*
+
+# ====== Python ====== #
+*.pyc
+__pycache__

@@ -9,6 +9,7 @@
 ###
 
 import os
+import argparse
 import torch
 import torch.nn as nn
 import torch.utils.data as Data
@@ -17,17 +18,22 @@ from torchvision.datasets import MNIST
 from torchvision.utils import save_image
 
 import numpy as np
+from scipy.optimize import linear_sum_assignment
 
-# torch.manual_seed(1)    # reproducible
+from utils import scatter
+
+CURRENT_FNAME = os.path.basename(__file__).split('.')[0]
 
 # Create output folder corresponding to current filename
-OUTPUT_DIR = './' + os.path.basename(__file__).split('.')[0] + '_output'
-if not os.path.exists(OUTPUT_DIR):
+OUTPUT_DIR = './' + CURRENT_FNAME + '_output'
+if not os.path.exists(OUTPUT_DIR) and CURRENT_FNAME!=config:
     os.mkdir(OUTPUT_DIR)
+
 
 # Device configuration
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+# torch.manual_seed(1)    # reproducible
 
 # Hyper Parameters
 N_EPOCHS = 20
@@ -37,7 +43,6 @@ DOWNLOAD_MNIST = False
 N_TEST_IMG = 8
 
 # =================== LOAD DATA ===================== #
-
 # MNIST dataset
 # Download from torchvision.datasets.mnist
 # https://pytorch.org/docs/stable/torchvision/datasets.html#mnist
@@ -58,8 +63,8 @@ test_data = MNIST('../',                      # Download dir
 train_loader = Data.DataLoader(dataset=train_data, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
 test_loader = Data.DataLoader(dataset=test_data, batch_size=BATCH_SIZE, shuffle=True, num_workers=4)
 
-# =================== MODEL ===================== #
 
+# =================== MODEL ===================== #
 class AutoEncoder(nn.Module):
     def __init__(self):
         super(AutoEncoder, self).__init__()
@@ -118,7 +123,7 @@ def train(epoch):
             ))
             
     epoch_loss /= len(train_loader.dataset)
-    print('\n====> Epoch: {} Average loss: {:.4f}\n'.format(epoch, epoch_loss))
+    print('\n====> Epoch: {} Average loss: {:.4f}'.format(epoch, epoch_loss))
     return epoch_loss
 
 # =================== TEST ===================== #
@@ -136,7 +141,7 @@ def test(epoch):
 
             # Accumulate test loss, feat_total and target_total
             test_loss += loss_func(decoded, batch_test.view(batch_test.size(0), -1)).data
-            feat_total.append(encoded.data.cpu().view(encoded.data.shape[1], -1))
+            feat_total.append(encoded.data.cpu().view(-1, encoded.data.shape[1]))
             target_total.append(batch_test_label)
 
             # =================== PLOT COMPARISON ===================== #
@@ -150,13 +155,30 @@ def test(epoch):
                         OUTPUT_DIR+'/x_recon_' + str(epoch) + '.png', nrow=N_TEST_IMG)
 
         test_loss /= len(test_loader.dataset)
-        print('\n====> Test set loss: {:.4f}\n'.format(test_loss))
+        print('====> Test set loss: {:.4f}\n'.format(test_loss))
 
+        # =================== PLOT SCATTER ===================== #
+        feat_total = torch.cat(feat_total, dim=0)
+        target_total = torch.cat(target_total, dim=0)
+        # scatter(feat_total.numpy(), target_total.numpy(), epoch, 'pca', OUTPUT_DIR)
+        # scatter(feat_total.numpy(), target_total.numpy(), epoch, 'tsne', OUTPUT_DIR)
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='AE MNIST Example')
+    parser.add_argument('--lr', type=float, default=LR, metavar='N',
+                        help='learning rate for training (default: 0.001)')
+    parser.add_argument('--batch-size', type=int, default=BATCH_SIZE, metavar='N',
+                        help='input batch size for training (default: 128)')
+    parser.add_argument('--update-interval', type=int, default=100, metavar='N',
+                        help='update interval for each batch')
+    parser.add_argument('--epochs', type=int, default=N_EPOCHS, metavar='N',
+                        help='number of epochs to train (default: 10)')
+    parser.add_argument('--weights', type=str, default="", metavar='N',
+                    help='path to weights')
+    args = parser.parse_args()
+
     autoencoder = AutoEncoder().to(device)      # moving ae to GPU if available
 
-    
     # TODO: Investigate weight decay
     # optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=1e-5)
     optimizer = torch.optim.Adam(autoencoder.parameters(), lr=LR)
@@ -169,5 +191,5 @@ if __name__ == '__main__':
         test(epoch)
     
     # Saving model weights
-    torch.save(autoencoder.state_dict(), './' + os.path.basename(__file__).split('.')[0] + '_weights.pth')
+    torch.save(autoencoder.state_dict(), './' + CURRENT_FNAME + '_weights.pth')
 

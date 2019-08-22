@@ -11,6 +11,9 @@
 		},
 		{
 			"path": "/root/gdrive/engr489-2019/examples/torch/DEC_nord_torch"
+		},
+		{
+			"path": "/root/gdrive/engr489-2019/examples/torch/pt-dec"
 		}
 	],
 	"settings": {
