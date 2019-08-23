@@ -8,6 +8,8 @@
 # Copyright (c) 2019 Victoria University of Wellington ECS
 ###
 
+import sys
+sys.path.append("..")
 import os
 import argparse
 import torch
@@ -26,7 +28,7 @@ CURRENT_FNAME = os.path.basename(__file__).split('.')[0]
 
 # Create output folder corresponding to current filename
 OUTPUT_DIR = './' + CURRENT_FNAME + '_output'
-if not os.path.exists(OUTPUT_DIR) and CURRENT_FNAME!=config:
+if not os.path.exists(OUTPUT_DIR):
     os.mkdir(OUTPUT_DIR)
 
 
