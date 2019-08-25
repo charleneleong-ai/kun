@@ -3,7 +3,7 @@
 ###
 # Created Date: Thursday, August 22nd 2019, 11:50:30 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Fri Aug 23 2019
+# Last Modified: Sat Aug 24 2019
 # -----
 # Copyright (c) 2019 Victoria University of Wellington ECS
 ###
@@ -16,6 +16,7 @@ import torch.utils.data as Data
 from torchvision.utils import save_image
 
 from utils import plt_scatter
+
 
 # =================== MODEL ===================== #
 class AutoEncoder(nn.Module):
@@ -42,6 +43,10 @@ class AutoEncoder(nn.Module):
             nn.Sigmoid(),       # compress to a range (0, 1)
         )
 
+        
+        # Initialise the weights and biases in the layers
+        self.apply(self._init_weights)
+
         # Shifting to GPU if needed
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.to(self.device)
@@ -63,7 +68,7 @@ class AutoEncoder(nn.Module):
             # TODO: Investigate weight decay
             # optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=1e-5)
             self.optimizer = torch.optim.Adam(self.parameters(), lr=lr)
-
+          
         if loss=='BCE':     # TODO: Investigate BCE or MSE loss
             self.loss_func = nn.BCELoss()
         elif loss=='MSE':
@@ -126,7 +131,7 @@ class AutoEncoder(nn.Module):
                         comparison = torch.cat([batch_test[:n_test_imgs], decoded.view(-1, 1, 28, 28)[:n_test_imgs]])
                         output_dir = self._check_output_dir(output_dir)
                         save_image(comparison.data.cpu(),
-                                output_dir+'/x_recon_{}.png'.format(, epoch), nrow=n_test_imgs)
+                                output_dir+'/x_recon_{}.png'.format(epoch), nrow=n_test_imgs)
 
                     # =================== PLOT SCATTER ===================== #
                     if scatter_plt!=None:
@@ -143,8 +148,11 @@ class AutoEncoder(nn.Module):
         if save_model: 
             output_dir = self._check_output_dir(output_dir)  
             save_path = '{}/{}.pth'.format(output_dir, output_dir.strip('./').strip('_output'))
+            print(os.path.basename(os.path.normpath(save_path)))
             torch.save({        # Saving checkpt for inference and/or resuming training
                 'model_name': os.path.basename(os.path.normpath(save_path)),
+                'lr': lr,
+                'batch_size': batch_size,
                 'model_state_dict': self.state_dict(),
                 'optimizer': self.optimizer,
                 'optimizer_state_dict': self.optimizer.state_dict(),
@@ -159,18 +167,29 @@ class AutoEncoder(nn.Module):
     def load_model(self, path):
         # map the parameters from storage to location. 
         model_checkpt = torch.load(path, map_location=lambda storage, loc: storage)
-
-        self.model_name = model_checkpt['model_name']
+        self.model_name = model_checkpt['model_name'],
+        self.lr = model_checkpt['lr'],
+        self.batch_size = model_checkpt['batch_size'],
         self.load_state_dict(model_checkpt['model_state_dict'])
         self.optimizer = model_checkpt['optimizer']
         self.optimizer.load_state_dict(model_checkpt['optimizer_state_dict'])
         self.epoch = model_checkpt['epoch']
         self.loss = model_checkpt['loss']
 
-        print('Loading model...\n{}\n\nEpoch: {}\tLoss: {}\n\nLoaded model\t{}\n'      
-                .format(self, self.epoch, self.loss, self.model_name))
+        print('Loading model...\n{}\n'.format(self))
+        print('Loaded model\t{}\n'.format(self.model_name))
+        print('Batch size: {} LR: {} Optimiser: {}\n'
+               .format(self.batch_size, self.lr, self.optimizer.__class__.__name__))
+        print('Epoch: {}\tLoss: {}\n'      
+                .format(self.epoch, self.loss))
+        
 
     def _check_output_dir(self, output_dir):
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)
         return output_dir
+
+    def _init_weights(self, layer):
+        if type(layer) == nn.Linear:
+            nn.init.xavier_uniform_, (layer.weight, nn.init.calculate_gain('relu'))
+            layer.bias.data.fill_(0.01)
