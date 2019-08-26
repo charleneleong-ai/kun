@@ -3,7 +3,7 @@
 ###
 # Created Date: Monday, August 26th 2019, 12:13:26 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Aug 26 2019
+# Last Modified: Tue Aug 27 2019
 # -----
 # Copyright (c) 2019 Victoria University of Wellington ECS
 ###
@@ -19,29 +19,29 @@ from torchvision.datasets import MNIST
 from sklearn.model_selection import train_test_split
 
 class FilteredMNIST(Dataset):
-    def __init__(self, label=0, split=0.8, n_noise_clusters=2,  output_dir=""):
+    def __init__(self, label=0, split=0.8, n_noise_clusters=2, output_dir=""):
         super(Dataset, self).__init__()
 
-        # If training
-        if output_dir=="":
+        if output_dir=="":      # If training
             self.LABEL = label
             self.N_NOISE_CLUSTERS = n_noise_clusters
             self.SPLIT= split
             self.train, self.test = self._load_filtered_mnist()
-
+        else:
+            self.load_dataset(output_dir)
     
     def _load_filtered_mnist(self):
-                # =================== LOAD DATA ===================== #
+        # =================== LOAD DATA ===================== #
         # MNIST dataset - download from torchvision.datasets.mnist
         # https://pytorch.org/docs/stable/torchvision/datasets.html#mnist
-        mnist_train = MNIST('../',                   # Download dir
+        mnist_train = MNIST('../',                  # Download dir
                 train=True,                         # Download training data 
                 transform=transforms.ToTensor(),    # Converts a PIL.Image or numpy.ndarray (H x W x C) [0, 255]
                                                     # to a torch.FloatTensor of shape (C x H x W) in the range [0.0, 1.0].
                 download=True
                 )
 
-        mnist_test = MNIST('../',                     # Download dir
+        mnist_test = MNIST('../',                    # Download dir
                 train=False,                         # Download test data
                 transform=transforms.ToTensor()
                 )
@@ -50,9 +50,10 @@ class FilteredMNIST(Dataset):
         
         noise_data, noise_targets = self._gen_noise_data(mnist_dataset)
         filtered_mnist = self._filter_label(mnist_dataset, self.LABEL)
-        # print(train_filtered.targets, len(train_filtered.data ),len(train_filtered.targets))
-        filtered_mnist = self._add_noise(filtered_mnist, noise_data, noise_targets)
+        print(filtered_mnist.targets, len(filtered_mnist.data ),len(filtered_mnist.targets))
         
+        filtered_mnist = self._add_noise(filtered_mnist, noise_data, noise_targets)
+
         return self._split_train_test(filtered_mnist, mnist_test, self.SPLIT)
 
     
@@ -78,6 +79,7 @@ class FilteredMNIST(Dataset):
         rand_labels = [labels.pop(random.randrange(len(labels))) for _ in range(self.N_NOISE_CLUSTERS)]
         print(labels, rand_labels)
         # print(noise_targets.type(), targets.type())
+        
         noise_data = torch.ByteTensor()      # Init noise and targets 
         noise_targets = torch.LongTensor()
         for i, label in enumerate(rand_labels):
@@ -88,6 +90,7 @@ class FilteredMNIST(Dataset):
 
             # Gen clusters in increasing size
             size = int(len(data)/(10-(i+1)))   
+            # print(len(data), size)
             # Get random subset of noise_data
             data = data[np.random.randint(data.numpy().shape[0], size=size)]
             targets = targets[:size] 
@@ -115,5 +118,25 @@ class FilteredMNIST(Dataset):
         # print(full.targets.unique(), test.targets.unique(), len(full), len(test))
         return full, test
 
-    def save_dataset(self, path):
-        torch.save(self, path)
+    def save_dataset(self, output_dir):
+        save_path = output_dir+'/filtered_mnist_dataset.pt'
+        torch.save({
+            'label': self.LABEL,
+            'n_noise_clusters': self.N_NOISE_CLUSTERS,
+            'split': self.SPLIT,
+            'train': self.train,
+            'test': self.test
+            },
+            save_path
+            )
+    
+    def load_dataset(self, output_dir):
+        path = output_dir+'/filtered_mnist_dataset.pt'
+        dataset = torch.load(path, map_location=lambda storage, loc: storage)
+        self.LABEL = dataset['label']
+        self.N_NOISE_CLUSTERS = dataset['n_noise_clusters']
+        self.SPLIT = dataset['split']
+        self.train = dataset['train']
+        self.test = dataset['test']
+
+        print('\nLoaded filtered_mnist_dataset.pt from {}\n'.format(output_dir.split('/')[1]))

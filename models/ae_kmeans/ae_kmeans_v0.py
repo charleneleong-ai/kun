@@ -24,8 +24,14 @@ from torch.utils.data import SubsetRandomSampler, DataLoader
 import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns; sns.set()  # for plot styling
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
+from scipy.stats import mode
+from sklearn.metrics import accuracy_score
 
-from utils import plt_confusion_matrix
+# from utils import plt_confusion_matrix
 from utils import cluster_accuracy  
 from ae.ae import AutoEncoder
 from datasets import FilteredMNIST
@@ -42,7 +48,6 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 EPOCHS = 30
 BATCH_SIZE = 128
 LR = 1e-3       
-DOWNLOAD_MNIST = True
 N_TEST_IMGS = 8
 
 SEED = 489
@@ -69,75 +74,140 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     
-
-            
-    # noise_data, noise_targets = noise_dataset(train_data, args.label, 2)
-    # train_data_filtered = filter_label(train_data, args.label)
-    # # print(train_data_filtered.targets, len(train_data_filtered.data ),len(train_data_filtered.targets))
-
-    # # Add noise
-    # train_data_filtered.data = torch.cat((train_data_filtered.data, noise_data), 0)
-    # train_data_filtered.targets = torch.cat((train_data_filtered.targets, noise_targets), 0)
-
-
     autoencoder = AutoEncoder()     
 
-    # Load model and perform Kmeans
+    
     if args.output=='':
         dataset = FilteredMNIST(label=args.label, split=0.8, n_noise_clusters=3)
+
         print(dataset.train.targets.unique(), len(dataset.train), len(dataset.test))
-        # autoencoder.fit(train_data_filtered, 
-        #         train_data_filtered,
-        #         batch_size=args.batch_size, 
-        #         epochs=args.epochs, 
-        #         lr=args.lr, 
-        #         opt='Adam',         # Adam
-        #         loss='BCE',         # BCE or MSE
-        #         eval=True,          # Eval training process with test data
-        #         plt_imgs=(N_TEST_IMGS, 5),         # (N_TEST_IMGS, plt_interval)
-        #         scatter_plt=('pca', 10),         # ('method', plt_interval)
-        #         output_dir=OUTPUT_DIR, 
-        #         save_model=True)        # Also saves dataset
-    else:
-        output_dir= args.output 
-        
+        autoencoder.fit(dataset,
+                batch_size=args.batch_size, 
+                epochs=args.epochs, 
+                lr=args.lr, 
+                opt='Adam',         # Adam
+                loss='BCE',         # BCE or MSE
+                eval=True,          # Eval training process with test data
+                # plt_imgs=(N_TEST_IMGS, 5),         # (N_TEST_IMGS, plt_interval)
+                scatter_plt=('tsne', 10),         # ('method', plt_interval)
+                output_dir=OUTPUT_DIR, 
+                save_model=True)        # Also saves dataset
+
+    else:       # Load model and perform Kmeans
+        output_dir= args.output   
         if args.output =='latest':
             output_dir = max(glob.iglob('./*/'), key=os.path.getctime)
-            # model_path = output_dir.format()
 
-        
-        
-        # train_data_filtered = FilteredMNIST()
-        
-        # print(train_data_filtered.targets)
-        # autoencoder.load_model(output_dir)
-        # autoencoder.eval()
+        dataset = FilteredMNIST(output_dir=output_dir)
+        model_path = autoencoder.load_model(output_dir=output_dir)
+        autoencoder.eval()
 
+        # print(dataset.test.targets.unique()) 
+        
         # model_name = autoencoder.model_name
         
         # # =================== CLUSTER ASSIGNMENT ===================== #
-        # data = train_data_filtered.data.type(torch.FloatTensor)  # Loaded as ByteTensor
-        # data = data.view(-1, 784).to(device) # Reshape and transfer
+        data = dataset.test.data.type(torch.FloatTensor)  # Loaded as FloatTensor
+        data = data.view(-1, 784).to(device) # Reshape and transfer
 
         # encoded, decoded = autoencoder(data)
-        # n_clusters=3
-        # kmeans = KMeans(n_clusters=n_clusters, n_init=20, random_state=SEED)
-        # y_pred = kmeans.fit_predict(encoded.data.cpu().numpy())
+        # feat = encoded.data.cpu().view(-1, encoded.data.shape[1]).numpy()
+        # print(len(feat), feat.shape)
 
-        # # idx = np.argsort(y_pred.cluster_centers_.sum(axis=1))
-        # # lut = np.zeros_like(idx)
-        # # lut[idx] = np.arange(n_clusters)
+        feat = data.cpu().numpy()
+        print(len(feat), feat.shape)
         
-        # # # =================== EVAL ACC ===================== #
-        # y_target = train_data.targets.numpy()
-        # accuracy, reassignment = cluster_accuracy(y_pred, y_target)
-        # print('Accuracy: \t', accuracy)
-        # print('Reassignment: \t', reassignment)
+        # tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=1000, random_state=SEED)
+        # feat = tsne.fit_transform(feat)
+        # pca = PCA(n_components=2, random_state=SEED)
+        # feat = pca.fit_transform(feat)
+        
+        kmeans = KMeans(n_clusters=dataset.N_NOISE_CLUSTERS+1, n_init=20, random_state=SEED)
+        y_pred = kmeans.fit_predict(feat)
+        print(y_pred)
+        plt.scatter(feat[:, 0], feat[:, 1], c=dataset.test.targets, s=30, cmap='viridis')
 
-        # # Rename model with accuracy
-        # # os.rename()
-        # # view_data = autoencoder.data.cpu().view(-1, encoded.data.shape[1]).numpy()
-        # # plt_scatter(view_data, epoch, method, output_dir, pltshow=False)
-        # plt_confusion_matrix(y_pred, y_target, model_path.split('/')[1])
+        centers = kmeans.cluster_centers_
+        plt.scatter(centers[:, 0], centers[:, 1], c='black', s=200, alpha=0.5)
+        plt.savefig(output_dir+'/kmeans_imgs.png', bbox_inches='tight')
+
+        # print(centers.shape)
+        # Permute the labels
+        # labels = np.zeros_like(y_pred)
+        # for i in range(dataset.N_NOISE_CLUSTERS+1):
+        #     mask = (y_pred == i)
+        #     labels[mask] = mode(dataset.test.targets[mask])[0]
+
+        # Rename cluster_labels to true_labels
+        
+        y_labels = dataset.test.targets.numpy()
+        y_target_labels = np.unique(y_labels)
+        y_pred_labels= np.unique(y_pred)
+        # np.unique(y_target)
+        print(np.unique(y_pred),  np.unique(y_labels))
+
+        # Rename cluster labels from largest to smallest
+        # print(centers.sum(axis=1))
+        # lut = np.argsort(centers.sum(axis=1))[::-1]
+        # lut = np.zeros_like(idx)
+        # y_pred_sorted = lut[y_pred]
+        # print(lut)
+        # print(y_pred)
+        # print(y_pred_sorted)
+
+        # Remap to target_laels
+        # lut = y_target_labels
+        # print(lut)
+        # y_pred_new = lut[y_pred]
+        # print(y_pred_new)
+
+
+        print(y_labels)
+        lut = y_pred_labels
+        print(lut)
+        y_labels_new = lut[y_labels]
+        print(y_labels_new)
+        print(y_labels)
+        
+
+        # Rename 
+        # print(accuracy_score(y_labels, y_pred_sorted))
+        
+        # y_targets_new = []
+        # for y_pred in y_pred_labels:
+        #     for y_label in y_labels:
+        #         if y_pred == y_label
+        # y_target_labels = np.unique(y_targets)
+        # for i in range(dataset.N_NOISE_CLUSTERS+1):
+        #     mask = (y_pred[i]==i)
+        #     y_pred[mask] = y_target_labels[i]
+        #     print(y_targets[i], y_target_labels[i])
+        # print(np.unique(y_pred))
+        
+        # # =================== EVAL ACC ===================== #
+        # y_target = dataset.test.targets.numpy()
+        
+
+        # print(np.unique(y_pred),  np.unique(y_target))
+        accuracy, reassignment = cluster_accuracy(y_pred, y_labels_new)
+        print('Accuracy: \t', accuracy)
+        print('Reassignment: \t', reassignment)
+
+        # Rename model with accuracy
+        # os.rename()
+        # view_data = autoencoder.data.cpu().view(-1, encoded.data.shape[1]).numpy()
+        # plt_scatter(view_data, epoch, method, output_dir, pltshow=False)
+        # plt_confusion_matrix(y_pred, y_target, output_dir)
+
+
+
+        mat = confusion_matrix(y_labels_new, y_pred)
+        sns.heatmap(mat.T, square=True, annot=True, fmt='d', cbar=False,
+                    xticklabels=dataset.test.targets.unique().tolist(),
+                    yticklabels=dataset.test.targets.unique().tolist())
+        plt.xlabel('true label')
+        plt.ylabel('predicted label');
+
+        plt.savefig(output_dir+'/confusion_matrix.png', bbox_inches='tight')
 
 

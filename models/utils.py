@@ -3,7 +3,7 @@
 ###
 # Created Date: Thursday, August 22nd 2019, 9:25:01 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Sun Aug 25 2019
+# Last Modified: Mon Aug 26 2019
 # -----
 # Copyright (c) 2019 Victoria University of Wellington ECS
 ###
@@ -30,10 +30,10 @@ def plt_scatter(feat, label, epoch, method, output_dir, pltshow=False):
             label = label[:5000]
 
         if method == 'pca':
-            pca = PCA(n_components=2)
+            pca = PCA(n_components=2, random_state=489)
             feat = pca.fit_transform(feat)
         elif method == 'tsne':
-            tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=1000)
+            tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=1000, random_state=489)
             feat = tsne.fit_transform(feat)
 
     plt.ion()
@@ -50,7 +50,7 @@ def plt_scatter(feat, label, epoch, method, output_dir, pltshow=False):
         txt = ax.text(xtext, ytext, str(i), fontsize=18)
         txt.set_path_effects([PathEffects.Stroke(linewidth=5, foreground="w"), PathEffects.Normal()])
     
-    plt.rc('axes', labelsize=18)
+    
     plt.draw()
     plt.ioff()
     plt.savefig(output_dir+'/scatter_{}_{}.png'.format(method, epoch), bbox_inches='tight')
