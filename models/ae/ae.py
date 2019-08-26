@@ -3,12 +3,13 @@
 ###
 # Created Date: Thursday, August 22nd 2019, 11:50:30 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Sat Aug 24 2019
+# Last Modified: Mon Aug 26 2019
 # -----
 # Copyright (c) 2019 Victoria University of Wellington ECS
 ###
 import os
 from datetime import datetime
+import json
 
 import torch
 import torch.nn as nn
@@ -48,7 +49,7 @@ class AutoEncoder(nn.Module):
         self.apply(self._init_weights)
 
         # Shifting to GPU if needed
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.to(self.device)
 
     def forward(self, batch):   # batch=x
@@ -57,7 +58,7 @@ class AutoEncoder(nn.Module):
         return encoded, decoded
     
     def fit(self, train_data, test_data, batch_size, epochs, lr, opt='Adam', loss='BCE', 
-                eval=True, n_test_imgs=None, scatter_plt=False, pltshow=False, output_dir="", save_model=False):
+                eval=True, plt_imgs=None, scatter_plt=False, pltshow=False, output_dir='', save_model=False):
         
         # Data Loader for easy mini-batch return in training, the image batch shape will be (BATCH_SIZE, 1, 28, 28)
         train_loader = Data.DataLoader(dataset=train_data, batch_size=batch_size, shuffle=True, num_workers=4)
@@ -92,7 +93,7 @@ class AutoEncoder(nn.Module):
                 self.optimizer.step()                    # apply gradients
 
                 epoch_loss += loss.data
-                if batch_idx % 100 == 0:
+                if batch_idx % 10 == 0:
                     print('Train Epoch: {} [{}/{} ({:.0f}%)] \t Loss:{:.6f} \t MSE Loss:{:.6f} '.format(
                         epoch, batch_idx * len(batch_train), len(train_loader.dataset),
                             100.0 * batch_idx / len(train_loader),
@@ -125,30 +126,30 @@ class AutoEncoder(nn.Module):
                     print('====> Test set loss: {:.4f}\n'.format(test_loss))
 
                     # =================== PLOT COMPARISON ===================== #
-                    if n_test_imgs!=None:
-                        batch_test = batch_test.view(-1, 1, 28, 28)   # Reshape into (N_TEST_IMG, 1, 28, 28)
-                        decoded = decoded.view(-1, 1, 28, 28)
-                        comparison = torch.cat([batch_test[:n_test_imgs], decoded.view(-1, 1, 28, 28)[:n_test_imgs]])
-                        output_dir = self._check_output_dir(output_dir)
-                        save_image(comparison.data.cpu(),
-                                output_dir+'/x_recon_{}.png'.format(epoch), nrow=n_test_imgs)
+                if plt_imgs!=None and epoch % plt_imgs[1] == 0:  #plt_imgs = (N_TEST_IMGS, plt_interval)
+                    batch_test = batch_test.view(-1, 1, 28, 28)   # Reshape into (N_TEST_IMG, 1, 28, 28)
+                    decoded = decoded.view(-1, 1, 28, 28)
+                    comparison = torch.cat([batch_test[:plt_imgs[0]], decoded.view(-1, 1, 28, 28)[:plt_imgs[0]]])
+                    output_dir = self._check_output_dir(output_dir)
+                    save_image(comparison.data.cpu(),
+                            output_dir+'/x_recon_{}.png'.format(epoch), nrow=plt_imgs[0])
 
                     # =================== PLOT SCATTER ===================== #
-                    if scatter_plt!=None:
-                        feat_total = torch.cat(feat_total, dim=0)
-                        target_total = torch.cat(target_total, dim=0)
-                        output_dir = self._check_output_dir(output_dir)
-                        if scatter_plt=='pca':
-                            plt_scatter(feat_total.numpy(), target_total.numpy(), epoch, 'pca', output_dir, pltshow)
-                        elif scatter_plt=='tsne':
-                            plt_scatter(feat_total.numpy(), target_total.numpy(), epoch, 'tsne', output_dir, pltshow)
+                if scatter_plt!=None and epoch % scatter_plt[1] == 0:       # scatter_plt = ('method', plt_interval)
+                    feat_total = torch.cat(feat_total, dim=0)
+                    target_total = torch.cat(target_total, dim=0)
+                    output_dir = self._check_output_dir(output_dir)
+                    plt_scatter(feat_total.numpy(), target_total.numpy(), epoch, scatter_plt[0], output_dir, pltshow)
 
 
-        # =================== SAVE MODEL ==================== #
+        # =================== SAVE MODEL AND DATA ==================== #
         if save_model: 
             output_dir = self._check_output_dir(output_dir)  
             save_path = '{}/{}.pth'.format(output_dir, output_dir.strip('./').strip('_output'))
-            print(os.path.basename(os.path.normpath(save_path)))
+            
+            # Save dataset
+            torch.save(train_data, output_dir+'/training_data.pt')
+            # print(os.path.basename(os.path.normpath(save_path)))
             torch.save({        # Saving checkpt for inference and/or resuming training
                 'model_name': os.path.basename(os.path.normpath(save_path)),
                 'lr': lr,
@@ -161,6 +162,22 @@ class AutoEncoder(nn.Module):
                 },
                 save_path
             )
+            # Save config file
+            config = {
+                'model_name': os.path.basename(os.path.normpath(save_path)),
+                'device': 'cuda' if torch.cuda.is_available() else 'cpu',
+                'lr': lr,
+                'batch_size': batch_size,
+                'optimizer': self.optimizer.__class__.__name__,
+                'epoch': epoch,
+                'loss': loss.data.item(),
+                'loss_fn': self.loss_func.__class__.__name__
+                }
+            # print(config)
+
+            with open(output_dir+'/config.json', 'w') as f:
+                json.dump(config, f)
+
             print('\nAE Model saved to {}\n'.format(save_path))
 
 
