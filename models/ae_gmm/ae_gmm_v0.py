@@ -20,23 +20,24 @@ import random
 import torch
 from torchvision import transforms
 from torchvision.datasets import MNIST
-from torch.utils.data import SubsetRandomSampler, DataLoader
 
 import numpy as np
-from sklearn.cluster import KMeans
+from sklearn.mixture import GaussianMixture, BayesianGaussianMixture
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns; sns.set()  # for plot styling
-from sklearn.decomposition import PCA
-from sklearn.manifold import TSNE
+
 from scipy.stats import mode
 from sklearn.metrics import accuracy_score
 
 # from utils import plt_confusion_matrix
-from utils import cluster_accuracy  
+from utils.eval import cluster_accuracy  
 from ae.ae import AutoEncoder
 from ae.conv_ae import ConvAutoEncoder
-from datasets import FilteredMNIST
+from utils.datasets import FilteredMNIST
 
 # Create output folder corresponding to current filename
 CURRENT_FNAME = os.path.basename(__file__).split('.')[0]
@@ -76,61 +77,84 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     
-    autoencoder = ConvAutoEncoder()     
+    ae = ConvAutoEncoder()     
     
     if args.output=='':
         dataset = FilteredMNIST(label=args.label, split=0.8, n_noise_clusters=3)
 
         print(dataset.train.targets.unique(), len(dataset.train), len(dataset.test))
-        autoencoder.fit(dataset,
+        ae.fit(dataset,
                 batch_size=args.batch_size, 
                 epochs=args.epochs, 
                 lr=args.lr, 
                 opt='Adam',         # Adam
                 loss='BCE',         # BCE or MSE
+                patience=10,   # Num epochs for early stopping
                 eval=True,          # Eval training process with test data
                 plt_imgs=(N_TEST_IMGS, 10),         # (N_TEST_IMGS, plt_interval)
                 scatter_plt=('tsne', 10),           # ('method', plt_interval)
                 output_dir=OUTPUT_DIR, 
                 save_model=True)        # Also saves dataset
 
-    else:       # Load model and perform Kmeans
-        output_dir = args.output   
+    else:       # Load model and perform GMM
+        OUTPUT_DIR = args.output   
         if args.output=='latest':
-            output_dir = max(glob.iglob('./*/'), key=os.path.getctime)
+            OUTPUT_DIR = max(glob.iglob('./*/'), key=os.path.getctime)
 
-        dataset = FilteredMNIST(output_dir=output_dir)
-        model_path = autoencoder.load_model(output_dir=output_dir)
-        autoencoder.eval()
+        dataset = FilteredMNIST(output_dir=OUTPUT_DIR)
+        model_path = ae.load_model(output_dir=OUTPUT_DIR)
 
-        # print(dataset.test.targets.unique()) 
-        
-        # model_name = autoencoder.model_name
-        
+
         # # =================== CLUSTER ASSIGNMENT ===================== #
-        data = dataset.test.data.type(torch.FloatTensor)  # Loaded as FloatTensor
-        data = data.to(device) # Reshape and transfer
+        _, feat, labels = ae.eval_model(dataset=dataset, 
+                                        batch_size=ae.BATCH_SIZE, 
+                                        epoch=ae.EPOCHS, 
+                                        plt_imgs=None, 
+                                        # scatter_plt=('tsne', ae.EPOCHS),    
+                                        output_dir=OUTPUT_DIR)
 
-        # encoded, decoded = autoencoder(data)
-        # feat = encoded.data.cpu().view(-1, encoded.data.shape[1]).numpy()
-        # print(len(feat), feat.shape)
-
-        feat = data.cpu().numpy()
-        print(len(feat), feat.shape)
+        print(feat.shape)
+        print(dataset.test.targets.unique()) 
         
         # tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=1000, random_state=SEED)
         # feat = tsne.fit_transform(feat)
-        # pca = PCA(n_components=2, random_state=SEED)
-        # feat = pca.fit_transform(feat)
-        
-        kmeans = KMeans(n_clusters=dataset.N_NOISE_CLUSTERS+1, n_init=20, random_state=SEED)
-        y_pred = kmeans.fit_predict(feat)
-        print(y_pred)
-        plt.scatter(feat[:, 0], feat[:, 1], c=dataset.test.targets, s=30, cmap='viridis')
+        pca = PCA(n_components=2, random_state=SEED)
+        feat = pca.fit_transform(feat)
+        print(feat.shape)
 
-        centers = kmeans.cluster_centers_
-        plt.scatter(centers[:, 0], centers[:, 1], c='black', s=200, alpha=0.5)
-        plt.savefig(output_dir+'/kmeans_imgs.png', bbox_inches='tight')
+        n_components = np.arange(1, 21)
+
+        models = [GaussianMixture(n, covariance_type='full', random_state=0).fit(feat) for n in n_components]
+        bic = [m.bic(feat) for m in models]
+        aic = [m.aic(feat) for m in models]
+
+        ymin = min(bic)     # Finding min pt
+        xmin = bic.index(ymin)
+        k = n_components[xmin]
+        print(k, ' components')
+
+        # plt.plot(n_components, bic, label='BIC')
+        # plt.plot(n_components, aic,  label='AIC')
+        # plt.legend(loc='best')
+        # plt.xlabel('n_components')
+        # plt.savefig(output_dir+'/optimal_k.png', bbox_inches='tight')
+
+
+        feat = StandardScaler().fit_transform(feat)    # Normalise the data
+        # y_pred = GaussianMixture(n_components=k, n_init=20).fit_predict(feat)
+        y_pred = BayesianGaussianMixture(weight_concentration_prior_type="dirichlet_distribution",
+                                        weight_concentration_prior=1,
+                                        n_components=k, reg_covar=0, init_params='random',
+                                        max_iter=1500, n_init=20, mean_precision_prior=.8,
+                                        random_state=SEED).fit_predict(feat)
+
+        print(y_pred, len(y_pred))
+        plt.scatter(feat[:, 0], feat[:, 1], c=y_pred, s=20, cmap='viridis')
+        # plt.scatter(feat[:, 0], feat[:, 1], c=y_pred, s=30, cmap='viridis')
+
+        # centers = kmeans.cluster_centers_
+        # plt.scatter(centers[:, 0], centers[:, 1], c='black', s=200, alpha=0.5)
+        plt.savefig(output_dir+'/bgmm_encoded_pca.png', bbox_inches='tight')
 
         # print(centers.shape)
         # Permute the labels

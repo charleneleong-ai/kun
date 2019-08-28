@@ -21,18 +21,22 @@ sns.set(font_scale=2)
 
 SEED = 489
 
+
+
 def plt_scatter(feat, labels, epoch, method, output_dir, pltshow=False):
-    print('Plotting scatter_{}_{}.png \n'.format(method, epoch))
+    print('Plotting {}_{}.png \n'.format(method, epoch))
     
-    if feat.shape[1] > 2:   # Plot only first 5000 pts
-        if feat.shape[0] > 5000:
+    if feat.shape[1] > 2:            # Reduce to 2 dim
+        if feat.shape[0] > 5000:     # Plot only first 5000 pts   
             feat = feat[:5000, :]
             labels = labels[:5000]
 
         if method == 'pca':
-            feat = pca(feat)
+            pca = PCA(n_components=2, random_state=SEED)
+            feat = pca.fit_transform(feat)
         elif method == 'tsne':
-            feat = tsne(feat)
+            tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=1000, random_state=SEED)
+            feat = tsne.fit_transform(feat)
 
     labels_list = np.unique(labels)
     
@@ -43,9 +47,7 @@ def plt_scatter(feat, labels, epoch, method, output_dir, pltshow=False):
     
     for i, label in enumerate(labels_list):
         plt.plot(feat[labels == label, 0], feat[labels == label, 1], '.', c=palette[i])
-    # plt.legend(loc='upper right')
-    # plt.legend(dataset.targets.unique().tolist().sort(), loc='upper right', prop={'size': 6})
-        
+
         ax.axis('tight')
         xtext, ytext = np.median(feat[labels == label, :], axis=0)
         txt = ax.text(xtext, ytext, str(label), fontsize=18)
@@ -53,7 +55,7 @@ def plt_scatter(feat, labels, epoch, method, output_dir, pltshow=False):
 
     plt.draw()
     plt.ioff()
-    plt.savefig(output_dir+'/scatter_{}_{}.png'.format(method, epoch), bbox_inches='tight')
+    plt.savefig(output_dir+'/{}_{}.png'.format(method, epoch), bbox_inches='tight')
 
     if pltshow:
         plt.show()
@@ -72,13 +74,6 @@ def plt_confusion_matrix(y_pred, y_target, output_dir, pltshow=False):
         plt.show()
 
 
-def tsne(feat):
-    tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=1000, random_state=SEED)
-    return tsne.fit_transform(feat)
-
-def pca(feat):
-    pca = PCA(n_components=2, random_state=SEED)
-    return pca.fit_transform(feat)
 
 
     

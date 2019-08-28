@@ -92,6 +92,7 @@ class AutoEncoder(nn.Module):
             for batch_idx, (batch_train, _) in enumerate(train_loader):
                 batch_train = batch_train.to(self.device)               # moving batch to GPU if available
                 # Flatten inputs
+                
                 batch_x = batch_train.view(batch_train.size(0), -1)     # batch x, shape (batch, 28*28)
                 batch_y = batch_train.view(batch_train.size(0), -1)     # batch y, shape (batch, 28*28)
                 
@@ -118,7 +119,7 @@ class AutoEncoder(nn.Module):
         
             # =================== EVAL MODEL ==================== #
             if eval:
-                test_loss = self.eval_model(dataset, self.BATCH_SIZE, epoch, plt_imgs, scatter_plt, pltshow, self.OUTPUT_DIR)
+                test_loss, _, _ = self.eval_model(dataset, self.BATCH_SIZE, epoch, plt_imgs, scatter_plt, pltshow, self.OUTPUT_DIR)
                 if es.step(test_loss):  # Early Stopping
                     break
 
@@ -133,7 +134,7 @@ class AutoEncoder(nn.Module):
         
         # Save dataset
         dataset.save_dataset(output_dir)
-            
+        
         # print(os.path.basename(os.path.normpath(save_path)))
         torch.save({        # Saving checkpt for inference and/or resuming training
             'model_name': os.path.basename(os.path.normpath(save_path)),
@@ -183,6 +184,11 @@ class AutoEncoder(nn.Module):
         self.EPOCHS = model_checkpt['epochs']
         self.loss = model_checkpt['loss']
         self.loss_fn = model_checkpt['loss_fn']
+        
+        # Converting from tuples
+        self.model_name = str(''.join(self.model_name))
+        self.LR = float(self.LR[0])
+        self.BATCH_SIZE = int(self.BATCH_SIZE[0])
 
         print('Loading model...\n{}\n'.format(self))
         print('Loaded model\t{}\n'.format(self.model_name))
@@ -192,7 +198,7 @@ class AutoEncoder(nn.Module):
                 .format(self.EPOCHS, self.loss))
     
     
-    def eval_model(self, dataset, batch_size, epoch, plt_imgs=None, scatter_plt=False, pltshow=False, output_dir=''):
+    def eval_model(self, dataset, batch_size, epoch, plt_imgs=None, scatter_plt=None, pltshow=False, output_dir=''):
         
         test_loader = Data.DataLoader(dataset=dataset.test, batch_size=batch_size, shuffle=True, num_workers=4)
 
@@ -204,18 +210,21 @@ class AutoEncoder(nn.Module):
         with torch.no_grad():      # turn autograd off for memory efficiency
             for batch_idx, (batch_test, batch_test_label) in enumerate(test_loader):
                 batch_test = batch_test.to(self.device)
-                batch_test = batch_test.view(batch_test.size(0), -1)  
+                batch_test = batch_test.view(batch_test.size(0), -1)  # Flatten
                 encoded, decoded = self.forward(batch_test)
             
                 loss = self.loss_fn(decoded, batch_test) 
                 test_loss += loss.item()*batch_test.size(0)
 
                 # Flatten for TSNE (b, 10)
-                feat_total.append(encoded.data.cpu().view(-1, encoded.data.shape[1])) 
+                feat_total.append(encoded.data.cpu().view(batch_test.size(0), -1)) 
                 target_total.append(batch_test_label)
 
             test_loss /= len(test_loader.dataset)
             print('====> Test set loss: {:.4f}\n'.format(test_loss))
+
+            feat_total = torch.cat(feat_total, dim=0).numpy()
+            target_total = torch.cat(target_total, dim=0).numpy()
 
         # =================== PLOT COMPARISON ===================== #
         if plt_imgs!=None and epoch % plt_imgs[1] == 0:         # plt_imgs = (N_TEST_IMGS, plt_interval)
@@ -228,12 +237,10 @@ class AutoEncoder(nn.Module):
 
         # =================== PLOT SCATTER ===================== #
         if scatter_plt!=None and epoch % scatter_plt[1] == 0:       # scatter_plt = ('method', plt_interval)
-            feat_total = torch.cat(feat_total, dim=0)
-            target_total = torch.cat(target_total, dim=0)
             output_dir = self._check_output_dir(output_dir)
-            plt_scatter(feat_total.numpy(), target_total.numpy(), epoch, scatter_plt[0], output_dir, pltshow)
+            plt_scatter(feat_total, target_total, epoch, scatter_plt[0], output_dir, pltshow)
 
-        return test_loss
+        return test_loss, feat_total, target_total
         
     def _check_output_dir(self, output_dir):
         if not os.path.exists(output_dir):

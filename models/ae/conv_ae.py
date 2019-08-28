@@ -17,7 +17,8 @@ import torch.nn as nn
 import torch.utils.data as Data
 from torchvision.utils import save_image
 
-from utils import plt_scatter
+from utils.plt import plt_scatter
+from utils.early_stopping import EarlyStopping
 
 CURRENT_FNAME = os.path.basename(__file__).split('.')[0]
 
@@ -47,7 +48,6 @@ class ConvAutoEncoder(nn.Module):
             nn.Sigmoid(),           # compress to a range (0, 1)
         )
 
-        
         # Initialise the weights and biases in the layers
         self.apply(self._init_weights)
 
@@ -60,7 +60,7 @@ class ConvAutoEncoder(nn.Module):
         decoded = self.decoder(encoded)         # recon_x (x_hat)
         return encoded, decoded
     
-    def fit(self, dataset, batch_size, epochs, lr, opt='Adam', loss='MSE', 
+    def fit(self, dataset, batch_size, epochs, lr, opt='Adam', loss='MSE', patience=0,
                 eval=True, plt_imgs=None, scatter_plt=False, pltshow=False, output_dir='', save_model=False):
         train_data = dataset.train
         test_data = dataset.test
@@ -85,6 +85,7 @@ class ConvAutoEncoder(nn.Module):
         elif loss=='MSE':
             self.loss_fn = nn.MSELoss()
 
+        es = EarlyStopping(patience=patience)
         self.train()        # Set to train mode
         for epoch in range(epochs+1):
             epoch_loss = 0      # printing intermediary loss
@@ -114,7 +115,9 @@ class ConvAutoEncoder(nn.Module):
         
             # =================== EVAL MODEL ==================== #
             if eval:
-                self.eval_model(dataset, self.BATCH_SIZE, epoch, plt_imgs, scatter_plt, pltshow, self.OUTPUT_DIR)
+                test_loss, _, _ = self.eval_model(dataset, self.BATCH_SIZE, epoch, plt_imgs, scatter_plt, pltshow, self.OUTPUT_DIR)
+                if es.step(test_loss):  # Early Stopping
+                    break
 
         # =================== SAVE MODEL AND DATA ==================== #
         if save_model: 
@@ -177,6 +180,11 @@ class ConvAutoEncoder(nn.Module):
         self.loss = model_checkpt['loss']
         self.loss_fn = model_checkpt['loss_fn']
 
+        # Converting from tuples
+        self.model_name = str(''.join(self.model_name))
+        self.LR = float(self.LR[0])
+        self.BATCH_SIZE = int(self.BATCH_SIZE[0])
+
         print('Loading model...\n{}\n'.format(self))
         print('Loaded model\t{}\n'.format(self.model_name))
         print('Batch size: {} LR: {} Optimiser: {}\n'
@@ -185,7 +193,7 @@ class ConvAutoEncoder(nn.Module):
                 .format(self.EPOCHS, self.loss))
 
 
-    def eval_model(self, dataset, batch_size, epoch, plt_imgs=None, scatter_plt=False, pltshow=False, output_dir=''):
+    def eval_model(self, dataset, batch_size, epoch, plt_imgs=None, scatter_plt=None, pltshow=False, output_dir=''):
         
         test_loader = Data.DataLoader(dataset=dataset.test, batch_size=batch_size, shuffle=True, num_workers=4)
 
@@ -209,6 +217,9 @@ class ConvAutoEncoder(nn.Module):
             test_loss /= len(test_loader.dataset)
             print('====> Test set loss: {:.4f}\n'.format(test_loss))
 
+            feat_total = torch.cat(feat_total, dim=0).numpy()
+            target_total = torch.cat(target_total, dim=0).numpy()
+
         # =================== PLOT COMPARISON ===================== #
         if plt_imgs!=None and epoch % plt_imgs[1] == 0:         # plt_imgs = (N_TEST_IMGS, plt_interval)
             batch_test = batch_test.view(-1, 1, 28, 28)         # Reshape into (N_TEST_IMG, 1, 28, 28)
@@ -222,12 +233,12 @@ class ConvAutoEncoder(nn.Module):
 
         # =================== PLOT SCATTER ===================== #
         if scatter_plt!=None and epoch % scatter_plt[1] == 0:       # scatter_plt = ('method', plt_interval)
-            feat_total = torch.cat(feat_total, dim=0)
-            target_total = torch.cat(target_total, dim=0)
             output_dir = self._check_output_dir(output_dir)
-            plt_scatter(feat_total.numpy(), target_total.numpy(), epoch, scatter_plt[0], output_dir, pltshow)
+            plt_scatter(feat_total, target_total, epoch, scatter_plt[0], output_dir, pltshow)
      
+        return test_loss, feat_total, target_total
 
+        
     def _check_output_dir(self, output_dir):
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)

@@ -19,11 +19,12 @@ import random
 import torch
 from torchvision import transforms
 from torchvision.datasets import MNIST
-from torch.utils.data import SubsetRandomSampler, DataLoader
 
 import numpy as np
-from sklearn.cluster import KMeans
+# from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns; sns.set()  # for plot styling
@@ -32,10 +33,11 @@ from scipy.stats import mode
 from sklearn.metrics import accuracy_score
 
 # from utils import plt_confusion_matrix
-# from kmeans import KMeans 
+from kmeans import KMeans 
 from utils.eval import cluster_accuracy  
 from ae.ae import AutoEncoder
 from utils.datasets import FilteredMNIST
+from utils.plt import plt_scatter
 
 CURRENT_FNAME = os.path.basename(__file__).split('.')[0]
 timestamp = datetime.now().strftime('%Y.%d.%m-%H:%M:%S')
@@ -75,14 +77,14 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     
-    autoencoder = AutoEncoder()     
+    ae = AutoEncoder()     
 
     
     if args.output=='':
         dataset = FilteredMNIST(label=args.label, split=0.8, n_noise_clusters=3)
 
         print(dataset.train.targets.unique(), len(dataset.train), len(dataset.test))
-        autoencoder.fit(dataset,
+        ae.fit(dataset,
                 batch_size=args.batch_size, 
                 epochs=args.epochs, 
                 lr=args.lr, 
@@ -95,63 +97,50 @@ if __name__ == '__main__':
                 output_dir=OUTPUT_DIR, 
                 save_model=True)        # Also saves dataset
 
-    else:       # Load model and perform Kmeans
-        output_dir= args.output   
+    else:       # Load dataset, model and perform Kmeans
+        OUTPUT_DIR= args.output   
         if args.output =='latest':
-            output_dir = max(glob.iglob('./*/'), key=os.path.getctime)
+            OUTPUT_DIR = max(glob.iglob('./*/'), key=os.path.getctime)
 
-        dataset = FilteredMNIST(output_dir=output_dir)
-        model_path = autoencoder.load_model(output_dir=output_dir)
-        autoencoder.eval()
+        dataset = FilteredMNIST(output_dir=OUTPUT_DIR)
+        model_path = ae.load_model(output_dir=OUTPUT_DIR)
 
-        # print(dataset.test.targets.unique()) 
-        
-        # model_name = autoencoder.model_name
-        
         # # =================== CLUSTER ASSIGNMENT ===================== #
-        data = dataset.test.data.type(torch.FloatTensor)  # Loaded as FloatTensor
-        data = data.view(-1, 784).to(device) # Reshape and transfer
-        feat = data.cpu().numpy()
-        print(len(feat), feat.shape)
+        _, feat, labels = ae.eval_model(dataset=dataset, 
+                                        batch_size=ae.BATCH_SIZE, 
+                                        epoch=ae.EPOCHS, 
+                                        plt_imgs=None, 
+                                        # scatter_plt=('tsne', ae.EPOCHS),    
+                                        output_dir=OUTPUT_DIR)
 
-        # encoded, decoded = autoencoder(data)
-        # feat = encoded.data.cpu().view(-1, encoded.data.shape[1]).numpy()
-        # print(len(feat), feat.shape)
-
-
+        print(feat.shape)
+        print(dataset.test.targets.unique()) 
         
         tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=1000, random_state=SEED)
         feat = tsne.fit_transform(feat)
         # pca = PCA(n_components=2, random_state=SEED)
         # feat = pca.fit_transform(feat)
 
-        feat = StandardScaler().fit_transform(feat)
-        kmeans = KMeans(n_clusters=dataset.N_NOISE_CLUSTERS+1, n_init=20, random_state=SEED)
-        y_pred = kmeans.fit_predict(feat)
-        
-        # Normalise the data
-        
-        # kmeans = KMeans(n_clusters=dataset.N_NOISE_CLUSTERS+1, max_iter=100, random_state=SEED)
-        # kmeans.fit(feat)
-        # y_pred = kmeans.predict(feat)
+        feat = StandardScaler().fit_transform(feat)    # Normalise the data
+        # kmeans = KMeans(n_clusters=dataset.N_NOISE_CLUSTERS+1, n_init=20, random_state=SEED)
+        # y_pred = kmeans.fit_predict(feat)
+        # centers = kmeans.cluster_centers_
+     
+        kmeans = KMeans(n_clusters=dataset.N_NOISE_CLUSTERS+1, max_iter=100, random_state=SEED)
+        kmeans.fit(feat)
+        y_pred = kmeans.predict(feat)
+        centers = kmeans.centroids
+
         print(y_pred, len(y_pred))
-        plt.scatter(feat[:, 0], feat[:, 1], c=dataset.test.targets, s=30, cmap='viridis')
-        #plt.scatter(feat[:, 0], feat[:, 1], c=y_pred, s=30, cmap='viridis')
+        plt.scatter(feat[:, 0], feat[:, 1], c=y_pred, s=20, cmap='viridis')
+        #plt.scatter(feat[:, 0], feat[:, 1], c=labels, s=30, cmap='viridis')
 
-        centers = kmeans.cluster_centers_
-        #centers = kmeans.centroids
         plt.scatter(centers[:, 0], centers[:, 1], c='black', s=200, alpha=0.5)
-        plt.savefig(output_dir+'/kmeans_raw_tsne_true.png', bbox_inches='tight')
+        plt.savefig(OUTPUT_DIR+'/kmeans_encoded_tsne_1.png', bbox_inches='tight')
 
-        # print(centers.shape)
-        # Permute the labels
-        # labels = np.zeros_like(y_pred)
-        # for i in range(dataset.N_NOISE_CLUSTERS+1):
-        #     mask = (y_pred == i)
-        #     labels[mask] = mode(dataset.test.targets[mask])[0]
+
 
         # Rename cluster_labels to true_labels
-        
         # y_labels = dataset.test.targets.numpy()
         # y_target_labels = np.unique(y_labels)
         # y_pred_labels= np.unique(y_pred)
@@ -207,7 +196,7 @@ if __name__ == '__main__':
 
         # # Rename model with accuracy
         # # os.rename()
-        # # view_data = autoencoder.data.cpu().view(-1, encoded.data.shape[1]).numpy()
+        # # view_data = ae.data.cpu().view(-1, encoded.data.shape[1]).numpy()
         # # plt_scatter(view_data, epoch, method, output_dir, pltshow=False)
         # # plt_confusion_matrix(y_pred, y_target, output_dir)
 

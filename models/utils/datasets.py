@@ -3,7 +3,7 @@
 ###
 # Created Date: Monday, August 26th 2019, 12:13:26 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Tue Aug 27 2019
+# Last Modified: Wed Aug 28 2019
 # -----
 # Copyright (c) 2019 Victoria University of Wellington ECS
 ###
@@ -119,7 +119,7 @@ class FilteredMNIST(Dataset):
         return full, test
 
     def save_dataset(self, output_dir):
-        save_path = output_dir+'/filtered_mnist_dataset.pt'
+        save_path = output_dir+'/filtered_mnist.pt'
         torch.save({
             'label': self.LABEL,
             'n_noise_clusters': self.N_NOISE_CLUSTERS,
@@ -131,7 +131,7 @@ class FilteredMNIST(Dataset):
             )
     
     def load_dataset(self, output_dir):
-        path = output_dir+'/filtered_mnist_dataset.pt'
+        path = output_dir+'/filtered_mnist.pt'
         dataset = torch.load(path, map_location=lambda storage, loc: storage)
         self.LABEL = dataset['label']
         self.N_NOISE_CLUSTERS = dataset['n_noise_clusters']
@@ -139,4 +139,4 @@ class FilteredMNIST(Dataset):
         self.train = dataset['train']
         self.test = dataset['test']
 
-        print('\nLoaded filtered_mnist_dataset.pt from {}\n'.format(output_dir.split('/')[1]))
+        print('\nLoaded filtered_mnist.pt from {}\n'.format(output_dir.split('/')[1]))
