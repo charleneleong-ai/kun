@@ -3,7 +3,7 @@
 ###
 # Created Date: Tuesday, August 27th 2019, 6:32:32 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Tue Aug 27 2019
+# Last Modified: Wed Aug 28 2019
 # -----
 # Copyright (c) 2019 Victoria University of Wellington ECS
 ###
@@ -90,13 +90,13 @@ if __name__ == '__main__':
                 loss='BCE',         # BCE or MSE
                 eval=True,          # Eval training process with test data
                 plt_imgs=(N_TEST_IMGS, 10),         # (N_TEST_IMGS, plt_interval)
-                scatter_plt=('tsne', 10),         # ('method', plt_interval)
+                scatter_plt=('tsne', 10),           # ('method', plt_interval)
                 output_dir=OUTPUT_DIR, 
                 save_model=True)        # Also saves dataset
 
     else:       # Load model and perform Kmeans
-        output_dir= args.output   
-        if args.output =='latest':
+        output_dir = args.output   
+        if args.output=='latest':
             output_dir = max(glob.iglob('./*/'), key=os.path.getctime)
 
         dataset = FilteredMNIST(output_dir=output_dir)
@@ -109,7 +109,7 @@ if __name__ == '__main__':
         
         # # =================== CLUSTER ASSIGNMENT ===================== #
         data = dataset.test.data.type(torch.FloatTensor)  # Loaded as FloatTensor
-        data = data.view(-1, 784).to(device) # Reshape and transfer
+        data = data.to(device) # Reshape and transfer
 
         # encoded, decoded = autoencoder(data)
         # feat = encoded.data.cpu().view(-1, encoded.data.shape[1]).numpy()
@@ -141,11 +141,11 @@ if __name__ == '__main__':
 
         # Rename cluster_labels to true_labels
         
-        y_labels = dataset.test.targets.numpy()
-        y_target_labels = np.unique(y_labels)
-        y_pred_labels= np.unique(y_pred)
-        # np.unique(y_target)
-        print(np.unique(y_pred),  np.unique(y_labels))
+        # y_labels = dataset.test.targets.numpy()
+        # y_target_labels = np.unique(y_labels)
+        # y_pred_labels= np.unique(y_pred)
+        # # np.unique(y_target)
+        # print(np.unique(y_pred),  np.unique(y_labels))
 
         # Rename cluster labels from largest to smallest
         # print(centers.sum(axis=1))
@@ -163,12 +163,12 @@ if __name__ == '__main__':
         # print(y_pred_new)
 
 
-        print(y_labels)
-        lut = y_pred_labels
-        print(lut)
-        y_labels_new = lut[y_labels]
-        print(y_labels_new)
-        print(y_labels)
+        # print(y_labels)
+        # lut = y_pred_labels
+        # print(lut)
+        # y_labels_new = lut[y_labels]
+        # print(y_labels_new)
+        # print(y_labels)
         
 
         # Rename 
@@ -190,9 +190,9 @@ if __name__ == '__main__':
         
 
         # print(np.unique(y_pred),  np.unique(y_target))
-        accuracy, reassignment = cluster_accuracy(y_pred, y_labels_new)
-        print('Accuracy: \t', accuracy)
-        print('Reassignment: \t', reassignment)
+        # accuracy, reassignment = cluster_accuracy(y_pred, y_labels_new)
+        # print('Accuracy: \t', accuracy)
+        # print('Reassignment: \t', reassignment)
 
         # Rename model with accuracy
         # os.rename()
@@ -202,13 +202,13 @@ if __name__ == '__main__':
 
 
 
-        mat = confusion_matrix(y_labels_new, y_pred)
-        sns.heatmap(mat.T, square=True, annot=True, fmt='d', cbar=False,
-                    xticklabels=dataset.test.targets.unique().tolist(),
-                    yticklabels=dataset.test.targets.unique().tolist())
-        plt.xlabel('true label')
-        plt.ylabel('predicted label');
+        # mat = confusion_matrix(y_labels_new, y_pred)
+        # sns.heatmap(mat.T, square=True, annot=True, fmt='d', cbar=False,
+        #             xticklabels=dataset.test.targets.unique().tolist(),
+        #             yticklabels=dataset.test.targets.unique().tolist())
+        # plt.xlabel('true label')
+        # plt.ylabel('predicted label');
 
-        plt.savefig(output_dir+'/confusion_matrix.png', bbox_inches='tight')
+        # plt.savefig(output_dir+'/confusion_matrix.png', bbox_inches='tight')
 
 

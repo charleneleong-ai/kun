@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 ###
-# Created Date: Thursday, August 22nd 2019, 11:50:30 am
+# Created Date: Tuesday, August 27th 2019, 6:34:04 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
 # Last Modified: Wed Aug 28 2019
 # -----
@@ -17,33 +17,33 @@ import torch.nn as nn
 import torch.utils.data as Data
 from torchvision.utils import save_image
 
-from utils.plt import plt_scatter
-from utils.early_stopping import EarlyStopping
-
+from utils import plt_scatter
 
 CURRENT_FNAME = os.path.basename(__file__).split('.')[0]
 
-class AutoEncoder(nn.Module):
+class ConvAutoEncoder(nn.Module):
     def __init__(self, ):
-        super(AutoEncoder, self).__init__()
+        super(ConvAutoEncoder, self).__init__()
         
         self.encoder = nn.Sequential(
-            nn.Linear(28*28, 500),
+            # conv layer (depth from 1 --> 16), 3x3 kernels
+            nn.Conv2d(1, 16, 3, stride=3, padding=1),  # b, 16, 10, 10
             nn.ReLU(inplace=True),  # modify input directly     
-            nn.Linear(500, 500),
+            nn.MaxPool2d(2, stride=2),  # b, 16, 5, 5
+            # conv layer (depth from 16 --> 8), 3x3 kernels
+            nn.Conv2d(16, 8, 3, stride=2, padding=1),  # b, 8, 3, 3
             nn.ReLU(inplace=True),
-            nn.Linear(500, 2000),
-            nn.ReLU(inplace=True),
-            nn.Linear(2000, 10),   # compress to 10 features, can use further method to vis
+            nn.MaxPool2d(2, stride=1)  # b, 8, 2, 2
         )
+        
+        # at this point the representation is (8, 2, 2) i.e. 32-dim
+
         self.decoder = nn.Sequential(
-            nn.Linear(10, 2000),
-            nn.ReLU(inplace=True),
-            nn.Linear(2000, 500),
-            nn.ReLU(inplace=True),
-            nn.Linear(500, 500),
-            nn.ReLU(inplace=True),
-            nn.Linear(500, 28*28),
+            nn.ConvTranspose2d(8, 16, 3, stride=2),  # b, 16, 5, 5
+            nn.ReLU(True),
+            nn.ConvTranspose2d(16, 8, 5, stride=3, padding=1),  # b, 8, 15, 15
+            nn.ReLU(True),
+            nn.ConvTranspose2d(8, 1, 2, stride=2, padding=1),  # b, 1, 28, 28
             nn.Sigmoid(),           # compress to a range (0, 1)
         )
 
@@ -60,8 +60,8 @@ class AutoEncoder(nn.Module):
         decoded = self.decoder(encoded)         # recon_x (x_hat)
         return encoded, decoded
     
-    def fit(self, dataset, batch_size, epochs, lr, opt='Adam', loss='BCE', patience=0,  
-                eval=True, plt_imgs=None, scatter_plt=None, pltshow=False, output_dir='', save_model=False):
+    def fit(self, dataset, batch_size, epochs, lr, opt='Adam', loss='MSE', 
+                eval=True, plt_imgs=None, scatter_plt=False, pltshow=False, output_dir='', save_model=False):
         train_data = dataset.train
         test_data = dataset.test
 
@@ -78,27 +78,23 @@ class AutoEncoder(nn.Module):
         if opt=='Adam':
             # TODO: Investigate weight decay
             self.optimizer = torch.optim.Adam(self.parameters(), lr=self.LR, weight_decay=1e-5)
-            #self.optimizer = torch.optim.Adam(self.parameters(), lr=lr)
+            # self.optimizer = torch.optim.Adam(self.parameters(), lr=self.LR)
           
         if loss=='BCE':     # TODO: Investigate BCE or MSE loss
             self.loss_fn = nn.BCELoss()
         elif loss=='MSE':
             self.loss_fn = nn.MSELoss()
 
-        es = EarlyStopping(patience=patience)
         self.train()        # Set to train mode
         for epoch in range(epochs+1):
             epoch_loss = 0      # printing intermediary loss
             for batch_idx, (batch_train, _) in enumerate(train_loader):
                 batch_train = batch_train.to(self.device)               # moving batch to GPU if available
-                # Flatten inputs
-                batch_x = batch_train.view(batch_train.size(0), -1)     # batch x, shape (batch, 28*28)
-                batch_y = batch_train.view(batch_train.size(0), -1)     # batch y, shape (batch, 28*28)
-                
+
                 # =================== forward ===================== #
-                encoded, decoded = self.forward(batch_x)
-                self.loss = self.loss_fn(decoded, batch_y)      
-                MSE_loss = nn.MSELoss()(decoded, batch_y)   # mean square error
+                encoded, decoded = self.forward(batch_train)
+                self.loss = self.loss_fn(decoded, batch_train)      
+                MSE_loss = nn.MSELoss()(decoded, batch_train)   # mean square error
                 # =================== backward ==================== #
                 self.optimizer.zero_grad()               # clear gradients for this training step
                 self.loss.backward()                     # backpropagation, compute gradients
@@ -118,15 +114,12 @@ class AutoEncoder(nn.Module):
         
             # =================== EVAL MODEL ==================== #
             if eval:
-                test_loss = self.eval_model(dataset, self.BATCH_SIZE, epoch, plt_imgs, scatter_plt, pltshow, self.OUTPUT_DIR)
-                if es.step(test_loss):  # Early Stopping
-                    break
+                self.eval_model(dataset, self.BATCH_SIZE, epoch, plt_imgs, scatter_plt, pltshow, self.OUTPUT_DIR)
 
         # =================== SAVE MODEL AND DATA ==================== #
         if save_model: 
             self.save_model(dataset, self.OUTPUT_DIR)
-
-            
+    
     def save_model(self, dataset, output_dir):
         output_dir = self._check_output_dir(output_dir)  
         save_path = '{}/{}.pth'.format(output_dir, output_dir.strip('./').strip('_output'))
@@ -167,7 +160,7 @@ class AutoEncoder(nn.Module):
         with open(output_dir+'/config.json', 'w') as f:
             json.dump(config, f)
 
-        print('\nAE Model saved to {}\n'.format(save_path))
+        print('\nConv AE Model saved to {}\n'.format(save_path))
 
 
     def load_model(self, output_dir):
@@ -190,28 +183,27 @@ class AutoEncoder(nn.Module):
                .format(self.BATCH_SIZE, self.LR, self.optimizer.__class__.__name__))
         print('Epoch: {}\tLoss: {}\n'      
                 .format(self.EPOCHS, self.loss))
-    
-    
+
+
     def eval_model(self, dataset, batch_size, epoch, plt_imgs=None, scatter_plt=False, pltshow=False, output_dir=''):
         
         test_loader = Data.DataLoader(dataset=dataset.test, batch_size=batch_size, shuffle=True, num_workers=4)
 
         self.eval()        # set dropout and batch normalisation layers to eval mode
         test_loss = 0   
-        feat_total = []
+        feat_total = []     # For TSNE
         target_total = []
 
         with torch.no_grad():      # turn autograd off for memory efficiency
             for batch_idx, (batch_test, batch_test_label) in enumerate(test_loader):
                 batch_test = batch_test.to(self.device)
-                batch_test = batch_test.view(batch_test.size(0), -1)  
                 encoded, decoded = self.forward(batch_test)
-            
+
                 loss = self.loss_fn(decoded, batch_test) 
                 test_loss += loss.item()*batch_test.size(0)
-
-                # Flatten for TSNE (b, 10)
-                feat_total.append(encoded.data.cpu().view(-1, encoded.data.shape[1])) 
+                
+                # Flatten for TSNE (b, 8, 2, 2) -> (b, 32)
+                feat_total.append(encoded.data.cpu().view(batch_test.size(0), -1))   
                 target_total.append(batch_test_label)
 
             test_loss /= len(test_loader.dataset)
@@ -222,9 +214,11 @@ class AutoEncoder(nn.Module):
             batch_test = batch_test.view(-1, 1, 28, 28)         # Reshape into (N_TEST_IMG, 1, 28, 28)
             decoded = decoded.view(-1, 1, 28, 28)
             comparison = torch.cat([batch_test[:plt_imgs[0]], decoded.view(-1, 1, 28, 28)[:plt_imgs[0]]])
+            
             output_dir = self._check_output_dir(output_dir)
-            save_image(comparison.data.cpu(),
-                    output_dir+'/x_recon_{}.png'.format(epoch), nrow=plt_imgs[0])
+            filename = 'x_recon_{}_{}.png'.format(CURRENT_FNAME.split('.')[0], epoch)
+            print('Saving ', filename)
+            save_image(comparison.data.cpu(), output_dir+'/'+filename, nrow=plt_imgs[0])
 
         # =================== PLOT SCATTER ===================== #
         if scatter_plt!=None and epoch % scatter_plt[1] == 0:       # scatter_plt = ('method', plt_interval)
@@ -232,9 +226,8 @@ class AutoEncoder(nn.Module):
             target_total = torch.cat(target_total, dim=0)
             output_dir = self._check_output_dir(output_dir)
             plt_scatter(feat_total.numpy(), target_total.numpy(), epoch, scatter_plt[0], output_dir, pltshow)
+     
 
-        return test_loss
-        
     def _check_output_dir(self, output_dir):
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)
