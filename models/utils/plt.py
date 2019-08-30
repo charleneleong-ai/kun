@@ -47,6 +47,7 @@ def plt_scatter(feat, labels, epoch, method, output_dir, pltshow=False):
         plt.plot(feat[labels == label, 0], feat[labels == label, 1], '.', c=palette[i])
 
         ax.axis('tight')
+        ax.tick_params(axis='both', labelsize=10)
         xtext, ytext = np.median(feat[labels == label, :], axis=0)
         txt = ax.text(xtext, ytext, str(label), fontsize=18)
         txt.set_path_effects([PathEffects.Stroke(linewidth=5, foreground="w"), PathEffects.Normal()])
@@ -72,6 +73,28 @@ def plt_confusion_matrix(y_pred, y_target, output_dir, pltshow=False):
         plt.show()
 
 
+
+def plt_clusters(outfile, data, algorithm, args, kwds):
+    fig = plt.figure()
+    # start_time = time.time()
+    labels = algorithm(*args, **kwds).fit_predict(data)
+    # end_time = time.time()
+    # palette = sns.color_palette('deep', np.unique(labels).max() + 1)
+
+    labels_list = np.unique(labels)
+    palette = np.array(sns.color_palette('hls', len(labels_list)))
+    
+    colors = [palette[x] if x >= 0 else (0.0, 0.0, 0.0) for x in labels]
+    plt.scatter(data.T[0], data.T[1], c=colors, alpha=0.5, s=8, linewidths=1)
+    # frame = plt.gca()
+    # frame.axes.get_xaxis().set_visible(False)
+    # frame.axes.get_yaxis().set_visible(False)
+    plt.title('Clusters found by {}'.format(str(algorithm.__name__)), fontsize=14)
+    #plt.text(-0.5, 0.7, 'Clustering took {:.2f} s'.format(end_time - start_time), fontsize=14)
+    plt.savefig(outfile)
+    print ( '\n  saved image ',outfile )
+    plt.close(fig)
+    return    
 
 
     

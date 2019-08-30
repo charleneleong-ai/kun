@@ -104,7 +104,7 @@ class ConvAutoEncoder(nn.Module):
                     print('Train Epoch: {} [{}/{} ({:.0f}%)] \t Loss:{:.6f} \t MSE Loss:{:.6f} '.format(
                         epoch, batch_idx * len(batch_train), len(train_loader.dataset),
                             100.0 * batch_idx / len(train_loader),
-                            self.loss.data / len(batch_train),
+                            self.loss.item() / len(batch_train),
                             MSE_loss.data / len(batch_train)
                     ))
                     

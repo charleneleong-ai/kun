@@ -1,4 +1,5 @@
 {
+	
 	"folders": [
 		{
 			"path": "."
@@ -20,6 +21,7 @@
 		}
 	],
 	"settings": {
+		"python.pythonPath": "/root/anaconda3/bin/python",
 		"psi-header.config": {
 			"forceToTop": true,
 			"blankLinesAfter": 6,

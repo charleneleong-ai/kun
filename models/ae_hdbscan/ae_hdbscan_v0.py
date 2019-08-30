@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 ###
-# Created Date: Tuesday, August 27th 2019, 6:32:32 am
+# Created Date: Friday, August 30th 2019, 3:21:02 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
 # Last Modified: Fri Aug 30 2019
 ###
 
+import warnings
+warnings.filterwarnings('ignore')
 
 import sys
 sys.path.append('..')
@@ -16,8 +18,7 @@ from datetime import datetime
 import random
 
 import torch
-from torchvision import transforms
-from torchvision.datasets import MNIST
+
 
 import numpy as np
 from sklearn.mixture import GaussianMixture, BayesianGaussianMixture
@@ -30,20 +31,20 @@ import seaborn as sns; sns.set()  # for plot styling
 
 from scipy.stats import mode
 from sklearn.metrics import accuracy_score
+import hdbscan
+import sklearn.cluster as cluster
 
 # from utils import plt_confusion_matrix
 from utils.eval import cluster_accuracy  
 from ae.ae import AutoEncoder
 from ae.conv_ae import ConvAutoEncoder
 from utils.datasets import FilteredMNIST
+from utils.plt import plt_clusters
 
 # Create output folder corresponding to current filename
 CURRENT_FNAME = os.path.basename(__file__).split('.')[0]
 timestamp = datetime.now().strftime('%Y.%d.%m-%H:%M:%S')
 OUTPUT_DIR = './{}_{}_output'.format(CURRENT_FNAME, timestamp)
-
-# Device configuration
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # Hyper Parameters
 EPOCHS = 30
@@ -75,8 +76,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     
-    ae = ConvAutoEncoder()  
-    # ae = AutoEncoder()     
+    # ae = ConvAutoEncoder()  
+    ae = AutoEncoder()     
     
     if args.output=='':
         dataset = FilteredMNIST(label=args.label, split=0.8, n_noise_clusters=3)
@@ -88,7 +89,7 @@ if __name__ == '__main__':
                 lr=args.lr, 
                 opt='Adam',         # Adam
                 loss='BCE',         # BCE or MSE
-                patience=10,   # Num epochs for early stopping
+                patience=10,        # Num epochs for early stopping
                 eval=True,          # Eval training process with test data
                 plt_imgs=(N_TEST_IMGS, 10),         # (N_TEST_IMGS, plt_interval)
                 scatter_plt=('tsne', 10),           # ('method', plt_interval)
@@ -103,8 +104,6 @@ if __name__ == '__main__':
         dataset = FilteredMNIST(output_dir=OUTPUT_DIR)
         model_path = ae.load_model(output_dir=OUTPUT_DIR)
 
-
-        # # =================== CLUSTER ASSIGNMENT ===================== #
         _, feat, labels = ae.eval_model(dataset=dataset, 
                                         batch_size=ae.BATCH_SIZE, 
                                         epoch=ae.EPOCHS, 
@@ -115,12 +114,13 @@ if __name__ == '__main__':
         print(feat.shape)
         print(dataset.test.targets.unique()) 
         
-        # tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=1000, random_state=SEED)
-        # feat = tsne.fit_transform(feat)
-        pca = PCA(n_components=2, random_state=SEED)
-        feat = pca.fit_transform(feat)
+        tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=1000, random_state=SEED)
+        feat = tsne.fit_transform(feat)
+        # pca = PCA(n_components=2, random_state=SEED)
+        # feat = pca.fit_transform(feat)
         print(feat.shape)
 
+        
         n_components = np.arange(1, 21)
         models = [GaussianMixture(n, covariance_type='full', random_state=0).fit(feat) for n in n_components]
         bic = [m.bic(feat) for m in models]
@@ -131,25 +131,45 @@ if __name__ == '__main__':
         k = n_components[xmin]
         print(k, ' components')
 
-        # plt.plot(n_components, bic, label='BIC')
-        # plt.plot(n_components, aic,  label='AIC')
-        # plt.legend(loc='best')
-        # plt.xlabel('n_components')
-        # plt.savefig(output_dir+'/optimal_k.png', bbox_inches='tight')
-
+        fig = plt.figure()
+        plt.plot(n_components, bic, label='BIC')
+        plt.plot(n_components, aic,  label='AIC')
+        plt.legend(loc='best')
+        plt.xlabel('n_components')
+        plt.savefig(OUTPUT_DIR+'/optimal_k.png', bbox_inches='tight')
+        plt.close(fig)
 
         feat = StandardScaler().fit_transform(feat)    # Normalise the data
-        # y_pred = GaussianMixture(n_components=k, n_init=20).fit_predict(feat)
-        y_pred = BayesianGaussianMixture(weight_concentration_prior_type="dirichlet_distribution",
-                                        weight_concentration_prior=1,
-                                        n_components=k, reg_covar=0, init_params='random',
-                                        max_iter=1500, n_init=20, mean_precision_prior=.8,
-                                        random_state=SEED).fit_predict(feat)
 
-        print(y_pred, len(y_pred))
-        plt.scatter(feat[:, 0], feat[:, 1], c=y_pred, s=10, cmap='viridis')
+        OUTPUT_DIR = OUTPUT_DIR+'_tsne'
+       
+        plt_clusters(OUTPUT_DIR+'_HDBSCAN.png',feat, hdbscan.HDBSCAN, (), {'min_cluster_size':15}) 
+        
+        plt_clusters(OUTPUT_DIR+'_Kmeans.png',feat, cluster.KMeans, (), {'n_clusters':k, 'random_state':SEED})
 
-        plt.savefig(OUTPUT_DIR+'/bgmm_encoded_pca.png', bbox_inches='tight')
+        plt_clusters(OUTPUT_DIR+'_BGMM.png',feat, BayesianGaussianMixture, (), 
+                                        {'weight_concentration_prior_type': 'dirichlet_distribution',
+                                        'weight_concentration_prior':0.001,
+                                        'n_components':k, 'reg_covar':0, 'init_params':'kmeans',
+                                        'max_iter':1500, 'n_init':20, 'mean_precision_prior':.8,
+                                        'random_state':SEED})
+
+        plt_clusters(OUTPUT_DIR+'_MeanShift.png', feat, cluster.MeanShift, (0.175,), {'cluster_all':False, 'random_state':SEED})
+        
+        plt_clusters(OUTPUT_DIR+'_SpectralClustering.png',feat, cluster.SpectralClustering, (), {'n_clusters':k, 'random_state':SEED})
+        
+        plt_clusters(OUTPUT_DIR+'_AffinityProp.png',feat, cluster.AffinityPropagation, (), {'preference':-5.0, 'damping':0.95, 'random_state':SEED})
+        
+        plt_clusters(OUTPUT_DIR+'_AgglomerativeClustering.png',
+                    feat, cluster.AgglomerativeClustering, (), {'n_clusters':k, 'linkage':'ward', 'random_state':SEED})
+
+        # y_pred = hdbscan.HDBSCAN(min_cluster_size=10)
+
+        # print(y_pred, len(y_pred))
+        # plt.scatter(feat[:, 0], feat[:, 1], c=y_pred, s=10, cmap='viridis')
+        # # plt.scatter(feat[:, 0], feat[:, 1], c=y_pred, s=30, cmap='viridis')
+
+        # plt.savefig(OUTPUT_DIR+'/hdbscan_encoded_tsne.png', bbox_inches='tight')
 
         # print(centers.shape)
         # Permute the labels

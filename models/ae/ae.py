@@ -12,8 +12,9 @@ import json
 
 import torch
 import torch.nn as nn
-import torch.utils.data as Data
-from torchvision.utils import save_image
+from torch.utils.data import DataLoader
+from torchvision.utils import save_image, make_grid
+from torch.utils.tensorboard import SummaryWriter
 
 from utils.plt import plt_scatter
 from utils.early_stopping import EarlyStopping
@@ -64,14 +65,13 @@ class AutoEncoder(nn.Module):
         test_data = dataset.test
 
         self.BATCH_SIZE = batch_size
-        self.EPOCHS = epochs
         self.LR = lr
         self.OUTPUT_DIR = output_dir
         
         # Data Loader for easy mini-batch return in training, the image batch shape will be (BATCH_SIZE, 1, 28, 28)
-        train_loader = Data.DataLoader(dataset=train_data, batch_size=self.BATCH_SIZE, shuffle=True, num_workers=4)
+        train_loader = DataLoader(dataset=train_data, batch_size=self.BATCH_SIZE, shuffle=True, num_workers=4)
         if eval: 
-            test_loader = Data.DataLoader(dataset=test_data, batch_size=self.BATCH_SIZE, shuffle=True, num_workers=4)
+            test_loader = DataLoader(dataset=test_data, batch_size=self.BATCH_SIZE, shuffle=True, num_workers=4)
         
         if opt=='Adam':
             # TODO: Investigate weight decay
@@ -85,10 +85,18 @@ class AutoEncoder(nn.Module):
         elif loss=='MSE':
             self.loss_fn = nn.MSELoss()
 
+        # =================== Tensorboard ===================== #
+        images, _ = next(iter(train_loader))
+        grid = make_grid(images)
+        tb = SummaryWriter()
+        tb.add_image('images', grid)
+        # tb.add_graph(self.cpu(), images)
+
         es = EarlyStopping(patience=patience)
         self.train()        # Set to train mode
         for epoch in range(epochs+1):
             epoch_loss = 0      # printing intermediary loss
+            self.EPOCH = epoch
             for batch_idx, (batch_train, _) in enumerate(train_loader):
                 batch_train = batch_train.to(self.device)               # moving batch to GPU if available
                 # Flatten inputs
@@ -110,12 +118,15 @@ class AutoEncoder(nn.Module):
                     print('Train Epoch: {} [{}/{} ({:.0f}%)] \t Loss:{:.6f} \t MSE Loss:{:.6f} '.format(
                         epoch, batch_idx * len(batch_train), len(train_loader.dataset),
                             100.0 * batch_idx / len(train_loader),
-                            self.loss.data / len(batch_train),
+                            self.loss.item() / len(batch_train),
                             MSE_loss.data / len(batch_train)
                     ))
                     
             epoch_loss /= len(train_loader.dataset)
             print('\n====> Epoch: {} Average loss: {:.4f}'.format(epoch, epoch_loss))
+
+            tb.add_scalar('Loss', epoch_loss, epoch)
+            
         
             # =================== EVAL MODEL ==================== #
             if eval:
@@ -145,7 +156,7 @@ class AutoEncoder(nn.Module):
             'batch_size': self.BATCH_SIZE,
             'optimizer': self.optimizer,
             'optimizer_state_dict': self.optimizer.state_dict(),
-            'epochs': self.EPOCHS,
+            'epoch': self.EPOCH,
             'loss': self.loss,
             'loss_fn': self.loss_fn
             },
@@ -159,7 +170,7 @@ class AutoEncoder(nn.Module):
             'lr': self.LR,
             'batch_size': self.BATCH_SIZE,
             'optimizer': self.optimizer.__class__.__name__,
-            'epochs': self.EPOCHS,
+            'epoch': self.EPOCH,
             'loss': self.loss.data.item(),
             'loss_fn': self.loss_fn.__class__.__name__
             }
@@ -181,7 +192,7 @@ class AutoEncoder(nn.Module):
         self.load_state_dict(model_checkpt['model_state_dict'])
         self.optimizer = model_checkpt['optimizer']
         self.optimizer.load_state_dict(model_checkpt['optimizer_state_dict'])
-        self.EPOCHS = model_checkpt['epochs']
+        self.EPOCH = model_checkpt['epoch']
         self.loss = model_checkpt['loss']
         self.loss_fn = model_checkpt['loss_fn']
         
@@ -195,12 +206,12 @@ class AutoEncoder(nn.Module):
         print('Batch size: {} LR: {} Optimiser: {}\n'
                .format(self.BATCH_SIZE, self.LR, self.optimizer.__class__.__name__))
         print('Epoch: {}\tLoss: {}\n'      
-                .format(self.EPOCHS, self.loss))
+                .format(self.EPOCH, self.loss))
     
     
     def eval_model(self, dataset, batch_size, epoch, plt_imgs=None, scatter_plt=None, pltshow=False, output_dir=''):
         
-        test_loader = Data.DataLoader(dataset=dataset.test, batch_size=batch_size, shuffle=True, num_workers=4)
+        test_loader = DataLoader(dataset=dataset.test, batch_size=batch_size, shuffle=True, num_workers=4)
 
         self.eval()        # set dropout and batch normalisation layers to eval mode
         test_loss = 0   
@@ -232,8 +243,9 @@ class AutoEncoder(nn.Module):
             decoded = decoded.view(-1, 1, 28, 28)
             comparison = torch.cat([batch_test[:plt_imgs[0]], decoded.view(-1, 1, 28, 28)[:plt_imgs[0]]])
             output_dir = self._check_output_dir(output_dir)
-            save_image(comparison.data.cpu(),
-                    output_dir+'/x_recon_{}.png'.format(epoch), nrow=plt_imgs[0])
+            filename = 'x_recon_{}_{}.png'.format(CURRENT_FNAME.split('.')[0], epoch)
+            print('Saving ', filename)
+            save_image(comparison.data.cpu(), output_dir+'/'+filename, nrow=plt_imgs[0])
 
         # =================== PLOT SCATTER ===================== #
         if scatter_plt!=None and epoch % scatter_plt[1] == 0:       # scatter_plt = ('method', plt_interval)

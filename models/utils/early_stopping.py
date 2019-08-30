@@ -36,6 +36,7 @@ class EarlyStopping(object):
             self.best = metrics
         else:
             self.num_bad_epochs += 1
+            print('Loss did not improve from {:.6f} for {} epochs\n'.format(metrics, self.num_bad_epochs))
 
         if self.num_bad_epochs >= self.patience:
             return True
