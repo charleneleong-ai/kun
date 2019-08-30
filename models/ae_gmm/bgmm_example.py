@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 ###
-# Created Date: Wednesday, August 28th 2019, 11:17:31 am
+# Created Date: Friday, August 30th 2019, 12:41:29 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Wed Aug 28 2019
-# -----
-# Copyright (c) 2019 Victoria University of Wellington ECS
+# Last Modified: Fri Aug 30 2019
 ###
+
+# Modified from 
+# https://scikit-learn.org/stable/auto_examples/mixture/plot_concentration_prior.html
 # Author: Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
+
 
 import sys
 sys.path.append('..')
@@ -19,6 +21,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 from sklearn.mixture import BayesianGaussianMixture
 from sklearn.preprocessing import StandardScaler
 
@@ -52,8 +55,9 @@ def plot_ellipses(ax, weights, means, covars):
 
 def plot_results(ax1, ax2, estimator, X, y, title, plot_title=False):
     ax1.set_title(title)
-    ax1.scatter(X[:, 0], X[:, 1], s=5, marker='o', c=y, alpha=0.8)
-    ax1.set_xlim(-1.3, 2.8)
+    ax1.scatter(X[:, 0], X[:, 1], s=5, marker='o', c=y, alpha=0.8, cmap='viridis')
+#     ax1.set_xlim(-1.3, 2.8)     # pca
+    ax1.set_xlim(-1.6, 2.4)     # tsne
     ax1.set_ylim(-3., 3.)
     ax1.set_xticks(())
     ax1.set_yticks(())
@@ -65,7 +69,7 @@ def plot_results(ax1, ax2, estimator, X, y, title, plot_title=False):
     for k, w in enumerate(estimator.weights_):
         ax2.bar(k, w, width=0.9, color='#56B4E9', zorder=3,
                 align='center', edgecolor='black')
-        ax2.text(k, w + 0.007, "%.1f%%" % (w * 100.),
+        ax2.text(k, w + 0.007, '%.1f%%' % (w * 100.),
                  horizontalalignment='center')
     ax2.set_xlim(-.6, n_components - .4)
     ax2.set_ylim(0., 1.1)
@@ -78,7 +82,7 @@ def plot_results(ax1, ax2, estimator, X, y, title, plot_title=False):
         ax2.set_ylabel('Weight of each component')
 
 # Parameters of the dataset
-random_state, n_components, n_features = 2, 6, 2
+random_state, n_components = SEED, 5
 # colors = np.array(['#0072B2', '#F0E442', '#D55E00'])
 
 # covars = np.array([[[.7, .0], [.0, .1]],
@@ -91,16 +95,16 @@ random_state, n_components, n_features = 2, 6, 2
 
 # mean_precision_prior= 0.8 to minimize the influence of the prior
 estimators = [
-    ("Finite mixture with a Dirichlet distribution\nprior and "
-     r"$\gamma_0=$", BayesianGaussianMixture(
-        weight_concentration_prior_type="dirichlet_distribution",
+    ('Finite mixture with a Dirichlet distribution\nprior and '
+     r'$\gamma_0=$', BayesianGaussianMixture(
+        weight_concentration_prior_type='dirichlet_distribution',
         n_components=n_components, reg_covar=0, init_params='kmeans',
         max_iter=1500, mean_precision_prior=.8,
         random_state=random_state), [0.001, 1, 1000]),
-    ("Infinite mixture with a Dirichlet process\n prior and" r"$\gamma_0=$",
+    ('Infinite mixture with a Dirichlet process\n prior and ' r'$\gamma_0=$',
      BayesianGaussianMixture(
-        weight_concentration_prior_type="dirichlet_process",
-        n_components=n_components, reg_covar=0, init_params='random',
+        weight_concentration_prior_type='dirichlet_process',
+        n_components=n_components, reg_covar=0, init_params='kmeans',
         max_iter=1500, mean_precision_prior=.8,
         random_state=random_state), [1, 1000, 100000])]
 
@@ -119,8 +123,6 @@ OUTPUT_DIR = max(glob.iglob('./*/'), key=os.path.getctime)
 dataset = FilteredMNIST(output_dir=OUTPUT_DIR)
 model_path = ae.load_model(output_dir=OUTPUT_DIR)
 
-
-# # =================== CLUSTER ASSIGNMENT ===================== #
 _, feat, labels = ae.eval_model(dataset=dataset, 
                                 batch_size=ae.BATCH_SIZE, 
                                 epoch=ae.EPOCHS, 
@@ -128,15 +130,15 @@ _, feat, labels = ae.eval_model(dataset=dataset,
                                 # scatter_plt=('tsne', ae.EPOCHS),    
                                 output_dir=OUTPUT_DIR)
 
-pca = PCA(n_components=2, random_state=SEED)
-feat = pca.fit_transform(feat)
+# pca = PCA(n_components=2, random_state=SEED)
+# feat = pca.fit_transform(feat)
+tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=1000, random_state=SEED)
+feat = tsne.fit_transform(feat)
 feat = StandardScaler().fit_transform(feat)    # Normalise the data
 X = feat
 y = labels
 print(X.shape)
 print(len(y))
-
-# sns.reset_orig()
 
 # Plot results in two different figures
 for (title, estimator, concentrations_prior) in estimators:
@@ -149,8 +151,8 @@ for (title, estimator, concentrations_prior) in estimators:
         estimator.weight_concentration_prior = concentration
         estimator.fit(X)
         plot_results(plt.subplot(gs[0:2, k]), plt.subplot(gs[2, k]), estimator,
-                     X, y, r"%s$%.1e$" % (title, concentration),
+                     X, y, r'%s$%.1e$' % (title, concentration),
                      plot_title=k == 0)
 
 
-    plt.savefig('./{}_{}_{}.png'.format((title).split(' with')[0], 'encoded', 'pca'), bbox_inches='tight')
+    plt.savefig('./{}_{}_{}.png'.format((title).split(' with')[0], 'encoded', 'tsne'), bbox_inches='tight')

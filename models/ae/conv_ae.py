@@ -3,9 +3,7 @@
 ###
 # Created Date: Tuesday, August 27th 2019, 6:34:04 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Wed Aug 28 2019
-# -----
-# Copyright (c) 2019 Victoria University of Wellington ECS
+# Last Modified: Fri Aug 30 2019
 ###
 
 import os
@@ -26,7 +24,7 @@ class ConvAutoEncoder(nn.Module):
     def __init__(self, ):
         super(ConvAutoEncoder, self).__init__()
         
-        self.encoder = nn.Sequential(
+        self.encoder= nn.Sequential(
             # conv layer (depth from 1 --> 16), 3x3 kernels
             nn.Conv2d(1, 16, 3, stride=3, padding=1),  # b, 16, 10, 10
             nn.ReLU(inplace=True),  # modify input directly     
@@ -37,7 +35,7 @@ class ConvAutoEncoder(nn.Module):
             nn.MaxPool2d(2, stride=1)  # b, 8, 2, 2
         )
         
-        # at this point the representation is (8, 2, 2) i.e. 32-dim
+        # representation is (8, 2, 2) i.e. 32-dim
 
         self.decoder = nn.Sequential(
             nn.ConvTranspose2d(8, 16, 3, stride=2),  # b, 16, 5, 5

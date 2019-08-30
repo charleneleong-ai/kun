@@ -3,9 +3,7 @@
 ###
 # Created Date: Thursday, August 22nd 2019, 11:50:30 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Wed Aug 28 2019
-# -----
-# Copyright (c) 2019 Victoria University of Wellington ECS
+# Last Modified: Fri Aug 30 2019
 ###
 
 import os
@@ -79,6 +77,8 @@ class AutoEncoder(nn.Module):
             # TODO: Investigate weight decay
             self.optimizer = torch.optim.Adam(self.parameters(), lr=self.LR, weight_decay=1e-5)
             #self.optimizer = torch.optim.Adam(self.parameters(), lr=lr)
+        elif opt=='SGD':
+            self.optimizer = torch.optim.SGD(self.parameters(), lr=self.LR, momentum=0.9)
           
         if loss=='BCE':     # TODO: Investigate BCE or MSE loss
             self.loss_fn = nn.BCELoss()

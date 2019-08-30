@@ -3,9 +3,7 @@
 ###
 # Created Date: Tuesday, August 27th 2019, 6:32:32 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Wed Aug 28 2019
-# -----
-# Copyright (c) 2019 Victoria University of Wellington ECS
+# Last Modified: Fri Aug 30 2019
 ###
 
 
@@ -77,7 +75,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     
-    ae = ConvAutoEncoder()     
+    ae = ConvAutoEncoder()  
+    # ae = AutoEncoder()     
     
     if args.output=='':
         dataset = FilteredMNIST(label=args.label, split=0.8, n_noise_clusters=3)
@@ -149,12 +148,12 @@ if __name__ == '__main__':
                                         random_state=SEED).fit_predict(feat)
 
         print(y_pred, len(y_pred))
-        plt.scatter(feat[:, 0], feat[:, 1], c=y_pred, s=20, cmap='viridis')
+        plt.scatter(feat[:, 0], feat[:, 1], c=y_pred, s=10, cmap='viridis')
         # plt.scatter(feat[:, 0], feat[:, 1], c=y_pred, s=30, cmap='viridis')
 
         # centers = kmeans.cluster_centers_
         # plt.scatter(centers[:, 0], centers[:, 1], c='black', s=200, alpha=0.5)
-        plt.savefig(output_dir+'/bgmm_encoded_pca.png', bbox_inches='tight')
+        plt.savefig(OUTPUT_DIR+'/bgmm_encoded_pca.png', bbox_inches='tight')
 
         # print(centers.shape)
         # Permute the labels

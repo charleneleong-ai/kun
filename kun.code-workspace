@@ -84,9 +84,7 @@
 				"template": [
 					"Created Date: <<filecreated('dddd, MMMM Do YYYY, h:mm:ss a')>>",
 					"Author: <<author>> <<authoremail>>",
-					"Last Modified: ",
-					"-----",
-					"Copyright (c) <<year>> <<company>>",
+					"Last Modified: "
 				],
 				"changeLogCaption": "HISTORY:",
 				"changeLogHeaderLineCount": 2,

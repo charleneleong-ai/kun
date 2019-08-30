@@ -3,9 +3,7 @@
 ###
 # Created Date: Thursday, August 22nd 2019, 9:25:01 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Wed Aug 28 2019
-# -----
-# Copyright (c) 2019 Victoria University of Wellington ECS
+# Last Modified: Fri Aug 30 2019
 ###
 
 import numpy as np
