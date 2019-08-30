@@ -14,7 +14,6 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torchvision.utils import save_image, make_grid
-from torch.utils.tensorboard import SummaryWriter
 
 from utils.plt import plt_scatter
 from utils.early_stopping import EarlyStopping
@@ -23,7 +22,7 @@ from utils.early_stopping import EarlyStopping
 CURRENT_FNAME = os.path.basename(__file__).split('.')[0]
 
 class AutoEncoder(nn.Module):
-    def __init__(self, ):
+    def __init__(self, tb):
         super(AutoEncoder, self).__init__()
         
         self.encoder = nn.Sequential(
@@ -54,6 +53,10 @@ class AutoEncoder(nn.Module):
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.to(self.device)
 
+        # Tensorboard SummaryWriter event log
+        self.tb = tb
+        
+
     def forward(self, batch):                   # batch=x
         encoded = self.encoder(batch)           # z
         decoded = self.decoder(encoded)         # recon_x (x_hat)
@@ -70,9 +73,7 @@ class AutoEncoder(nn.Module):
         
         # Data Loader for easy mini-batch return in training, the image batch shape will be (BATCH_SIZE, 1, 28, 28)
         train_loader = DataLoader(dataset=train_data, batch_size=self.BATCH_SIZE, shuffle=True, num_workers=4)
-        if eval: 
-            test_loader = DataLoader(dataset=test_data, batch_size=self.BATCH_SIZE, shuffle=True, num_workers=4)
-        
+
         if opt=='Adam':
             # TODO: Investigate weight decay
             self.optimizer = torch.optim.Adam(self.parameters(), lr=self.LR, weight_decay=1e-5)
@@ -88,9 +89,14 @@ class AutoEncoder(nn.Module):
         # =================== Tensorboard ===================== #
         images, _ = next(iter(train_loader))
         grid = make_grid(images)
-        tb = SummaryWriter()
-        tb.add_image('images', grid)
+        self.tb.add_image('images', grid)
         # tb.add_graph(self.cpu(), images)
+
+        if plt_imgs!=None:
+            view_data = images.to(self.device)
+            print(view_data.size())
+            decode_plt = view_data[:plt_imgs[0]].cpu()
+            print(decode_plt.size())
 
         es = EarlyStopping(patience=patience)
         self.train()        # Set to train mode
@@ -125,20 +131,82 @@ class AutoEncoder(nn.Module):
             epoch_loss /= len(train_loader.dataset)
             print('\n====> Epoch: {} Average loss: {:.4f}'.format(epoch, epoch_loss))
 
-            tb.add_scalar('Loss', epoch_loss, epoch)
+            self.tb.add_scalar('Train Loss', epoch_loss, epoch)
             
+            for name, weight in self.named_parameters():
+                self.tb.add_histogram(name, weight, epoch)
+                self.tb.add_histogram(f'{name}.grad', weight.grad, epoch)
         
             # =================== EVAL MODEL ==================== #
+            if plt_imgs!=None and epoch % plt_imgs[1] == 0:
+                view_data = view_data.view(self.BATCH_SIZE, -1)
+                encoded, decoded = self.forward(view_data) 
+                decoded = decoded[:plt_imgs[0]].view(-1, 1, 28, 28).cpu()
+                print(decoded.size())
+                decode_plt = torch.cat((decode_plt, decoded), dim=0)
+                print(decode_plt.size())
+
             if eval:
                 test_loss, _, _ = self.eval_model(dataset, self.BATCH_SIZE, epoch, plt_imgs, scatter_plt, pltshow, self.OUTPUT_DIR)
                 if es.step(test_loss):  # Early Stopping
                     break
+        
+        self.tb.add_images('decoded', decode_plt, epoch)    # Add to tb
 
         # =================== SAVE MODEL AND DATA ==================== #
         if save_model: 
             self.save_model(dataset, self.OUTPUT_DIR)
 
             
+    def eval_model(self, dataset, batch_size, epoch, plt_imgs=None, scatter_plt=None, pltshow=False, output_dir=''):
+            
+            test_loader = DataLoader(dataset=dataset.test, batch_size=batch_size, shuffle=True, num_workers=4)
+            
+            self.eval()        # set dropout and batch normalisation layers to eval mode
+            test_loss = 0   
+            feat_total = []
+            target_total = []
+
+            with torch.no_grad():      # turn autograd off for memory efficiency
+                for batch_idx, (batch_test, batch_test_label) in enumerate(test_loader):
+                    batch_test = batch_test.to(self.device)
+                    batch_test = batch_test.view(batch_test.size(0), -1)  # Flatten
+                    encoded, decoded = self.forward(batch_test)
+                
+                    loss = self.loss_fn(decoded, batch_test) 
+                    test_loss += loss.item()*batch_test.size(0)
+
+                    # Flatten for TSNE (b, 10)
+                    feat_total.append(encoded.data.cpu().view(batch_test.size(0), -1)) 
+                    target_total.append(batch_test_label)
+
+                test_loss /= len(test_loader.dataset)
+                print('====> Test set loss: {:.4f}\n'.format(test_loss))
+
+                self.tb.add_scalar('Test Loss', test_loss, epoch)
+
+                feat_total = torch.cat(feat_total, dim=0).numpy()
+                target_total = torch.cat(target_total, dim=0).numpy()
+
+            # =================== PLOT COMPARISON ===================== #
+            if plt_imgs!=None and epoch % plt_imgs[1] == 0:         # plt_imgs = (N_TEST_IMGS, plt_interval)
+                batch_test = batch_test.view(-1, 1, 28, 28)         # Reshape into (N_TEST_IMG, 1, 28, 28)
+                decoded = decoded.view(-1, 1, 28, 28)
+                comparison = torch.cat([batch_test[:plt_imgs[0]], decoded[:plt_imgs[0]]])
+
+                output_dir = self._check_output_dir(output_dir)
+                filename = 'x_recon_{}_{}.png'.format(CURRENT_FNAME.split('.')[0], epoch)
+                print('Saving ', filename)
+                save_image(comparison.data.cpu(), output_dir+'/'+filename, nrow=plt_imgs[0])
+
+            # =================== PLOT SCATTER ===================== #
+            if scatter_plt!=None and epoch % scatter_plt[1] == 0:       # scatter_plt = ('method', plt_interval)
+                output_dir = self._check_output_dir(output_dir)
+                plt_scatter(feat_total, target_total, epoch, scatter_plt[0], output_dir, pltshow, self.tb)
+                
+            return test_loss, feat_total, target_total
+            
+                
     def save_model(self, dataset, output_dir):
         output_dir = self._check_output_dir(output_dir)  
         save_path = '{}/{}.pth'.format(output_dir, output_dir.strip('./').strip('_output'))
@@ -158,7 +226,8 @@ class AutoEncoder(nn.Module):
             'optimizer_state_dict': self.optimizer.state_dict(),
             'epoch': self.EPOCH,
             'loss': self.loss,
-            'loss_fn': self.loss_fn
+            'loss_fn': self.loss_fn,
+            'tb_log_dir': self.tb.log_dir
             },
             save_path
         )
@@ -172,7 +241,8 @@ class AutoEncoder(nn.Module):
             'optimizer': self.optimizer.__class__.__name__,
             'epoch': self.EPOCH,
             'loss': self.loss.data.item(),
-            'loss_fn': self.loss_fn.__class__.__name__
+            'loss_fn': self.loss_fn.__class__.__name__,
+            'tb_log_dir': self.tb.log_dir
             }
         # print(config)
 
@@ -195,6 +265,7 @@ class AutoEncoder(nn.Module):
         self.EPOCH = model_checkpt['epoch']
         self.loss = model_checkpt['loss']
         self.loss_fn = model_checkpt['loss_fn']
+        self.tb.log_dir = model_checkpt['tb_log_dir']
         
         # Converting from tuples
         self.model_name = str(''.join(self.model_name))
@@ -209,51 +280,7 @@ class AutoEncoder(nn.Module):
                 .format(self.EPOCH, self.loss))
     
     
-    def eval_model(self, dataset, batch_size, epoch, plt_imgs=None, scatter_plt=None, pltshow=False, output_dir=''):
-        
-        test_loader = DataLoader(dataset=dataset.test, batch_size=batch_size, shuffle=True, num_workers=4)
-
-        self.eval()        # set dropout and batch normalisation layers to eval mode
-        test_loss = 0   
-        feat_total = []
-        target_total = []
-
-        with torch.no_grad():      # turn autograd off for memory efficiency
-            for batch_idx, (batch_test, batch_test_label) in enumerate(test_loader):
-                batch_test = batch_test.to(self.device)
-                batch_test = batch_test.view(batch_test.size(0), -1)  # Flatten
-                encoded, decoded = self.forward(batch_test)
-            
-                loss = self.loss_fn(decoded, batch_test) 
-                test_loss += loss.item()*batch_test.size(0)
-
-                # Flatten for TSNE (b, 10)
-                feat_total.append(encoded.data.cpu().view(batch_test.size(0), -1)) 
-                target_total.append(batch_test_label)
-
-            test_loss /= len(test_loader.dataset)
-            print('====> Test set loss: {:.4f}\n'.format(test_loss))
-
-            feat_total = torch.cat(feat_total, dim=0).numpy()
-            target_total = torch.cat(target_total, dim=0).numpy()
-
-        # =================== PLOT COMPARISON ===================== #
-        if plt_imgs!=None and epoch % plt_imgs[1] == 0:         # plt_imgs = (N_TEST_IMGS, plt_interval)
-            batch_test = batch_test.view(-1, 1, 28, 28)         # Reshape into (N_TEST_IMG, 1, 28, 28)
-            decoded = decoded.view(-1, 1, 28, 28)
-            comparison = torch.cat([batch_test[:plt_imgs[0]], decoded.view(-1, 1, 28, 28)[:plt_imgs[0]]])
-            output_dir = self._check_output_dir(output_dir)
-            filename = 'x_recon_{}_{}.png'.format(CURRENT_FNAME.split('.')[0], epoch)
-            print('Saving ', filename)
-            save_image(comparison.data.cpu(), output_dir+'/'+filename, nrow=plt_imgs[0])
-
-        # =================== PLOT SCATTER ===================== #
-        if scatter_plt!=None and epoch % scatter_plt[1] == 0:       # scatter_plt = ('method', plt_interval)
-            output_dir = self._check_output_dir(output_dir)
-            plt_scatter(feat_total, target_total, epoch, scatter_plt[0], output_dir, pltshow)
-
-        return test_loss, feat_total, target_total
-        
+    
     def _check_output_dir(self, output_dir):
         if not os.path.exists(output_dir):
             os.mkdir(output_dir)

@@ -18,7 +18,8 @@ from datetime import datetime
 import random
 
 import torch
-
+from torchvision.utils import save_image, make_grid
+from torch.utils.tensorboard import SummaryWriter
 
 import numpy as np
 from sklearn.mixture import GaussianMixture, BayesianGaussianMixture
@@ -75,15 +76,16 @@ if __name__ == '__main__':
                         help='class to filter')
     args = parser.parse_args()
 
-    
+    tb = SummaryWriter()    # Tensorboard
+
     # ae = ConvAutoEncoder()  
-    ae = AutoEncoder()     
+    ae = AutoEncoder(tb)     
     
     if args.output=='':
         dataset = FilteredMNIST(label=args.label, split=0.8, n_noise_clusters=3)
 
         print(dataset.train.targets.unique(), len(dataset.train), len(dataset.test))
-        ae.fit(dataset,
+        ae.fit(dataset, 
                 batch_size=args.batch_size, 
                 epochs=args.epochs, 
                 lr=args.lr, 

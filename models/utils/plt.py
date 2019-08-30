@@ -7,6 +7,7 @@
 ###
 
 import numpy as np
+import torch
 
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
@@ -21,7 +22,7 @@ SEED = 489
 
 
 
-def plt_scatter(feat, labels, epoch, method, output_dir, pltshow=False):
+def plt_scatter(feat, labels, epoch, method, output_dir, pltshow=False, tb=None):
     print('Plotting {}_{}.png \n'.format(method, epoch))
     
     if feat.shape[1] > 2:            # Reduce to 2 dim
@@ -54,16 +55,21 @@ def plt_scatter(feat, labels, epoch, method, output_dir, pltshow=False):
 
     plt.draw()
     plt.ioff()
-    plt.savefig(output_dir+'/{}_{}.png'.format(method, epoch), bbox_inches='tight')
+    plt_name = '{}_{}.png'.format(method, epoch)
+    plt.savefig(output_dir+'/'+plt_name, bbox_inches='tight')
 
     if pltshow:
         plt.show()
+
+    if tb!=None:    # Save to Tensorboard
+        np_image = plt.imread(output_dir+'/'+plt_name)
+        tb.add_image(plt_name, np_image, epoch, dataformats='HWC')
         
 def plt_confusion_matrix(y_pred, y_target, output_dir, pltshow=False):
     confusion_matrix = sklearn.metrics.confusion_matrix(y_target, y_pred)
 
     plt.figure(figsize=(16, 14))
-    sns.heatmap(confusion_matrix, annot=True, fmt="d", annot_kws={"size": 20});
+    sns.heatmap(confusion_matrix, annot=True, fmt="d", annot_kws={"size": 20})
     # plt.title("Confusion matrix", fontsize=10)
     plt.ylabel('True label', fontsize=20)
     plt.xlabel('Clustering label', fontsize=20)
@@ -94,7 +100,7 @@ def plt_clusters(outfile, data, algorithm, args, kwds):
     plt.savefig(outfile)
     print ( '\n  saved image ',outfile )
     plt.close(fig)
-    return    
+    return 
 
 
     
