@@ -75,9 +75,10 @@ if __name__ == '__main__':
     parser.add_argument('--label', type=int, default=1, metavar='N',
                         help='class to filter')
     args = parser.parse_args()
-
-    tb = SummaryWriter()    # Tensorboard
-
+    
+    comment = '_lr={}_bs={}'.format(args.lr, args.batch_size) # Adding comment
+    tb = SummaryWriter(comment=comment)    # Tensorboard
+    
     # ae = ConvAutoEncoder()  
     ae = AutoEncoder(tb)     
     
