@@ -20,9 +20,7 @@ sns.set(font_scale=2)
 
 SEED = 489
 
-
-
-def plt_scatter(feat, labels, epoch, method, output_dir, pltshow=False, tb=None):
+def plt_scatter(feat, labels, epoch, method, output_dir, pltshow=False):
     print('Plotting {}_{}.png \n'.format(method, epoch))
     
     if feat.shape[1] > 2:            # Reduce to 2 dim
@@ -42,13 +40,19 @@ def plt_scatter(feat, labels, epoch, method, output_dir, pltshow=False, tb=None)
     plt.ion()
     plt.clf()
     palette = np.array(sns.color_palette('hls', len(labels_list)))
-    ax = plt.subplot(aspect='equal')
-    
-    for i, label in enumerate(labels_list):
-        plt.plot(feat[labels == label, 0], feat[labels == label, 1], '.', c=palette[i])
 
-        ax.axis('tight')
-        ax.tick_params(axis='both', labelsize=10)
+    palette = sns.color_palette('hls', np.unique(labels).max() + 1)
+    colors = [palette[x] if x >= 0 else (0.0, 0.0, 0.0) for x in labels]
+    ax = plt.subplot()
+    # ax.axis('tight')
+    ax.tick_params(axis='both', labelsize=10)
+
+    for i, label in enumerate(labels_list):
+        # plt.plot(feat[labels == label, 0], feat[labels == label, 1], '.', c=palette[i])
+
+        
+        plt.scatter(feat[labels == label, 0], feat[labels == label, 1], c=palette[i], s=8, linewidths=1)
+
         xtext, ytext = np.median(feat[labels == label, :], axis=0)
         txt = ax.text(xtext, ytext, str(label), fontsize=18)
         txt.set_path_effects([PathEffects.Stroke(linewidth=5, foreground="w"), PathEffects.Normal()])
@@ -60,10 +64,9 @@ def plt_scatter(feat, labels, epoch, method, output_dir, pltshow=False, tb=None)
 
     if pltshow:
         plt.show()
-
-    if tb!=None:    # Save to Tensorboard
-        np_image = plt.imread(output_dir+'/'+plt_name)
-        tb.add_image(plt_name, np_image, epoch, dataformats='HWC')
+   
+    return plt.imread(output_dir+'/'+plt_name), plt_name
+        
         
 def plt_confusion_matrix(y_pred, y_target, output_dir, pltshow=False):
     confusion_matrix = sklearn.metrics.confusion_matrix(y_target, y_pred)
@@ -78,6 +81,7 @@ def plt_confusion_matrix(y_pred, y_target, output_dir, pltshow=False):
     if pltshow:
         plt.show()
 
+    return plt.imread(output_dir+'/confusion_matrix.png'), 'confusion_matrix.png'
 
 
 def plt_clusters(outfile, data, algorithm, args, kwds):
@@ -85,16 +89,18 @@ def plt_clusters(outfile, data, algorithm, args, kwds):
     # start_time = time.time()
     labels = algorithm(*args, **kwds).fit_predict(data)
     # end_time = time.time()
-    # palette = sns.color_palette('deep', np.unique(labels).max() + 1)
-
-    labels_list = np.unique(labels)
-    palette = np.array(sns.color_palette('hls', len(labels_list)))
-    
+    ax = plt.subplot()
+    # ax.axis('tight')
+    ax.tick_params(axis='both', labelsize=10)
+    # labels_list = np.unique(labels)
+    # palette = np.array(sns.color_palette('hls', len(labels_list)))
+    palette = sns.color_palette('hls', np.unique(labels).max() + 1)
     colors = [palette[x] if x >= 0 else (0.0, 0.0, 0.0) for x in labels]
-    plt.scatter(data.T[0], data.T[1], c=colors, alpha=0.5, s=8, linewidths=1)
+    plt.scatter(data.T[0], data.T[1], c=colors, s=8, linewidths=1)
     # frame = plt.gca()
     # frame.axes.get_xaxis().set_visible(False)
     # frame.axes.get_yaxis().set_visible(False)
+    
     plt.title('Clusters found by {}'.format(str(algorithm.__name__)), fontsize=14)
     #plt.text(-0.5, 0.7, 'Clustering took {:.2f} s'.format(end_time - start_time), fontsize=14)
     plt.savefig(outfile)

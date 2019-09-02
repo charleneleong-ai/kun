@@ -68,21 +68,23 @@ if __name__ == '__main__':
                         help='input batch size for training (default: 128)')
     parser.add_argument('--update_interval', type=int, default=100, metavar='N',
                         help='update interval for each batch')
-    parser.add_argument('--epochs', type=int, default=EPOCHS, metavar='N',
-                        help='number of epochs to train (default: 10)')
+    parser.add_argument('--epochs', type=int, default=0, metavar='N',
+                        help='number of epochs to train (default: 0)')
     parser.add_argument('--output', type=str, default='', metavar='N',
                         help='path/to/output/dir or latest')
     parser.add_argument('--label', type=int, default=1, metavar='N',
                         help='class to filter')
     args = parser.parse_args()
     
-    comment = '_lr={}_bs={}'.format(args.lr, args.batch_size) # Adding comment
-    tb = SummaryWriter(comment=comment)    # Tensorboard
-    
-    # ae = ConvAutoEncoder()  
-    ae = AutoEncoder(tb)     
-    
+
     if args.output=='':
+        comment = '_lr={}_bs={}'.format(args.lr, args.batch_size) # Adding comment
+        log_dir_name = OUTPUT_DIR.split('/')[1].split('_output')[0]+comment
+        tb = SummaryWriter(log_dir='../runs/'+log_dir_name)    # Tensorboard
+        
+        # ae = ConvAutoEncoder()  
+        ae = AutoEncoder(tb)     
+    
         dataset = FilteredMNIST(label=args.label, split=0.8, n_noise_clusters=3)
 
         print(dataset.train.targets.unique(), len(dataset.train), len(dataset.test))
@@ -104,28 +106,44 @@ if __name__ == '__main__':
         if args.output=='latest':
             OUTPUT_DIR = max(glob.iglob('./*/'), key=os.path.getctime)
 
+        ae = AutoEncoder()  
         dataset = FilteredMNIST(output_dir=OUTPUT_DIR)
         model_path = ae.load_model(output_dir=OUTPUT_DIR)
 
+        if args.epochs != 0:    # Further training if needed
+            ae.fit(dataset, 
+                batch_size=ae.BATCH_SIZE, 
+                epochs=args.epochs, 
+                lr=ae.LR, 
+                opt=ae.optimizer.__class__.__name__,         # Adam
+                loss=float(ae.loss),         # BCE or MSE
+                patience=3,        # Num epochs for early stopping
+                eval=True,          # Eval training process with test data
+                plt_imgs=(N_TEST_IMGS, 10),         # (N_TEST_IMGS, plt_interval)
+                scatter_plt=('tsne', 10),           # ('method', plt_interval)
+                output_dir=OUTPUT_DIR, 
+                save_model=True)        # Update old run
+        
+
+
         _, feat, labels = ae.eval_model(dataset=dataset, 
-                                        batch_size=ae.BATCH_SIZE, 
-                                        epoch=ae.EPOCHS, 
-                                        plt_imgs=None, 
-                                        # scatter_plt=('tsne', ae.EPOCHS),    
-                                        output_dir=OUTPUT_DIR)
+                                batch_size=ae.BATCH_SIZE, 
+                                epoch=ae.EPOCH, 
+                                plt_imgs=None, 
+                                # scatter_plt=('tsne', ae.EPOCHS),    
+                                output_dir=OUTPUT_DIR)
 
         print(feat.shape)
         print(dataset.test.targets.unique()) 
-        
         tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=1000, random_state=SEED)
         feat = tsne.fit_transform(feat)
         # pca = PCA(n_components=2, random_state=SEED)
         # feat = pca.fit_transform(feat)
         print(feat.shape)
 
-        
+        feat = StandardScaler().fit_transform(feat)    # Normalise the data
         n_components = np.arange(1, 21)
-        models = [GaussianMixture(n, covariance_type='full', random_state=0).fit(feat) for n in n_components]
+        models = [GaussianMixture(n, covariance_type='full', random_state=SEED).fit(feat) for n in n_components]
         bic = [m.bic(feat) for m in models]
         aic = [m.aic(feat) for m in models]
 
@@ -141,14 +159,26 @@ if __name__ == '__main__':
         plt.xlabel('n_components')
         plt.savefig(OUTPUT_DIR+'/optimal_k.png', bbox_inches='tight')
         plt.close(fig)
+    
+      
+        ae.tb.add_image(tag='optimal_k.png', 
+                        img_tensor=plt.imread(OUTPUT_DIR+'/optimal_k.png'), 
+                        global_step=ae.EPOCH, dataformats='HWC')
 
-        feat = StandardScaler().fit_transform(feat)    # Normalise the data
-
+        
         OUTPUT_DIR = OUTPUT_DIR+'_tsne'
+
        
         plt_clusters(OUTPUT_DIR+'_HDBSCAN.png',feat, hdbscan.HDBSCAN, (), {'min_cluster_size':15}) 
+        ae.tb.add_image(tag='_tsne_HDBSCAN.png', 
+                        img_tensor=plt.imread(OUTPUT_DIR+'_HDBSCAN.png'), 
+                        global_step = ae.EPOCH, dataformats='HWC')
+
         
         plt_clusters(OUTPUT_DIR+'_Kmeans.png',feat, cluster.KMeans, (), {'n_clusters':k, 'random_state':SEED})
+        ae.tb.add_image(tag='_tsne_Kmeans.png', 
+                        img_tensor=plt.imread(OUTPUT_DIR+'_Kmeans.png'), 
+                        global_step = ae.EPOCH, dataformats='HWC')
 
         plt_clusters(OUTPUT_DIR+'_BGMM.png',feat, BayesianGaussianMixture, (), 
                                         {'weight_concentration_prior_type': 'dirichlet_distribution',
@@ -156,16 +186,32 @@ if __name__ == '__main__':
                                         'n_components':k, 'reg_covar':0, 'init_params':'kmeans',
                                         'max_iter':1500, 'n_init':20, 'mean_precision_prior':.8,
                                         'random_state':SEED})
+        ae.tb.add_image(tag='_tsne_BGMM.png', 
+                        img_tensor=plt.imread(OUTPUT_DIR+'_BGMM.png'), 
+                        global_step = ae.EPOCH, dataformats='HWC')
 
-        plt_clusters(OUTPUT_DIR+'_MeanShift.png', feat, cluster.MeanShift, (0.175,), {'cluster_all':False, 'random_state':SEED})
+        plt_clusters(OUTPUT_DIR+'_MeanShift.png', feat, cluster.MeanShift, (0.175,), {'cluster_all':False})
+        ae.tb.add_image(tag='_tsne_MeanShift.png', 
+                        img_tensor=plt.imread(OUTPUT_DIR+'_MeanShift.png'), 
+                        global_step = ae.EPOCH, dataformats='HWC')
         
         plt_clusters(OUTPUT_DIR+'_SpectralClustering.png',feat, cluster.SpectralClustering, (), {'n_clusters':k, 'random_state':SEED})
-        
-        plt_clusters(OUTPUT_DIR+'_AffinityProp.png',feat, cluster.AffinityPropagation, (), {'preference':-5.0, 'damping':0.95, 'random_state':SEED})
-        
-        plt_clusters(OUTPUT_DIR+'_AgglomerativeClustering.png',
-                    feat, cluster.AgglomerativeClustering, (), {'n_clusters':k, 'linkage':'ward', 'random_state':SEED})
+        ae.tb.add_image(tag='_tsne_SpectralClustering.png', 
+                        img_tensor=plt.imread(OUTPUT_DIR+'_SpectralClustering.png'), 
+                        global_step = ae.EPOCH, dataformats='HWC')
 
+        plt_clusters(OUTPUT_DIR+'_AffinityProp.png',feat, cluster.AffinityPropagation, (), {'preference':-5.0, 'damping':0.95})
+        ae.tb.add_image(tag='_tsne_AffinityProp.png', 
+                        img_tensor=plt.imread(OUTPUT_DIR+'_AffinityProp.png'), 
+                        global_step = ae.EPOCH, dataformats='HWC')
+
+        plt_clusters(OUTPUT_DIR+'_AgglomerativeClustering.png', feat, cluster.AgglomerativeClustering, (), {'n_clusters':k, 'linkage':'ward'})
+        ae.tb.add_image(tag='_tsne_AgglomerativeClustering.png', 
+                                img_tensor=plt.imread(OUTPUT_DIR+'_AgglomerativeClustering.png'), 
+                                global_step = ae.EPOCH, dataformats='HWC')
+                
+        
+        
         # y_pred = hdbscan.HDBSCAN(min_cluster_size=10)
 
         # print(y_pred, len(y_pred))

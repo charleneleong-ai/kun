@@ -1,0 +1,20 @@
+embeddings {
+tensor_name: "default:02243"
+tensor_path: "02243/default/tensors.tsv"
+metadata_path: "02243/default/metadata.tsv"
+sprite {
+image_path: "02243/default/sprite.png"
+single_image_dim: 28
+single_image_dim: 28
+}
+}
+embeddings {
+tensor_name: "default:02903"
+tensor_path: "02903/default/tensors.tsv"
+metadata_path: "02903/default/metadata.tsv"
+sprite {
+image_path: "02903/default/sprite.png"
+single_image_dim: 28
+single_image_dim: 28
+}
+}
