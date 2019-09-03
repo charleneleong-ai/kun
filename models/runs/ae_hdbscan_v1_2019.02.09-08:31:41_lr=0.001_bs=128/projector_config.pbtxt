@@ -1,0 +1,30 @@
+embeddings {
+tensor_name: "default:02243"
+tensor_path: "02243/default/tensors.tsv"
+metadata_path: "02243/default/metadata.tsv"
+sprite {
+image_path: "02243/default/sprite.png"
+single_image_dim: 28
+single_image_dim: 28
+}
+}
+embeddings {
+tensor_name: "default:02441"
+tensor_path: "02441/default/tensors.tsv"
+metadata_path: "02441/default/metadata.tsv"
+sprite {
+image_path: "02441/default/sprite.png"
+single_image_dim: 28
+single_image_dim: 28
+}
+}
+embeddings {
+tensor_name: "default:02639"
+tensor_path: "02639/default/tensors.tsv"
+metadata_path: "02639/default/metadata.tsv"
+sprite {
+image_path: "02639/default/sprite.png"
+single_image_dim: 28
+single_image_dim: 28
+}
+}

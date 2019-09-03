@@ -154,5 +154,4 @@ for (title, estimator, concentrations_prior) in estimators:
                      X, y, r'%s$%.1e$' % (title, concentration),
                      plot_title=k == 0)
 
-
     plt.savefig('./{}_{}_{}.png'.format((title).split(' with')[0], 'encoded', 'tsne'), bbox_inches='tight')

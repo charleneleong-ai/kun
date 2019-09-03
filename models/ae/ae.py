@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 ###
@@ -91,7 +92,7 @@ class AutoEncoder(nn.Module):
 
         if plt_imgs!=None:
             view_data = images.to(self.device)  # Deocde to show training
-            row = 3
+            row = 2
             decode_plt = view_data[row*plt_imgs[0]:row*plt_imgs[0]+plt_imgs[0]].cpu()
 
         # =================== TRAIN ===================== #
@@ -102,7 +103,7 @@ class AutoEncoder(nn.Module):
         for epoch in range(start_epoch, start_epoch+epochs+1):
             train_feat = []
             train_labels = []
-            label_imgs = []
+            train_imgs = []
             epoch_loss = 0      # printing intermediary loss
             self.EPOCH = epoch
             for batch_idx, (batch_train, batch_train_label) in enumerate(train_loader):
@@ -126,10 +127,10 @@ class AutoEncoder(nn.Module):
 
                 #train_feat = torch.cat((train_feat, encoded.data.cpu().view(batch_train.size(0), -1)), dim=0)
                 #train_labels = torch.cat((train_labels, batch_train_label.type(torch.FloatTensor)), dim=0)
-                #label_imgs = torch.cat((label_imgs, batch_train.cpu()), dim=0)
+                #train_imgs = torch.cat((train_imgs, batch_train.cpu()), dim=0)
                 train_feat.append(encoded.data.cpu().view(batch_train.size(0), -1))
                 train_labels.append(batch_train_label)
-                label_imgs.append(batch_train.cpu())
+                train_imgs.append(batch_train.cpu())
                 if batch_idx % 10 == 0:
                     print('Train Epoch: {} [{}/{} ({:.0f}%)] \t Loss:{:.6f} \t MSE Loss:{:.6f} '.format(
                         self.EPOCH, batch_idx * len(batch_train), len(train_loader.dataset),
@@ -156,14 +157,14 @@ class AutoEncoder(nn.Module):
                 decode_plt = torch.cat((decode_plt, decoded), dim=0)
 
             if eval:
-                test_loss, _, _ = self.eval_model(dataset, self.BATCH_SIZE, self.EPOCH, plt_imgs, scatter_plt, pltshow, self.OUTPUT_DIR)
+                test_loss, _, _, _ = self.eval_model(dataset, self.BATCH_SIZE, self.EPOCH, plt_imgs, scatter_plt, pltshow, self.OUTPUT_DIR)
                 if es.step(test_loss):  # Early Stopping
                     break
 
         train_feat = torch.cat(train_feat, dim=0)
         train_labels = torch.cat(train_labels, dim=0)
-        label_imgs = torch.cat(label_imgs, dim=0)
-        self.tb.add_embedding(train_feat, metadata=train_labels, label_img=label_imgs, global_step=n_iter)
+        train_imgs = torch.cat(train_imgs, dim=0)
+        self.tb.add_embedding(train_feat, metadata=train_labels, label_img=train_imgs, global_step=n_iter)
         self.tb.add_images('decoded_row_{}_epochs_{}'.format(row, plt_imgs[1]), decode_plt, self.EPOCH)   
 
         # =================== SAVE MODEL AND DATA ==================== #
@@ -178,6 +179,7 @@ class AutoEncoder(nn.Module):
             test_loss = 0   
             test_feat = []
             test_labels = []
+            test_imgs = []
             with torch.no_grad():      # turn autograd off for memory efficiency
                 for batch_idx, (batch_test, batch_test_label) in enumerate(test_loader):
                     n_iter = (epoch * len(test_loader)) + batch_idx
@@ -191,21 +193,22 @@ class AutoEncoder(nn.Module):
                     # Flatten for TSNE (b, 10)
                     test_feat.append(encoded.data.cpu().view(batch_test.size(0), -1)) 
                     test_labels.append(batch_test_label)
+                    test_imgs.append(batch_test.cpu())
 
                 test_loss /= len(test_loader.dataset)
                 print('====> Test set loss: {:.4f}\n'.format(test_loss))
 
                 self.tb.add_scalar('Test Loss', test_loss, epoch)
 
-                test_feat = torch.cat(test_feat, dim=0).numpy()
-                test_labels = torch.cat(test_labels, dim=0).numpy()
+                test_feat = torch.cat(test_feat, dim=0)
+                test_labels = torch.cat(test_labels, dim=0)
+                test_imgs = torch.cat(test_imgs, dim=0)
 
             # =================== PLOT COMPARISON ===================== #
             if plt_imgs!=None and epoch % plt_imgs[1] == 0:         # plt_imgs = (N_TEST_IMGS, plt_interval)
                 batch_test = batch_test.view(-1, 1, 28, 28)         # Reshape into (N_TEST_IMG, 1, 28, 28)
                 decoded = decoded.view(-1, 1, 28, 28)
                 comparison = torch.cat([batch_test[:plt_imgs[0]], decoded[:plt_imgs[0]]])
-
                 output_dir = self._check_output_dir(output_dir)
                 filename = 'x_recon_{}_{}.png'.format(CURRENT_FNAME.split('.')[0], epoch)
                 print('Saving ', filename)
@@ -214,10 +217,10 @@ class AutoEncoder(nn.Module):
             # =================== PLOT SCATTER ===================== #
             if scatter_plt!=None and epoch % scatter_plt[1] == 0:       # scatter_plt = ('method', plt_interval)
                 output_dir = self._check_output_dir(output_dir)
-                np_img, plt_name = plt_scatter(test_feat, test_labels, epoch, scatter_plt[0], output_dir, pltshow)
+                np_img, plt_name = plt_scatter(test_feat.numpy(), test_labels.numpy(), epoch, scatter_plt[0], output_dir, pltshow)
                 self.tb.add_image(plt_name, np_img, epoch, dataformats='HWC')
        
-            return test_loss, test_feat, test_labels
+            return test_loss, test_feat, test_labels, test_imgs
             
                 
     def save_model(self, dataset, output_dir):
@@ -286,7 +289,7 @@ class AutoEncoder(nn.Module):
         self.BATCH_SIZE = int(self.BATCH_SIZE[0])
         self.loss = float(self.loss)
         self.tb = SummaryWriter(log_dir=str(''.join(tb_log_dir)))
-        print(self.tb.log_dir)
+        # print(self.tb.log_dir)
 
         print('Loading model...\n{}\n'.format(self))
         print('Loaded model\t{}\n'.format(self.model_name))

@@ -28,12 +28,14 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
+import matplotlib.patheffects as PathEffects
 import seaborn as sns; sns.set()  # for plot styling
 
 from scipy.stats import mode
 from sklearn.metrics import accuracy_score
 import hdbscan
 import sklearn.cluster as cluster
+from sklearn.metrics import pairwise_distances_argmin_min
 
 # from utils import plt_confusion_matrix
 from utils.eval import cluster_accuracy  
@@ -124,85 +126,104 @@ if __name__ == '__main__':
                 output_dir=OUTPUT_DIR, 
                 save_model=True)        # Update old run
         
-        _, feat, labels = ae.eval_model(dataset=dataset, 
+        _, feat, labels, test_imgs = ae.eval_model(dataset=dataset, 
                                 batch_size=ae.BATCH_SIZE, 
                                 epoch=ae.EPOCH, 
                                 plt_imgs=None, 
                                 # scatter_plt=('tsne', ae.EPOCHS),    
                                 output_dir=OUTPUT_DIR)
 
-        print(feat.shape)
+        print(feat.size())
         print(dataset.test.targets.unique()) 
         tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=1000, random_state=SEED)
-        feat = tsne.fit_transform(feat)
+        feat = tsne.fit_transform(feat.numpy())
         # pca = PCA(n_components=2, random_state=SEED)
         # feat = pca.fit_transform(feat)
         print(feat.shape)
 
         feat = StandardScaler().fit_transform(feat)    # Normalise the data
-        n_components = np.arange(1, 21)
-        models = [GaussianMixture(n, covariance_type='full', random_state=SEED).fit(feat) for n in n_components]
-        bic = [m.bic(feat) for m in models]
-        aic = [m.aic(feat) for m in models]
+        # n_components = np.arange(1, 21)
+        # models = [GaussianMixture(n, covariance_type='full', random_state=SEED).fit(feat) for n in n_components]
+        # bic = [m.bic(feat) for m in models]
+        # aic = [m.aic(feat) for m in models]
 
-        ymin = min(bic)     # Finding min pt
-        xmin = bic.index(ymin)
-        k = n_components[xmin]
-        print(k, ' components')
+        # ymin = min(bic)     # Finding min pt
+        # xmin = bic.index(ymin)
+        # k = n_components[xmin]
+        # print(k, ' components')
 
-        fig = plt.figure()
-        plt.plot(n_components, bic, label='BIC')
-        plt.plot(n_components, aic,  label='AIC')
-        plt.legend(loc='best')
-        plt.xlabel('n_components')
-        plt.savefig(OUTPUT_DIR+'/optimal_k.png', bbox_inches='tight')
-        plt.close(fig)
+        # fig = plt.figure()
+        # plt.plot(n_components, bic, label='BIC')
+        # plt.plot(n_components, aic,  label='AIC')
+        # plt.legend(loc='best')
+        # plt.xlabel('n_components')
+        # plt.savefig(OUTPUT_DIR+'/optimal_k.png', bbox_inches='tight')
+        # plt.close(fig)
       
-        ae.tb.add_image(tag='optimal_k.png', 
-                        img_tensor=plt.imread(OUTPUT_DIR+'/optimal_k.png'), 
-                        global_step=ae.EPOCH, dataformats='HWC')
+        # ae.tb.add_image(tag='optimal_k.png', 
+        #                 img_tensor=plt.imread(OUTPUT_DIR+'/optimal_k.png'), 
+        #                 global_step=ae.EPOCH, dataformats='HWC')
         
         OUTPUT_DIR = OUTPUT_DIR+'_tsne'
+        
+        # plt_img = plt_clusters(OUTPUT_DIR+'_HDBSCAN.png',feat, hdbscan.HDBSCAN, (), {'min_cluster_size':100}) 
+        # ae.tb.add_image(tag='_tsne_HDBSCAN.png', 
+        #                 img_tensor=plt_img, 
+        #                 global_step = ae.EPOCH, dataformats='HWC')
 
-        plt_clusters(OUTPUT_DIR+'_HDBSCAN.png',feat, hdbscan.HDBSCAN, (), {'min_cluster_size':15}) 
-        ae.tb.add_image(tag='_tsne_HDBSCAN.png', 
-                        img_tensor=plt.imread(OUTPUT_DIR+'_HDBSCAN.png'), 
+        hdbscan = hdbscan.HDBSCAN(min_cluster_size=10, gen_min_span_tree=True)
+        hdbscan.fit(feat)
+    
+        #hdbscan.minimum_spanning_tree_.plot(edge_cmap='viridis', 
+        #                                     edge_alpha=0.6, 
+        #                                     node_size=10, 
+        #                                     edge_linewidth=1)
+        # plt.savefig(OUTPUT_DIR+'_HDBSCAN_min_span_tree.png', bbox_inches='tight')
+        # plt.close()
+        # ae.tb.add_image(tag='_HDBSCAN_min_span_tree.png', 
+        #                         img_tensor=plt.imread(OUTPUT_DIR+'_HDBSCAN_min_span_tree.png'), 
+        #                         global_step = ae.EPOCH, dataformats='HWC')
+
+        #hdbscan.single_linkage_tree_.plot(cmap='viridis', colorbar=True)
+        # plt.savefig(OUTPUT_DIR+'_HDBSCAN_single_linkage_tree.png', bbox_inches='tight')
+        # plt.close()
+        # ae.tb.add_image(tag='_HDBSCAN_single_linkage_tree.png', 
+        #                                 img_tensor=plt.imread(OUTPUT_DIR+'_HDBSCAN_single_linkage_tree.png'), 
+        #                                 global_step = ae.EPOCH, dataformats='HWC')
+
+        #hdbscan.condensed_tree_.plot(select_clusters=True, selection_palette=sns.color_palette('hls'))
+        # plt.savefig(OUTPUT_DIR+'_HDBSCAN_condensed_tree.png', bbox_inches='tight')
+        # plt.close()
+        # ae.tb.add_image(tag='_HDBSCAN_condensed_tree.png', 
+        #                                 img_tensor=plt.imread(OUTPUT_DIR+'_HDBSCAN_condensed_tree.png'), 
+        #                                 global_step = ae.EPOCH, dataformats='HWC')
+        labels = hdbscan.labels_
+        print(np.unique(labels), labels.shape)
+
+        palette = sns.color_palette('hls', np.unique(labels).max() +1)
+        colors = [palette[x] if x >= 0 else (0.0, 0.0, 0.0) for x in labels]    # -1 is noise
+        ax = plt.subplot()
+        ax.tick_params(axis='both', labelsize=10)
+        plt.scatter(feat.T[0], feat.T[1], c=colors, s=8, linewidths=1)
+
+        centroids = np.array([np.median(feat[labels == label, :], axis=0) for label in np.unique(labels)[1:]])
+        plt.scatter(centroids[:, 0], centroids[:, 1], c='black', s=100, alpha=0.5)
+        
+        plt.savefig(OUTPUT_DIR+'_HDBSCAN_clusters_{}.png'.format(ae.EPOCH), bbox_inches='tight')
+        plt.close()
+        ae.tb.add_image(tag='_HDBSCAN_clusters.png', 
+                        img_tensor=plt.imread(OUTPUT_DIR+'_HDBSCAN_clusters.png'), 
                         global_step = ae.EPOCH, dataformats='HWC')
+
+        closest, _ = pairwise_distances_argmin_min(centroids, feat)
+        test_imgs = test_imgs.view(-1, 1, 28, 28)
+        print(closest, test_imgs.size())
+        centroid_imgs = []
+        for i in closest:
+            save_image(test_imgs[i], OUTPUT_DIR+'closest_{}.png'.format(i))
+
 
         
-        plt_clusters(OUTPUT_DIR+'_Kmeans.png',feat, cluster.KMeans, (), {'n_clusters':k, 'random_state':SEED})
-        ae.tb.add_image(tag='_tsne_Kmeans.png', 
-                        img_tensor=plt.imread(OUTPUT_DIR+'_Kmeans.png'), 
-                        global_step = ae.EPOCH, dataformats='HWC')
 
-        plt_clusters(OUTPUT_DIR+'_BGMM.png',feat, BayesianGaussianMixture, (), 
-                                        {'weight_concentration_prior_type': 'dirichlet_distribution',
-                                        'weight_concentration_prior':0.001,
-                                        'n_components':k, 'reg_covar':0, 'init_params':'kmeans',
-                                        'max_iter':1500, 'n_init':20, 'mean_precision_prior':.8,
-                                        'random_state':SEED})
-        ae.tb.add_image(tag='_tsne_BGMM.png', 
-                        img_tensor=plt.imread(OUTPUT_DIR+'_BGMM.png'), 
-                        global_step = ae.EPOCH, dataformats='HWC')
 
-        plt_clusters(OUTPUT_DIR+'_MeanShift.png', feat, cluster.MeanShift, (0.175,), {'cluster_all':False})
-        ae.tb.add_image(tag='_tsne_MeanShift.png', 
-                        img_tensor=plt.imread(OUTPUT_DIR+'_MeanShift.png'), 
-                        global_step = ae.EPOCH, dataformats='HWC')
-        
-        plt_clusters(OUTPUT_DIR+'_SpectralClustering.png',feat, cluster.SpectralClustering, (), {'n_clusters':k, 'random_state':SEED})
-        ae.tb.add_image(tag='_tsne_SpectralClustering.png', 
-                        img_tensor=plt.imread(OUTPUT_DIR+'_SpectralClustering.png'), 
-                        global_step = ae.EPOCH, dataformats='HWC')
 
-        plt_clusters(OUTPUT_DIR+'_AffinityProp.png',feat, cluster.AffinityPropagation, (), {'preference':-5.0, 'damping':0.95})
-        ae.tb.add_image(tag='_tsne_AffinityProp.png', 
-                        img_tensor=plt.imread(OUTPUT_DIR+'_AffinityProp.png'), 
-                        global_step = ae.EPOCH, dataformats='HWC')
-
-        plt_clusters(OUTPUT_DIR+'_AgglomerativeClustering.png', feat, cluster.AgglomerativeClustering, (), {'n_clusters':k, 'linkage':'ward'})
-        ae.tb.add_image(tag='_tsne_AgglomerativeClustering.png', 
-                                img_tensor=plt.imread(OUTPUT_DIR+'_AgglomerativeClustering.png'), 
-                                global_step = ae.EPOCH, dataformats='HWC')
-                
-        

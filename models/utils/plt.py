@@ -9,6 +9,7 @@
 import numpy as np
 import torch
 
+from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 import sklearn.metrics
@@ -36,23 +37,16 @@ def plt_scatter(feat, labels, epoch, method, output_dir, pltshow=False):
             feat = tsne.fit_transform(feat)
 
     labels_list = np.unique(labels)
+    feat = StandardScaler().fit_transform(feat)    # Normalise the data
     
     plt.ion()
     plt.clf()
-    palette = np.array(sns.color_palette('hls', len(labels_list)))
-
-    palette = sns.color_palette('hls', np.unique(labels).max() + 1)
+    palette = sns.color_palette('hls', labels_list.max()+1)
     colors = [palette[x] if x >= 0 else (0.0, 0.0, 0.0) for x in labels]
     ax = plt.subplot()
-    # ax.axis('tight')
     ax.tick_params(axis='both', labelsize=10)
-
-    for i, label in enumerate(labels_list):
-        # plt.plot(feat[labels == label, 0], feat[labels == label, 1], '.', c=palette[i])
-
-        
-        plt.scatter(feat[labels == label, 0], feat[labels == label, 1], c=palette[i], s=8, linewidths=1)
-
+    plt.scatter(feat.T[0], feat.T[1], c=colors, s=8, linewidths=1)
+    for label in labels_list:   
         xtext, ytext = np.median(feat[labels == label, :], axis=0)
         txt = ax.text(xtext, ytext, str(label), fontsize=18)
         txt.set_path_effects([PathEffects.Stroke(linewidth=5, foreground="w"), PathEffects.Normal()])
@@ -84,7 +78,7 @@ def plt_confusion_matrix(y_pred, y_target, output_dir, pltshow=False):
     return plt.imread(output_dir+'/confusion_matrix.png'), 'confusion_matrix.png'
 
 
-def plt_clusters(outfile, data, algorithm, args, kwds):
+def plt_clusters(output_dir, data, algorithm, args, kwds):
     fig = plt.figure()
     # start_time = time.time()
     labels = algorithm(*args, **kwds).fit_predict(data)
@@ -94,19 +88,18 @@ def plt_clusters(outfile, data, algorithm, args, kwds):
     ax.tick_params(axis='both', labelsize=10)
     # labels_list = np.unique(labels)
     # palette = np.array(sns.color_palette('hls', len(labels_list)))
-    palette = sns.color_palette('hls', np.unique(labels).max() + 1)
+    palette = sns.color_palette('hls')
     colors = [palette[x] if x >= 0 else (0.0, 0.0, 0.0) for x in labels]
     plt.scatter(data.T[0], data.T[1], c=colors, s=8, linewidths=1)
     # frame = plt.gca()
     # frame.axes.get_xaxis().set_visible(False)
     # frame.axes.get_yaxis().set_visible(False)
-    
     plt.title('Clusters found by {}'.format(str(algorithm.__name__)), fontsize=14)
     #plt.text(-0.5, 0.7, 'Clustering took {:.2f} s'.format(end_time - start_time), fontsize=14)
-    plt.savefig(outfile)
-    print ( '\n  saved image ',outfile )
+    plt.savefig(output_dir)
+    print ( '\n  saved image ',output_dir )
     plt.close(fig)
-    return 
+    return plt.imread(output_dir)
 
 
     
