@@ -93,7 +93,7 @@ class AutoEncoder(nn.Module):
         if plt_imgs!=None:
             view_data = images.to(self.device)  # Deocde to show training
             row = 2
-            decode_plt = view_data[row*plt_imgs[0]:row*plt_imgs[0]+plt_imgs[0]].cpu()
+            decoded_plt = view_data[row*plt_imgs[0]:row*plt_imgs[0]+plt_imgs[0]].cpu()
 
         # =================== TRAIN ===================== #
         es = EarlyStopping(patience=patience)
@@ -154,18 +154,19 @@ class AutoEncoder(nn.Module):
                 view_data = view_data.view(self.BATCH_SIZE, -1)
                 encoded, decoded = self.forward(view_data) 
                 decoded = decoded[row*plt_imgs[0]:row*plt_imgs[0]+plt_imgs[0]].view(-1, 1, 28, 28).cpu()
-                decode_plt = torch.cat((decode_plt, decoded), dim=0)
+                decoded_plt = torch.cat((decoded_plt, decoded), dim=0)
 
             if eval:
                 test_loss, _, _, _ = self.eval_model(dataset, self.BATCH_SIZE, self.EPOCH, plt_imgs, scatter_plt, pltshow, self.OUTPUT_DIR)
                 if es.step(test_loss):  # Early Stopping
+                    test_loss, _, _, _ = self.eval_model(dataset, self.BATCH_SIZE, self.EPOCH+es.num_bad_epochs, plt_imgs, scatter_plt, pltshow, self.OUTPUT_DIR)
                     break
 
         train_feat = torch.cat(train_feat, dim=0)
         train_labels = torch.cat(train_labels, dim=0)
         train_imgs = torch.cat(train_imgs, dim=0)
         self.tb.add_embedding(train_feat, metadata=train_labels, label_img=train_imgs, global_step=n_iter)
-        self.tb.add_images('decoded_row_{}_epochs_{}'.format(row, plt_imgs[1]), decode_plt, self.EPOCH)   
+        self.tb.add_images('decoded_row_{}_epochs_{}'.format(row, plt_imgs[1]), decoded_plt, self.EPOCH)   
 
         # =================== SAVE MODEL AND DATA ==================== #
         if save_model: 

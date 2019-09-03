@@ -97,7 +97,7 @@ def plt_clusters(output_dir, data, algorithm, args, kwds):
     plt.title('Clusters found by {}'.format(str(algorithm.__name__)), fontsize=14)
     #plt.text(-0.5, 0.7, 'Clustering took {:.2f} s'.format(end_time - start_time), fontsize=14)
     plt.savefig(output_dir)
-    print ( '\n  saved image ',output_dir )
+    print ( '\n  saved image ', output_dir)
     plt.close(fig)
     return plt.imread(output_dir)
 

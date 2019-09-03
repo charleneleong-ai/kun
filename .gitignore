@@ -13,3 +13,6 @@ MNIST
 # ====== Python ====== #
 *.pyc
 __pycache__
+
+# ====== Tensorboard ====== #
+runs

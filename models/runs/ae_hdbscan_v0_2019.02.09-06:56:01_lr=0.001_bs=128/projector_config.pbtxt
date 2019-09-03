@@ -18,3 +18,13 @@ single_image_dim: 28
 single_image_dim: 28
 }
 }
+embeddings {
+tensor_name: "default:03101"
+tensor_path: "03101/default/tensors.tsv"
+metadata_path: "03101/default/metadata.tsv"
+sprite {
+image_path: "03101/default/sprite.png"
+single_image_dim: 28
+single_image_dim: 28
+}
+}
