@@ -3,7 +3,7 @@
 ###
 # Created Date: Monday, August 26th 2019, 12:13:26 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Fri Aug 30 2019
+# Last Modified: Thu Sep 05 2019
 ###
 
 import numpy as np
@@ -15,6 +15,11 @@ from torchvision import transforms
 from torchvision.datasets import MNIST
 
 from sklearn.model_selection import train_test_split
+
+SEED = 489
+torch.manual_seed(SEED)    # reproducible
+np.random.seed(SEED)
+random.seed(SEED)
 
 class FilteredMNIST(Dataset):
     def __init__(self, label=0, split=0.8, n_noise_clusters=2, output_dir=""):
@@ -32,14 +37,14 @@ class FilteredMNIST(Dataset):
         # =================== LOAD DATA ===================== #
         # MNIST dataset - download from torchvision.datasets.mnist
         # https://pytorch.org/docs/stable/torchvision/datasets.html#mnist
-        mnist_train = MNIST('../',                  # Download dir
+        mnist_train = MNIST('./',                  # Download dir
                 train=True,                         # Download training data 
                 transform=transforms.ToTensor(),    # Converts a PIL.Image or numpy.ndarray (H x W x C) [0, 255]
                                                     # to a torch.FloatTensor of shape (C x H x W) in the range [0.0, 1.0].
                 download=True
                 )
 
-        mnist_test = MNIST('../',                    # Download dir
+        mnist_test = MNIST('./',                    # Download dir
                 train=False,                         # Download test data
                 transform=transforms.ToTensor()
                 )
@@ -106,7 +111,7 @@ class FilteredMNIST(Dataset):
         # print(full.targets.unique(), len(full), train_size, test_size)
 
         train_idx, test_idx = train_test_split(    # Stratified split
-            np.arange(len(full.targets)), test_size=test_size, random_state=489, shuffle=True, stratify=full.targets)
+            np.arange(len(full.targets)), test_size=test_size, random_state=SEED, shuffle=True, stratify=full.targets)
     
         test.data = full.data[test_idx]  
         test.targets = full.targets[test_idx]

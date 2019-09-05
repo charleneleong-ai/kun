@@ -3,7 +3,7 @@
 ###
 # Created Date: Friday, August 30th 2019, 3:21:02 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Fri Aug 30 2019
+# Last Modified: Thu Sep 05 2019
 ###
 
 import warnings
@@ -114,7 +114,7 @@ if __name__ == '__main__':
         model_path = ae.load_model(output_dir=OUTPUT_DIR)
 
         if args.epochs != 0:    # Further training if needed
-            ae.fit(dataset, 
+            ae.fit(dataset,
                 batch_size=ae.BATCH_SIZE, 
                 epochs=args.epochs, 
                 lr=ae.LR, 
@@ -127,10 +127,7 @@ if __name__ == '__main__':
                 output_dir=OUTPUT_DIR, 
                 save_model=True)        # Update old run
         
-        _, feat, labels, test_imgs = ae.eval_model(dataset=dataset, 
-                                batch_size=ae.BATCH_SIZE, 
-                                epoch=ae.EPOCH, 
-                                output_dir=OUTPUT_DIR)
+        _, feat, labels, test_imgs = ae.eval_model(dataset=dataset, output_dir=OUTPUT_DIR)
 
         print(feat.size())
         print(dataset.test.targets.unique()) 

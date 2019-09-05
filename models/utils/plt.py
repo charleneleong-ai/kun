@@ -3,15 +3,12 @@
 ###
 # Created Date: Thursday, August 22nd 2019, 9:25:01 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Fri Aug 30 2019
+# Last Modified: Thu Sep 05 2019
 ###
 
 import numpy as np
 import torch
 
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-from sklearn.manifold import TSNE
 import sklearn.metrics
 
 import matplotlib.pyplot as plt
@@ -21,53 +18,40 @@ sns.set(font_scale=2)
 
 SEED = 489
 
-def plt_scatter(feat, labels, epoch, method, output_dir, pltshow=False):
-    print('Plotting {}_{}.png \n'.format(method, epoch))
-    
-    if feat.shape[1] > 2:            # Reduce to 2 dim
-        if feat.shape[0] > 5000:     # Plot only first 5000 pts   
-            feat = feat[:5000, :]
-            labels = labels[:5000]
-
-        if method == 'pca':
-            pca = PCA(n_components=2, random_state=SEED)
-            feat = pca.fit_transform(feat)
-        elif method == 'tsne':
-            tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=1000, random_state=SEED)
-            feat = tsne.fit_transform(feat)
-
-    labels_list = np.unique(labels)
-    feat = StandardScaler().fit_transform(feat)    # Normalise the data
-    
-    plt.ion()
-    plt.clf()
+def plt_scatter(feat=[], labels=[], colors=[], output_dir='.', plt_name='', pltshow=False):
+    print('Plotting {}\n'.format(plt_name))
+    labels_list = np.unique(labels[labels!=-1])     # -1 is noise 
     palette = sns.color_palette('hls', labels_list.max()+1)
-    colors = [palette[x] if x >= 0 else (0.0, 0.0, 0.0) for x in labels]
+    feat_colors = [palette[x] if x >= 0 else (0.0, 0.0, 0.0) for x in labels]
     ax = plt.subplot()
     ax.tick_params(axis='both', labelsize=10)
-    plt.scatter(feat.T[0], feat.T[1], c=colors, s=8, linewidths=1)
+    
+    if len(colors) == 0:
+        plt.scatter(*feat.T, c=feat_colors, s=8, linewidths=1)
+    else:
+        plt.scatter(*feat[0].T, c=feat_colors, s=8, linewidths=1)
+        for i, f in enumerate(feat[1:]):
+            plt.scatter(*f.T, c=colors[i], s=8, linewidths=1)
+        feat = feat[0]
+
     for label in labels_list:   
         xtext, ytext = np.median(feat[labels == label, :], axis=0)
         txt = ax.text(xtext, ytext, str(label), fontsize=18)
-        txt.set_path_effects([PathEffects.Stroke(linewidth=5, foreground="w"), PathEffects.Normal()])
-
-    plt.draw()
-    plt.ioff()
-    plt_name = '{}_{}.png'.format(method, epoch)
+        txt.set_path_effects([PathEffects.Stroke(linewidth=5, foreground='w'), PathEffects.Normal()])
+    
     plt.savefig(output_dir+'/'+plt_name, bbox_inches='tight')
-
     if pltshow:
         plt.show()
-   
-    return plt.imread(output_dir+'/'+plt_name), plt_name
+    plt.close()
+    return plt.imread(output_dir+'/'+plt_name)
         
         
 def plt_confusion_matrix(y_pred, y_target, output_dir, pltshow=False):
     confusion_matrix = sklearn.metrics.confusion_matrix(y_target, y_pred)
 
     plt.figure(figsize=(16, 14))
-    sns.heatmap(confusion_matrix, annot=True, fmt="d", annot_kws={"size": 20})
-    # plt.title("Confusion matrix", fontsize=10)
+    sns.heatmap(confusion_matrix, annot=True, fmt='d', annot_kws={'size': 20})
+    # plt.title('Confusion matrix', fontsize=10)
     plt.ylabel('True label', fontsize=20)
     plt.xlabel('Clustering label', fontsize=20)
     plt.savefig(output_dir+'/confusion_matrix.png', bbox_inches='tight')

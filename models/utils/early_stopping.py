@@ -3,21 +3,21 @@
 ###
 # Created Date: Wednesday, August 28th 2019, 3:25:31 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Fri Aug 30 2019
+# Last Modified: Thu Sep 05 2019
 ###
 
 import numpy as np
 
 
 class EarlyStopping(object):
-    def __init__(self, mode='min', min_delta=0, patience=10, percentage=False):
+    def __init__(self, mode='min', tol=0, patience=10, percentage=False):
         self.mode = mode
-        self.min_delta = min_delta
+        self.tol = tol
         self.patience = patience
         self.best = None
         self.num_bad_epochs = 0
         self.is_better = None
-        self._init_is_better(mode, min_delta, percentage)
+        self._init_is_better(mode, tol, percentage)
 
         if patience == 0:
             self.is_better = lambda a, b: True
@@ -43,18 +43,18 @@ class EarlyStopping(object):
 
         return False
 
-    def _init_is_better(self, mode, min_delta, percentage):
+    def _init_is_better(self, mode, tol, percentage):
         if mode not in {'min', 'max'}:
             raise ValueError('mode ' + mode + ' is unknown!')
         if not percentage:
             if mode == 'min':
-                self.is_better = lambda a, best: a < best - min_delta
+                self.is_better = lambda a, best: a < best - tol
             if mode == 'max':
-                self.is_better = lambda a, best: a > best + min_delta
+                self.is_better = lambda a, best: a > best + tol
         else:
             if mode == 'min':
                 self.is_better = lambda a, best: a < best - (
-                            best * min_delta / 100)
+                            best * tol / 100)
             if mode == 'max':
                 self.is_better = lambda a, best: a > best + (
-                            best * min_delta / 100)
+                            best * tol / 100)
