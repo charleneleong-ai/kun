@@ -21,7 +21,7 @@
 		}
 	],
 	"settings": {
-		"python.pythonPath": "/root/anaconda3/bin/python",
+		// "python.pythonPath": "/root/anaconda3/bin/python",
 		"psi-header.config": {
 			"forceToTop": true,
 			"blankLinesAfter": 6,

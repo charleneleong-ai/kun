@@ -159,7 +159,11 @@ class AutoEncoder(nn.Module):
             if eval:
                 test_loss, _, _, _ = self.eval_model(dataset, self.BATCH_SIZE, self.EPOCH, plt_imgs, scatter_plt, pltshow, self.OUTPUT_DIR)
                 if es.step(test_loss):  # Early Stopping
-                    test_loss, _, _, _ = self.eval_model(dataset, self.BATCH_SIZE, self.EPOCH+es.num_bad_epochs, plt_imgs, scatter_plt, pltshow, self.OUTPUT_DIR)
+                    # Plot last epoch
+                    test_loss, _, _, _ = self.eval_model(dataset, self.BATCH_SIZE, self.EPOCH, 
+                                                        plt_imgs=(plt_imgs[0], self.EPOCH), 
+                                                        scatter_plt=(scatter_plt[0], self.EPOCH), 
+                                                        pltshow=pltshow, output_dir=self.OUTPUT_DIR)
                     break
 
         train_feat = torch.cat(train_feat, dim=0)
@@ -270,7 +274,7 @@ class AutoEncoder(nn.Module):
 
 
     def load_model(self, output_dir):
-        path = '{}/{}.pth'.format(output_dir, output_dir.strip('./').strip('_output'))
+        path = output_dir+'/{}.pth'.format(os.path.basename(os.path.normpath(output_dir)).strip('_output'))
         # map the parameters from storage to location
         model_checkpt = torch.load(path, map_location=lambda storage, loc: storage)
         self.model_name = model_checkpt['model_name'],
