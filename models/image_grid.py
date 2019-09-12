@@ -115,6 +115,10 @@ if __name__ == '__main__':
     print(image_grid.size())
     image_grid = image_grid.view(-1, 1, 28, 28)
     print(image_grid.size())
-    save_image(image_grid, OUTPUT_DIR+'/_image_grid.png', nrow=20)
-
-  
+    save_image(image_grid, OUTPUT_DIR+'_image_grid.png', nrow=20)
+    
+    
+    # Checking sample idx row by row
+    sample_idx = np.array(sample_idx).reshape(-1, 20)
+    image_grid_0 = imgs[sample_idx[1]].view(-1, 1, 28, 28)
+    save_image(image_grid_0, OUTPUT_DIR+'_image_grid_0.png', nrow=20)

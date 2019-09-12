@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <link rel="stylesheet" href="https://cdn.rawgit.com/Chalarangelo/mini.css/v3.0.1/dist/mini-dark.min.css">
+  <!--
+  MiniCSS Dark Theme
+  <link rel="stylesheet" href="https://cdn.rawgit.com/Chalarangelo/mini.css/v3.0.1/dist/mini-nord.min.css">
+  -->
+
+  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="./static/style.css">
+  <link rel="stylesheet" href="./static/shufflejs.css">
+
+  <meta charset="UTF-8">
+  <title>Kun</title>
+</head>
+
+<div class="common">
+
+  <body>
+
+    <header class="sticky row">
+      <div class="col-sm-12 col-md-10 col-md-offset-1">
+        <a href="https://gitlab.ecs.vuw.ac.nz/leongchar/kun" class="button">Gitlab</a>
+        <a href="https://gitlab.ecs.vuw.ac.nz/leongchar/kun/wikis/home" class="button" target="_blank">Wiki</a>
+        <a href="https://www.overleaf.com/read/bckkvcbpbxbr" class="button" target="_blank">Project Proposal</a>
+      </div>
+    </header>
+    <div class="row">
+      <div class="col-sm-12 col-md-10 col-md-offset-1">
+        <br />
+        <h1>Kun Test<small>MNIST</small></h1>
+        <p>
+          Please identify the incorrect characters
+          <p>
+            </br>
+      </div>
+    </div>
+
+    <!-- Shuffle JS Grid -->
+    <div class="container">
+      <div class="js-grid shuffle-grid">
+        {%- for img in images %}
+        <figure class="js-item column">
+          <div class="aspect aspect--16x9">
+            <div class="aspect__inner">
+              <img src="{{img}}" alt="{{img}}">
+            </div>
+          </div>
+        </figure>
+        {%- endfor %}
+      </div>
+    </div>
+
+
+    </br>
+    <p>Non-exhaustive list of functionalities that could be added.</p>
+
+    <div class="col-sm col-md-8 col-md-offset-2 col-lg-5 col-lg-offset-4 row" style="text-align: center;">
+      <div class="card fluid" style=" width: 80%;">
+        <ul style="text-align: left;">
+          <small>Hyperparameter optimization ; Neural network pruning ;</small>
+          <small>Center and crop image ; Show top-n predictions ;</small>
+          <small>Model versioning ; Load balancer in a cluster ;</small>
+          <small>Add correction and submit options - Re-train...</small>
+        </ul>
+      </div>
+
+    </div>
+    <div class="container" style="height: 8rem; position: relative;">
+      <span class="toast doc" style="position: absolute;">
+        <a href="https://www.victoria.ac.nz/wtapress"> Waiteata Press</a> | Charlene Leong | &copy; 2019
+      </span>
+    </div>
+
+
+    <script src="{{ url_for('static', filename='shuffle.min.js') }}"></script>
+    <script src="./static/index.js"></script>
+  </body>
+
+</div>

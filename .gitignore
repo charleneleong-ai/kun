@@ -15,4 +15,8 @@ MNIST
 __pycache__
 
 # ====== Tensorboard ====== #
+tb_runs
 runs
+
+# ====== Node ====== #
+node_modules
