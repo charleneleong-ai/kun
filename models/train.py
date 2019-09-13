@@ -3,7 +3,7 @@
 ###
 # Created Date: Thursday, September 5th 2019, 2:25:54 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Thu Sep 05 2019
+# Last Modified: Fri Sep 13 2019
 ###
 
 import warnings
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     comment = '_lr={}_bs={}'.format(args.lr, args.batch_size) # Adding comment
     log_dir_name = os.path.basename(os.path.normpath(OUTPUT_DIR)).replace('_output','')+comment
     print(log_dir_name)
-    tb = SummaryWriter(log_dir='./runs/'+log_dir_name)    # Tensorboard
+    tb = SummaryWriter(log_dir='./tb_runs/'+log_dir_name)    # Tensorboard
 
     if args.model=='ae':
         ae = AutoEncoder(tb) 

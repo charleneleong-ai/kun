@@ -4,7 +4,7 @@
 ###
 # Created Date: Thursday, August 22nd 2019, 11:50:30 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Fri Sep 06 2019
+# Last Modified: Fri Sep 13 2019
 ###
 
 import os
@@ -25,6 +25,7 @@ from utils.early_stopping import EarlyStopping
 
 CURRENT_FNAME = os.path.basename(__file__).split('.')[0]
 
+SEED = 489
 
 class AutoEncoder(nn.Module):
     def __init__(self, tb=""):
@@ -229,9 +230,10 @@ class AutoEncoder(nn.Module):
                         feat = tsne.fit_transform(feat)
 
                 feat = MinMaxScaler().fit_transform(feat) 
-                np_img, plt_name = plt_scatter(feat=feat, labels=labels, output_dir=output_dir, 
-                                                plt_name='tsne_{}.png'.format(self.EPOCH), pltshow=pltshow)
-                self.tb.add_image(plt_name, np_img, self.EPOCH, dataformats='HWC')
+                plt_name = 'tsne_{}.png'.format(self.EPOCH)
+                img_plt = plt_scatter(feat=feat, labels=labels, output_dir=output_dir, 
+                                                plt_name=plt_name, pltshow=pltshow)
+                self.tb.add_image(plt_name, img_plt, self.EPOCH, dataformats='HWC')
        
             return test_loss, test_feat, test_labels, test_imgs
     

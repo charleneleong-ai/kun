@@ -67,11 +67,8 @@ class SOM(object):
                 print('Iteration %d' % i)
             
             # select a training example at random
-            rand_int = np.random.randint(0, self.N)
-            print(rand_int)
-            t = self.data[rand_int, :].reshape(np.array([self.M, 1]))
-            
-            
+            t = self.data[np.random.randint(0, self.N), :].reshape(np.array([self.M, 1]))
+   
             # find its Best Matching Unit
             bmu, bmu_idx = self.find_bmu(t, self.net, self.M)
             
@@ -99,3 +96,7 @@ class SOM(object):
                         self.net[x, y, :] = new_w.reshape(1, self.M)
         
         return self.net
+    
+    def get_net_nn(self):
+        centroids = np.array([net[x-1, y-1, :] for x in range(net.shape[0]) for y in range(net.shape[1])])
+        

@@ -54,8 +54,7 @@ def plt_scatter_3D(feat=[], labels=[], colors=[], output_dir='.', plt_name='', p
 
     fig = plt.figure()
     ax = Axes3D(fig)
-    ax.scatter(*feat.T, c=feat_colors, s=8, linewidths=1)
-
+  
     if len(colors) == 0:
         ax.scatter(*feat.T, c=feat_colors, s=8, linewidths=1)
     else:
@@ -68,7 +67,7 @@ def plt_scatter_3D(feat=[], labels=[], colors=[], output_dir='.', plt_name='', p
         xtext, ytext, ztext = np.median(feat[labels == label, :], axis=0)
         txt = ax.text(xtext, ytext, ztext, str(label), fontsize=18)
         txt.set_path_effects([PathEffects.Stroke(linewidth=5, foreground='w'), PathEffects.Normal()])
-    
+
     plt.savefig(output_dir+'/'+plt_name, bbox_inches='tight')
     if pltshow:
         plt.show()
