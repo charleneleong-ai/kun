@@ -6,22 +6,11 @@
 		},
 		{
 			"path": "/Users/chaleong/Google Drive/engr489-2019/kun.wiki"
-		},
-		{
-			"path": "/root/gdrive/engr489-2019/examples/torch/dec-pytorch"
-		},
-		{
-			"path": "/root/gdrive/engr489-2019/examples/torch/DEC_nord_torch"
-		},
-		{
-			"path": "/root/gdrive/engr489-2019/examples/torch/pt-dec"
-		},
-		{
-			"path": "/root/gdrive/engr489-2019/examples/torch/pt-sdae"
 		}
 	],
 	"settings": {
 		// "python.pythonPath": "/root/anaconda3/bin/python",
+		"python.pythonPath": "/Users/chaleong/anaconda3/bin/python3",
 		"psi-header.config": {
 			"forceToTop": true,
 			"blankLinesAfter": 6,

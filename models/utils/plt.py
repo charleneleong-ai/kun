@@ -3,7 +3,7 @@
 ###
 # Created Date: Thursday, August 22nd 2019, 9:25:01 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Thu Sep 05 2019
+# Last Modified: Fri Sep 13 2019
 ###
 
 import numpy as np
@@ -13,6 +13,7 @@ import sklearn.metrics
 
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as PathEffects
+from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
 sns.set(font_scale=2)
 
@@ -44,7 +45,35 @@ def plt_scatter(feat=[], labels=[], colors=[], output_dir='.', plt_name='', plts
         plt.show()
     plt.close()
     return plt.imread(output_dir+'/'+plt_name)
-        
+
+def plt_scatter_3D(feat=[], labels=[], colors=[], output_dir='.', plt_name='', pltshow=False):
+    print('Plotting {}\n'.format(plt_name))
+    labels_list = np.unique(labels[labels!=-1])     # -1 is noise 
+    palette = sns.color_palette('hls', labels_list.max()+1)
+    feat_colors = [palette[x] if x >= 0 else (0.0, 0.0, 0.0) for x in labels]
+
+    fig = plt.figure()
+    ax = Axes3D(fig)
+    ax.scatter(*feat.T, c=feat_colors, s=8, linewidths=1)
+
+    if len(colors) == 0:
+        ax.scatter(*feat.T, c=feat_colors, s=8, linewidths=1)
+    else:
+        ax.scatter(*feat[0].T, c=feat_colors, s=8, linewidths=1)
+        for i, f in enumerate(feat[1:]):
+            ax.scatter(*f.T, c=colors[i], s=8, linewidths=1)
+        feat = feat[0]
+
+    for label in labels_list:   
+        xtext, ytext, ztext = np.median(feat[labels == label, :], axis=0)
+        txt = ax.text(xtext, ytext, ztext, str(label), fontsize=18)
+        txt.set_path_effects([PathEffects.Stroke(linewidth=5, foreground='w'), PathEffects.Normal()])
+    
+    plt.savefig(output_dir+'/'+plt_name, bbox_inches='tight')
+    if pltshow:
+        plt.show()
+    plt.close()
+    return plt.imread(output_dir+'/'+plt_name)      
         
 def plt_confusion_matrix(y_pred, y_target, output_dir, pltshow=False):
     confusion_matrix = sklearn.metrics.confusion_matrix(y_target, y_pred)
