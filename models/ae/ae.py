@@ -4,7 +4,7 @@
 ###
 # Created Date: Thursday, August 22nd 2019, 11:50:30 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Fri Sep 13 2019
+# Last Modified: Sat Sep 14 2019
 ###
 
 import os
@@ -23,12 +23,12 @@ from sklearn.manifold import TSNE
 from utils.plt import plt_scatter
 from utils.early_stopping import EarlyStopping
 
-CURRENT_FNAME = os.path.basename(__file__).split('.')[0]
-
+MODEL = __file__.split('.')[0]
+DIR_PATH = os.path.dirname(os.path.abspath(__file__))
 SEED = 489
 
 class AutoEncoder(nn.Module):
-    def __init__(self, tb=""):
+    def __init__(self, label='', tb=''):
         super(AutoEncoder, self).__init__()
         self.EPOCH = 0
         self.encoder = nn.Sequential(
@@ -59,13 +59,21 @@ class AutoEncoder(nn.Module):
         self.to(self.device)
 
         # Tensorboard SummaryWriter event log
-        if tb!="":
-            self.tb = tb
+        self.tb = tb
+        self.label = label
+
+    def __repr__(self):
+        return '<{}> \n{} \n{} \n\n{}'.format(__class__.__name__, self.encoder, self.decoder, self.device)
         
     def forward(self, batch):                   # batch=x
         encoded = self.encoder(batch)           # z
         decoded = self.decoder(encoded)         # recon_x (x_hat)
         return encoded, decoded
+
+    def tb(self, label, lr, batch_size):
+        timestamp = datetime.now().strftime('%Y.%d.%m-%H:%M:%S')
+        log_dir_name = DIR_PATH+'/{}_{}_{}_lr={}_bs={}'.format(MODEL, label, timestamp, lr, batch_size)
+        return SummaryWriter(log_dir='./tb_runs/'+log_dir_name)    # Tensorboard
     
     def fit(self, dataset, batch_size, epochs, lr, opt='Adam', loss='BCE', patience=0,  
                 eval=True, plt_imgs=None, scatter_plt=None, pltshow=False, output_dir='', save_model=False):
@@ -73,6 +81,8 @@ class AutoEncoder(nn.Module):
         self.BATCH_SIZE = batch_size
         self.LR = lr
         self.OUTPUT_DIR = output_dir
+        if self.tb=='': 
+            self.tb = tb(self.label, lr, batch_size)
         
         # Data Loader for easy mini-batch return in training, the image batch shape will be (BATCH_SIZE, 1, 28, 28)
         train_loader = DataLoader(dataset=dataset.train, batch_size=self.BATCH_SIZE, shuffle=True, num_workers=4)
@@ -211,7 +221,7 @@ class AutoEncoder(nn.Module):
                 decoded = decoded.view(-1, 1, 28, 28)
                 comparison = torch.cat([batch_test[:plt_imgs[0]], decoded[:plt_imgs[0]]])
                 output_dir = self._check_output_dir(output_dir)
-                filename = 'x_recon_{}_{}.png'.format(CURRENT_FNAME.split('.')[0], self.EPOCH)
+                filename = 'x_recon_{}_{}.png'.format(MODEL, self.EPOCH)
                 print('Saving ', filename)
                 save_image(comparison.data.cpu(), output_dir+'/'+filename, nrow=plt_imgs[0])
 
@@ -245,7 +255,7 @@ class AutoEncoder(nn.Module):
         
         torch.save({        # Saving checkpt for inference and/or resuming training
             'model_name': os.path.basename(os.path.normpath(save_path)),
-            'model_type': CURRENT_FNAME.split('.')[0],
+            'model_type': MODEL,
             'model_state_dict': self.state_dict(),
             'device': self.device,
             'lr': self.LR,
@@ -261,7 +271,7 @@ class AutoEncoder(nn.Module):
         )
         config = {          # Save config file
             'model_name': os.path.basename(os.path.normpath(save_path)),
-            'model_type': CURRENT_FNAME.split('.')[0],
+            'model_type': MODEL,
             'device': 'cuda' if torch.cuda.is_available() else 'cpu',
             'lr': self.LR,
             'batch_size': self.BATCH_SIZE,

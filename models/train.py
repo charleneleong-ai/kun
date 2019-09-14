@@ -3,7 +3,7 @@
 ###
 # Created Date: Thursday, September 5th 2019, 2:25:54 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Fri Sep 13 2019
+# Last Modified: Sat Sep 14 2019
 ###
 
 import warnings
@@ -52,13 +52,13 @@ if __name__ == '__main__':
     # ./output/train_ae_[label]_[timestamp]_output/
     OUTPUT_DIR = './output/{}_{}_{}_{}_output'.format(CURRENT_FNAME, args.model, args.label, timestamp)
 
-    comment = '_lr={}_bs={}'.format(args.lr, args.batch_size) # Adding comment
-    log_dir_name = os.path.basename(os.path.normpath(OUTPUT_DIR)).replace('_output','')+comment
-    print(log_dir_name)
-    tb = SummaryWriter(log_dir='./tb_runs/'+log_dir_name)    # Tensorboard
+    # comment = '_lr={}_bs={}'.format(args.lr, args.batch_size) # Adding comment
+    # log_dir_name = os.path.basename(os.path.normpath(OUTPUT_DIR)).replace('_output','')+comment
+    # print(log_dir_name)
+    # tb = SummaryWriter(log_dir='./tb_runs/'+log_dir_name)    # Tensorboard
 
     if args.model=='ae':
-        ae = AutoEncoder(tb) 
+        ae = AutoEncoder(label=args.label) 
     elif args.model=='conv_ae':
         ae = ConvAutoEncoder() 
 
