@@ -10,15 +10,14 @@
 
   <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
-  <link rel="stylesheet" href="./static/style.css">
-  <link rel="stylesheet" href="./static/shufflejs.css">
+  <link rel="stylesheet" href="./static/css/style.css">
+  <link rel="stylesheet" href="./static/css/shufflejs.css">
 
   <meta charset="UTF-8">
   <title>Kun</title>
 </head>
 
 <div class="common">
-
   <body>
 
     <header class="sticky row">
@@ -30,12 +29,13 @@
     </header>
     <div class="row">
       <div class="col-sm-12 col-md-10 col-md-offset-1">
-        <br />
+        <br/>
         <h1>Kun Test<small>MNIST</small></h1>
-        <p>
-          Please identify the incorrect characters
-          <p>
-            </br>
+        <p>Please identify the incorrect characters<p>
+        <form action="./upload" method="POST" style='display: inline'>
+          <button id='upload' class='primary'>Upload</button>
+        </form>
+      </br>
       </div>
     </div>
 
@@ -76,8 +76,9 @@
     </div>
 
 
-    <script src="{{ url_for('static', filename='shuffle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/shuffle.min.js') }}"></script>
     <script src="./static/index.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   </body>
 
 </div>

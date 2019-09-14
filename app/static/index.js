@@ -9,6 +9,7 @@ var myShuffle = new Shuffle(document.querySelector('.shuffle-grid'), {
   buffer: 1,
 });
 
+
 // let images = getImagesFromDir(path.join(__dirname, 'imgs'));
 // var images = getImagesFromDir('./imgs')
 // console.log(images)
