@@ -7,11 +7,11 @@
   MiniCSS Dark Theme
   <link rel="stylesheet" href="https://cdn.rawgit.com/Chalarangelo/mini.css/v3.0.1/dist/mini-nord.min.css">
   -->
-
+  <link href="{{url_for('static', filename='css/style.css')}}" rel="stylesheet" media="screen">
+  <link href="{{url_for('static', filename='css/shufflejs.css')}}" rel="stylesheet" media="screen">
   <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
-  <link rel="stylesheet" href="./static/css/style.css">
-  <link rel="stylesheet" href="./static/css/shufflejs.css">
+
 
   <meta charset="UTF-8">
   <title>Kun</title>
@@ -32,9 +32,11 @@
         <br/>
         <h1>Kun Test<small>MNIST</small></h1>
         <p>Please identify the incorrect characters<p>
-        <form action="./upload" method="POST" style='display: inline'>
-          <button id='upload' class='primary'>Upload</button>
-        </form>
+        <!-- <form action="./tasks" method="POST" style='display: inline'> -->
+          <!-- <a href=# > -->
+            <button id=upload type="button" class="btn btn-primary">Upload</a>
+         <!-- <button id=upload class='btn btn-primary'>Upload</a> -->
+        <!-- </form> -->
       </br>
       </div>
     </div>
@@ -54,6 +56,57 @@
       </div>
     </div>
 
+    <div class="starter-template">
+        <div>
+          <h3>Task Status</h3>
+          <br>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Task</th>
+                <th>ID</th>
+                <th>Status</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td id='task_type'></td>
+                <td id='task_id'></td>
+                <td id='task_status'></td>
+                <td id='task_result'></td>
+              </tr>
+            </tbody>
+            <!-- <tbody id="task_type">
+            </tbody> -->
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- <div class="container">
+        <div class="row">
+          <div class="col">
+            <h5 class="mt-3 mb-3">Job queue</h5>
+            {% if jobs %}
+            {% for job in jobs %}
+            <div class="card mb-3">
+              <div class="card-body">
+                <h6>{{ job.func_name }}</h6>
+                <p>Args: {{ job.args }}</p>
+                <small class="text-muted d-block">Job ID: {{ job.id }}</small>
+                <small class="text-muted d-block">Status: {{ job.status }}</small>
+                <small class="text-muted d-block">Created at: {{ job.created_at.strftime('%a, %d %b %Y %H:%M:%S') }}</small>
+                <small class="text-muted d-block">Enqueued at: {{ job.enqueued_at.strftime('%a, %d %b %Y %H:%M:%S') }}</small>
+              </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p>No jobs in the queue</p>
+            {% endif %}
+          </div>
+        </div>
+      </div> -->
 
     </br>
     <p>Non-exhaustive list of functionalities that could be added.</p>
@@ -76,9 +129,10 @@
     </div>
 
 
-    <script src="{{ url_for('static', filename='js/shuffle.min.js') }}"></script>
-    <script src="./static/index.js"></script>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="{{ url_for('static', filename='index.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/shuffle.min.js') }}"></script>
+    {% block js %}{% endblock %}
   </body>
 
 </div>

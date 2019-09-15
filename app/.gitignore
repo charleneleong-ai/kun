@@ -1,0 +1,14 @@
+
+# ====== Node ====== #
+node_modules
+
+
+# ====== DB ====== #
+*.rdb
+*.db
+
+# ====== Test files ====== #
+*test*
+
+# ====== Image dirs ====== #
+*imgs*

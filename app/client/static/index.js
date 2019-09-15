@@ -1,6 +1,51 @@
 
 
 
+$( document ).ready(() => {
+  console.log('Sanity Check!');
+});
+
+// $('#upload').on('click', function() {
+$('#upload').bind('click', function() {
+  $.ajax({
+    url: '/tasks/upload',
+    method: 'POST'
+  })
+  .done((res) => {
+    console.log(res)
+    getStatus(res.data.task_type, res.data.task_id)
+    
+  })
+  .fail((err) => {
+    console.log(err)
+  });
+});
+
+function getStatus(taskType, taskID) {
+  $.ajax({
+    url: `/tasks/${taskType}/${taskID}`,
+    method: 'GET'
+  })
+  .done((res) => {
+    document.getElementById("task_type").innerHTML = res.data.task_type;
+    document.getElementById("task_id").innerHTML = res.data.task_id;
+    document.getElementById("task_status").innerHTML = res.data.task_status;
+    document.getElementById("task_result").innerHTML = res.data.task_result;
+
+    const taskStatus = res.data.task_status;
+    if (taskStatus === 'finished' || taskStatus === 'failed') return false;
+    setTimeout(function() {
+      getStatus(res.data.task_type, res.data.task_id);
+    }, 1000);
+    
+  })
+  .fail((err) => {
+    console.log(err)
+  });
+}
+
+
+
 var Shuffle = window.Shuffle;
 
 var myShuffle = new Shuffle(document.querySelector('.shuffle-grid'), {
@@ -8,7 +53,6 @@ var myShuffle = new Shuffle(document.querySelector('.shuffle-grid'), {
   sizer: '.my-sizer-element',
   buffer: 1,
 });
-
 
 // let images = getImagesFromDir(path.join(__dirname, 'imgs'));
 // var images = getImagesFromDir('./imgs')

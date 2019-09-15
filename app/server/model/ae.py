@@ -4,7 +4,7 @@
 ###
 # Created Date: Thursday, August 22nd 2019, 11:50:30 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Sat Sep 14 2019
+# Last Modified: Sun Sep 15 2019
 ###
 
 import os
@@ -20,11 +20,8 @@ from torch.utils.tensorboard import SummaryWriter
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.manifold import TSNE
 
-# TODO: remove later
-import sys 
-sys.path.append('../models/')
-from utils.plt import plt_scatter
-from utils.early_stopping import EarlyStopping
+from .utils.plt import plt_scatter
+from .utils.early_stopping import EarlyStopping
 
 MODEL = os.path.basename(__file__).split('.')[0]
 SEED = 489

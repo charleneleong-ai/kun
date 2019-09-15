@@ -3,7 +3,7 @@
 ###
 # Created Date: Thursday, September 5th 2019, 9:14:26 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Sat Sep 14 2019
+# Last Modified: Sun Sep 15 2019
 ###
 
 import warnings
@@ -14,75 +14,125 @@ import os
 from datetime import datetime
 
 from flask import Flask
-from flask import render_template
+from flask import render_template, url_for
 from flask import request, redirect, jsonify
 from flask_sqlalchemy import SQLAlchemy
 
-from model.ae import AutoEncoder
+from server import create_app
 
-# TODO: remove later
-import sys
-sys.path.append('../models/')
-from utils.datasets import FilteredMNIST
-from utils.plt import plt_scatter
+import redis
+from rq import Connection, Worker
 
-ROOT_DIR = os.path.dirname(__file__)
-DB_FILE = 'sqlite:///{}'.format(os.path.join(ROOT_DIR, 'images.db'))
+from server.tasks import train, filtered_MNIST
+
 
 HOST = '0.0.0.0'
 PORT = 8888
 
 # OUTPUT_DIR = max(glob.iglob('./../models/output/*output/'), key=os.path.getctime)
 
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = DB_FILE
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# app = Flask(__name__,
+#         template_folder='./client/templates',
+#         static_folder='./client/static'
+#         )
+        
 
-db = SQLAlchemy(app)
+# r = redis.Redis()
+# q = Queue(connection=r)
 
-class Image(db.Model):
-    idx = db.Column(db.Integer, primary_key=True, nullable=False)
-    label = db.Column(db.Integer, nullable=False)
-    image_path = db.Column(db.String, nullable=False)
+# db = SQLAlchemy(app)
+
+# app = create_app()
+
+# db = SQLAlchemy(app)
+
+app = create_app()
 
 
-@app.route('/', methods=['GET', 'POST'])
-def home():
-    images = glob.glob('static/imgs/*.png')
-    return render_template('home.html', images=images)
+# @cli.command('run_worker')
+def run_worker():
+    redis_url = app.config['REDIS_URL']
+    redis_connection = redis.from_url(redis_url)
+    with Connection(redis_connection):
+        worker = Worker(app.config['QUEUES'])
+        worker.work()
 
-@app.route('/upload', methods=['POST'])
-def upload():
-    dataset = FilteredMNIST(label=8, split=0.8, n_noise_clusters=3)
-    train(dataset)
-    return redirect('/')
+# @app.route('/', methods=['GET', 'POST'])
+# def home():
+#     images = os.listdir(os.path.join(app.static_folder, 'imgs'))
+#     images = [url_for('static', filename=os.path.join('imgs', img)) for img in images]
+#     return render_template('home.html', images=images)
 
-@app.route('/train', methods=['POST'])
-def train(dataset):
-    EPOCHS = 50
-    BATCH_SIZE = 128
-    LR = 1e-3       
-    N_TEST_IMGS = 8
-
-    ae = AutoEncoder()
-
-    timestamp = datetime.now().strftime('%Y.%d.%m-%H:%M:%S')
-    OUTPUT_DIR = './output/{}_{}_{}'.format('ae', dataset.LABEL, timestamp)
-    print(OUTPUT_DIR)
-    ae.fit(dataset, 
-            batch_size=BATCH_SIZE, 
-            epochs=EPOCHS, 
-            lr=LR, 
-            opt='Adam',         # Adam
-            loss='BCE',         # BCE or MSE
-            patience=10,        # Num epochs for early stopping
-            eval=True,          # Eval training process with test data
-            plt_imgs=(N_TEST_IMGS, 10),         # (N_TEST_IMGS, plt_interval)
-            scatter_plt=('tsne', 10),           # ('method', plt_interval)
-            output_dir=OUTPUT_DIR, 
-            save_model=True)        # Also saves dataset
+# @app.route('/', methods=['GET', 'POST'])
+# def home():
+#     return render_template('home.html')
     
-    return redirect('/')
+# @app.route('/upload', methods=['POST'])
+# def upload():
+#     label = 8
+#     task = q.enqueue(filtered_MNIST, 8)  # Send a training job to the task queue
+
+#     response = {
+#         'status': 'success',
+#         'data': {
+#             'task_id': task.get_id()
+#         }
+#     }
+
+#     return render_template('home.html', response=response)
+
+# # @app.route('/train', methods=['POST'])
+# # tasks
+
+# @app.route('/upload/<task_id>', methods=['GET'])
+# def get_status(task_id):
+#     # with Connection(redis.from_url(current_app.config['REDIS_URL'])):
+#     #     q = Queue()
+#     task = q.fetch_job(task_id)
+#     if task:
+#         response_object = {
+#             'status': 'success',
+#             'data': {
+#                 'task_id': task.get_id(),
+#                 'task_status': task.get_status(),
+#                 'task_result': task.result,
+#             }
+#         }
+#     else:
+#         response_object = {'status': 'error'}
+#     return jsonify(response_object)
+
+
+def add_task():
+    jobs = q.jobs  # Get a list of jobs in the queue
+    message = None
+
+    if request.args:  # Only run if a query string is sent in the request
+
+        url = request.args.get("url")  # Gets the URL coming in as a query string
+
+        task = q.enqueue(count_words, url)  # Send a job to the task queue
+
+        jobs = q.jobs  # Get a list of jobs in the queue
+
+        q_len = len(q)  # Get the queue length
+
+        message = f"Task queued at {task.enqueued_at.strftime('%a, %d %b %Y %H:%M:%S')}. {q_len} jobs queued"
+
+    return render_template("add_task.html", message=message, jobs=jobs)
+
+def run_task():
+    task_type = request.form['type']
+    with Connection(redis.from_url(app.config['REDIS_URL'])):
+        q = Queue()
+        task = q.enqueue(create_task, task_type)
+    response_object = {
+        'status': 'success',
+        'data': {
+            'task_id': task.get_id()
+        }
+    }
+    return jsonify(response_object), 202
 
 def load_model(dataset):
     # assume latest model
@@ -137,8 +187,18 @@ def load_model(dataset):
     # output data
     # return json.dumps(results)
 
+
+def run_worker():
+    redis_url = app.config['REDIS_URL']
+    redis_connection = redis.from_url(redis_url)
+    with Connection(redis_connection):
+        worker = Worker(app.config['QUEUES'])
+        worker.work()
+
+
 if __name__ == '__main__':
     # run web server
+    # run_worker()
     app.run(host=HOST,
             debug=True,  # automatic reloading enabled
             port=PORT)
