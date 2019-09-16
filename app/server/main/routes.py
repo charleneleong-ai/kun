@@ -3,16 +3,17 @@
 ###
 # Created Date: Sunday, September 15th 2019, 6:35:09 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Sep 16 2019
+# Last Modified: Tue Sep 17 2019
 ###
 
 # project/server/main/views.py
 
+import os
 
 import redis
 from rq import Queue, Connection
 from flask import render_template, Blueprint, jsonify, \
-    request, redirect,current_app, session
+    url_for, request, redirect,current_app, session
 
 from server.worker import conn
 from server.main import bp
@@ -21,7 +22,9 @@ from server.main.tasks import train, filtered_MNIST, process_imgs
 @bp.route('/', methods=['GET'])
 def home():
     jobs = current_app.task_queue.jobs  # Get a list of jobs in the queue
-    return render_template('/home.html')
+    img_names = os.listdir(current_app.config['IMG_DIR'])
+    imgs = [url_for('static', filename=os.path.join('imgs', img)) for img in img_names]
+    return render_template('/shuffle.html', imgs=imgs)
 
 
 @bp.route('/tasks/<task_type>', methods=['POST'])

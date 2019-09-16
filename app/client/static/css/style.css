@@ -2,29 +2,31 @@
     text-align: center;
 }
 
-.boxitem {
-    display: inline-block;
-    vertical-align: top;
+* { box-sizing: border-box; }
+
+
+.container {
+    width: 93%;
+    margin: auto;
 }
 
-/* #inputimg {
-    vertical-align: top;
-    border: solid 1px black;
-}
+.grid {
+    height: 75%; /* inherit height from body */
+  }
 
-#clearbtn {
-    width: 100%;
-    font-size: medium;
+/* clear fix */
+.grid:after {
+    content: '';
     display: block;
-} */
-
-/* #predictdigit {
-    width: 196px;
-    height: 196px;
-    line-height: 196px;
-    font-size: 160px;
-    border: solid 1px black;
-    background-color: white;
-    font-family: Century;
-} */
+    clear: both;
+  }
+  
+.grid-sizer,
+.grid-item {
+    float: left;
+    width: 5%;
+    height: 5%;
+    border: 2px solid #333;
+    border-color: hsla(0, 0%, 0%, 0.7);
+}
 

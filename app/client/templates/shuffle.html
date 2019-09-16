@@ -1,0 +1,35 @@
+<!--
+Created Date: Monday, September 16th 2019, 7:03:49 pm
+Author: Charlene Leong leongchar@myvuw.ac.nz
+Last Modified: Tue Sep 17 2019
+-->
+
+
+{% extends "_base.html" %}
+
+{% block css %}
+<link href="{{url_for('static', filename='css/shufflejs.css')}}" rel="stylesheet" media="screen">
+{% endblock %}
+
+{% block content %}
+<!-- Shuffle JS Grid -->
+<div class="container">
+    <div id='img-grid' class="js-grid shuffle-grid">
+        {%- for img in imgs %}
+        <figure class="js-item column">
+            <div class="aspect">
+                <div class="aspect__inner">
+                    <img src="{{img}}" alt="{{img}}">
+                </div>
+            </div> 
+        </figure>
+        {%- endfor %}
+    </div>
+</div>
+
+{% endblock %}
+
+<!-- {% block js %}
+<script src="{{ url_for('static', filename='js/shuffle.js') }}"></script>
+<script src="{{ url_for('static', filename='js/shuffle.min.js') }}"></script>
+{% endblock %} -->

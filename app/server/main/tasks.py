@@ -32,7 +32,9 @@ SEED = 489
 np.random.seed(SEED)
 random.seed(SEED)
 
-# RQ Task
+def filtered_MNIST(label):
+    return FilteredMNIST(label=label, split=0.8, n_noise_clusters=3, download_dir=app.config['RAW_IMG_DIR'])
+    
 def train(dataset):
     EPOCHS = 1
     BATCH_SIZE = 128
@@ -60,10 +62,6 @@ def train(dataset):
     
     return OUTPUT_DIR
 
-def filtered_MNIST(label):
-    return FilteredMNIST(label=label, split=0.8, n_noise_clusters=3, download_dir=app.config['RAW_IMG_DIR'])
-    
-# RQ Task
 def process_imgs():
     # Return latest model by default
     OUTPUT_DIR = max(glob.iglob(app.config['MODEL_OUTPUT_DIR']+'/*/'), key=os.path.getctime)

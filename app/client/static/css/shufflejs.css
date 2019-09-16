@@ -6,18 +6,14 @@
 
 
 
-/* quick grid */
-.container {
-    width: 93%;
-    margin: auto;
-}
 
 /* Bootstrap-style columns */
 .column {
     position: relative;
     float: left;
-    min-height: 1px;
-    width: 25%;
+    /* min-height: 1px; */
+    width: 5%;
+    /* height: 5%; */
     padding-left: 4px;
     padding-right: 4px;
 
@@ -41,6 +37,7 @@
 
 /* Ensure images take up the same space when they load */
 /* https://vestride.github.io/Shuffle/images */
+
 .aspect {
     position: relative;
     width: 100%;
@@ -89,7 +86,4 @@ figure {
     margin: 0;
     padding: 0;
 }
-
-
-
 

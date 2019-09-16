@@ -1,0 +1,114 @@
+<!--
+Created Date: Monday, September 16th 2019, 6:56:22 pm
+Author: Charlene Leong leongchar@myvuw.ac.nz
+Last Modified: Tue Sep 17 2019
+-->
+
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>Kun</title>
+  <!-- meta -->
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <!-- styles -->
+  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <link rel="stylesheet" href="https://cdn.rawgit.com/Chalarangelo/mini.css/v3.0.1/dist/mini-dark.min.css">
+  <!--
+  MiniCSS Dark Theme
+  <link rel="stylesheet" href="https://cdn.rawgit.com/Chalarangelo/mini.css/v3.0.1/dist/mini-nord.min.css">
+  -->
+  <link href="{{url_for('static', filename='css/style.css')}}" rel="stylesheet" media="screen">
+  {% block css %}{% endblock %}
+
+</head>
+
+<div class="common">
+
+  <body>
+    <header class="sticky row">
+      <div class="col-sm-12 col-md-10 col-md-offset-1">
+        <a href="https://gitlab.ecs.vuw.ac.nz/leongchar/kun" class="button">Gitlab</a>
+        <a href="https://gitlab.ecs.vuw.ac.nz/leongchar/kun/wikis/home" class="button" target="_blank">Wiki</a>
+        <a href="https://www.overleaf.com/read/bckkvcbpbxbr" class="button" target="_blank">Project Proposal</a>
+      </div>
+    </header>
+    <div class="row">
+      <div class="col-sm-12 col-md-10 col-md-offset-1">
+        <br />
+        <h1>Kun Test<small>MNIST</small></h1>
+        <p>Please identify the incorrect characters<p>
+            <!-- <form action="./tasks" method="POST" style='display: inline'> -->
+            <!-- <a href=# > -->
+            <button id=upload type="button" class="btn btn-primary">Upload</a>
+              <!-- <button id=upload class='btn btn-primary'>Upload</a> -->
+              <!-- </form> -->
+              </br>
+
+      </div>
+    </div>
+
+   
+    <div class="container">
+      {% block content %}{% endblock %}
+    </div>
+    </br>
+
+    <div class="container">
+      <div class="starter-template">
+        <div>
+          <br>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Task</th>
+                <th>ID</th>
+                <th>Status</th>
+                <th>Result</th>
+              </tr> 
+            </thead>
+            <tbody>
+              <tr>
+                <td id='task_type'></td>
+                <td id='task_id'></td>
+                <td id='task_status'></td>
+                <td id='task_result'></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    </br>
+
+    <div class="col-sm col-md-8 col-md-offset-2 col-lg-5 col-lg-offset-4 row" style="text-align: center;">
+      <p>Non-exhaustive list of functionalities that could be added.</p>
+      <div class="card fluid" style=" width: 80%;">
+        <ul style="text-align: left;">
+          <small>Hyperparameter optimization ; Neural network pruning ;</small>
+          <small>Center and crop image ; Show top-n predictions ;</small>
+          <small>Model versioning ; Load balancer in a cluster ;</small>
+          <small>Add correction and submit options - Re-train...</small>
+        </ul>
+      </div>
+    </div>
+
+    <div class="container" style="height: 8rem; position: relative;">
+      <span class="toast doc" style="position: absolute;">
+        <a href="https://www.victoria.ac.nz/wtapress"> Waiteata Press</a> | Charlene Leong | &copy; 2019
+      </span>
+    </div>
+
+    <script src="https://unpkg.com/isotope-layout@3/dist/isotope.pkgd.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+    {% block js %}{% endblock %}
+  </body>
+
+</div>
