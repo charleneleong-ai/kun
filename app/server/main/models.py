@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 10:41:07 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Sun Sep 15 2019
+# Last Modified: Mon Sep 16 2019
 ###
 
 import os
@@ -60,3 +60,23 @@ class Image(db.Model):
 
     def __repr__(self):
         return '<Image {}_{}_{}>'.format(idx, label, image_path)
+
+# TODO: Refactor task into db 
+# https://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-xxii-background-jobs
+class Task(db.Model):
+    id = db.Column(db.String(36), primary_key=True)
+    name = db.Column(db.String(128), index=True)
+    description = db.Column(db.String(128))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    complete = db.Column(db.Boolean, default=False)
+
+    def get_rq_job(self):
+        try:
+            rq_job = rq.job.Job.fetch(self.id, connection=current_app.redis)
+        except (redis.exceptions.RedisError, rq.exceptions.NoSuchJobError):
+            return None
+        return rq_job
+
+    def get_progress(self):
+        job = self.get_rq_job()
+        return job.meta.get('progress', 0) if job is not None else 100

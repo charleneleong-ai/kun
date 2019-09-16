@@ -4,7 +4,7 @@
 ###
 # Created Date: Thursday, August 22nd 2019, 11:50:30 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Sun Sep 15 2019
+# Last Modified: Mon Sep 16 2019
 ###
 
 import os
@@ -25,6 +25,7 @@ from .utils.early_stopping import EarlyStopping
 
 MODEL = os.path.basename(__file__).split('.')[0]
 SEED = 489
+torch.manual_seed(SEED)
 
 class AutoEncoder(nn.Module):
     def __init__(self, tb=''):
@@ -69,8 +70,11 @@ class AutoEncoder(nn.Module):
         return encoded, decoded
 
     def gen_tb(self, output_dir, lr, batch_size, ):
-        log_dir_name ='{}_lr={}_bs={}'.format(output_dir, lr, batch_size)
-        return SummaryWriter(log_dir='./tb_runs/'+log_dir_name)    # Tensorboard
+        base_output_dir = os.path.join(output_dir, '..')    # output folder
+        output_dir = os.path.basename(os.path.normpath(output_dir))
+        comment ='{}_lr={}_bs={}'.format(output_dir, lr, batch_size)
+        log_dir_name = os.path.join(base_output_dir, 'tb_runs', comment)
+        return SummaryWriter(log_dir=log_dir_name)    # Tensorboard
         
     def fit(self, dataset, batch_size, epochs, lr, opt='Adam', loss='BCE', patience=0,  
                 eval=True, plt_imgs=None, scatter_plt=None, pltshow=False, output_dir='', save_model=False):
@@ -79,7 +83,6 @@ class AutoEncoder(nn.Module):
         self.LR = lr
         self.OUTPUT_DIR = output_dir
         if self.tb=='':  
-            output_dir = os.path.basename(os.path.normpath(output_dir))
             self.tb = self.gen_tb(output_dir, lr, batch_size)
 
         # Data Loader for easy mini-batch return in training, the image batch shape will be (BATCH_SIZE, 1, 28, 28)
@@ -130,10 +133,7 @@ class AutoEncoder(nn.Module):
                 self.optimizer.step()                    # apply gradients
 
                 epoch_loss += self.loss.item()*batch_train.size(0)
-
-                #train_feat = torch.cat((train_feat, encoded.data.cpu().view(batch_train.size(0), -1)), dim=0)
-                #train_labels = torch.cat((train_labels, batch_train_label.type(torch.FloatTensor)), dim=0)
-                #train_imgs = torch.cat((train_imgs, batch_train.cpu()), dim=0)
+                
                 train_feat.append(encoded.data.cpu().view(batch_train.size(0), -1))
                 train_labels.append(batch_train_label)
                 train_imgs.append(batch_train.cpu())
@@ -165,17 +165,22 @@ class AutoEncoder(nn.Module):
             if eval:
                 test_loss, _, _, _ = self.eval_model(dataset, plt_imgs, scatter_plt, pltshow, self.OUTPUT_DIR)
                 if es.step(test_loss):  # Early Stopping
-                    test_loss, _, _, _ = self.eval_model(dataset,           # Plot last epoch
-                                            plt_imgs=(plt_imgs[0], self.EPOCH),         # (N_TEST_IMGS, plt_interval)
-                                            scatter_plt=(scatter_plt[0], self.EPOCH),   # ('method', plt_interval)
-                                            pltshow=pltshow, output_dir=self.OUTPUT_DIR)
+                    if plt_imgs != None: 
+                        plt_imgs = (plt_imgs[0], self.EPOCH)
+                    if scatter_plt != None:
+                        scatter_plt = (scatter_plt[0], self.EPOCH)
+                    self.eval_model(dataset,           # Plot last epoch
+                                    plt_imgs=plt_imgs,         # (N_TEST_IMGS, plt_interval)
+                                    scatter_plt=scatter_plt,   # ('method', plt_interval)
+                                    pltshow=pltshow, output_dir=self.OUTPUT_DIR)
                     break
 
         train_feat = torch.cat(train_feat, dim=0)
         train_labels = torch.cat(train_labels, dim=0)
         train_imgs = torch.cat(train_imgs, dim=0)
         self.tb.add_embedding(train_feat, metadata=train_labels, label_img=train_imgs, global_step=n_iter)
-        self.tb.add_images('decoded_row_{}_epochs_{}'.format(row, plt_imgs[1]), decoded_plt, self.EPOCH)   
+        if plt_imgs!=None:
+            self.tb.add_images('decoded_row_{}_epochs_{}'.format(row, plt_imgs[1]), decoded_plt, self.EPOCH)   
         
         # =================== SAVE MODEL AND DATA ==================== #
         if save_model: 
@@ -184,7 +189,6 @@ class AutoEncoder(nn.Module):
             
     def eval_model(self, dataset, plt_imgs=None, scatter_plt=None, pltshow=False, output_dir=''):
             test_loader = DataLoader(dataset=dataset.test, batch_size=self.BATCH_SIZE, shuffle=True, num_workers=4)
-            
             self.eval()  
             test_loss = 0   
             test_feat = []
@@ -249,11 +253,12 @@ class AutoEncoder(nn.Module):
                 
     def save_model(self, dataset, output_dir):
         output_dir = self._check_output_dir(output_dir)  
-        save_path = '{}/{}.pth'.format(output_dir, output_dir.strip('./').strip('_output'))
         dataset.save_dataset(output_dir)
         
+        model_name = '{}.pth'.format(os.path.basename(os.path.normpath(output_dir)))
+        save_path = os.path.join(output_dir, model_name)
         torch.save({        # Saving checkpt for inference and/or resuming training
-            'model_name': os.path.basename(os.path.normpath(save_path)),
+            'model_name': model_name,
             'model_type': MODEL,
             'model_state_dict': self.state_dict(),
             'device': self.device,
@@ -269,7 +274,7 @@ class AutoEncoder(nn.Module):
             save_path
         )
         config = {          # Save config file
-            'model_name': os.path.basename(os.path.normpath(save_path)),
+            'model_name': model_name,
             'model_type': MODEL,
             'device': 'cuda' if torch.cuda.is_available() else 'cpu',
             'lr': self.LR,
@@ -290,9 +295,10 @@ class AutoEncoder(nn.Module):
 
 
     def load_model(self, output_dir):
-        path = output_dir+'/{}.pth'.format(os.path.basename(os.path.normpath(output_dir)).replace('_output', ''))
+        model_name = '{}.pth'.format(os.path.basename(os.path.normpath(output_dir)))
+        model_path = os.path.join(output_dir, model_name)
         # map the parameters from storage to location
-        model_checkpt = torch.load(path, map_location=lambda storage, loc: storage)
+        model_checkpt = torch.load(model_path, map_location=lambda storage, loc: storage)
         self.model_name = model_checkpt['model_name'],
         self.LR = model_checkpt['lr'],
         self.BATCH_SIZE = model_checkpt['batch_size'],

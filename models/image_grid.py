@@ -3,7 +3,7 @@
 ###
 # Created Date: Thursday, September 5th 2019, 3:19:07 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Fri Sep 13 2019
+# Last Modified: Mon Sep 16 2019
 ###
 
 
@@ -24,7 +24,6 @@ from sklearn.metrics import pairwise_distances_argmin_min
 from torchvision.utils import save_image, make_grid
 
 from hdbscan import HDBSCAN
-# import somoclu
 
 from ae import AutoEncoder, ConvAutoEncoder
 from utils.datasets import FilteredMNIST

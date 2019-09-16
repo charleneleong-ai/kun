@@ -3,7 +3,7 @@
 ###
 # Created Date: Thursday, August 22nd 2019, 9:25:01 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Fri Sep 13 2019
+# Last Modified: Mon Sep 16 2019
 ###
 
 import numpy as np
@@ -16,8 +16,6 @@ import matplotlib.patheffects as PathEffects
 from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
 sns.set(font_scale=2)
-
-SEED = 489
 
 def plt_scatter(feat=[], labels=[], colors=[], output_dir='.', plt_name='', pltshow=False):
     print('Plotting {}\n'.format(plt_name))

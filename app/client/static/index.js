@@ -8,7 +8,7 @@ $( document ).ready(() => {
 // $('#upload').on('click', function() {
 $('#upload').bind('click', function() {
   $.ajax({
-    url: '/tasks/upload',
+    url: '/tasks/process_imgs',
     method: 'POST'
   })
   .done((res) => {

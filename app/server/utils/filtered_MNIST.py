@@ -3,9 +3,10 @@
 ###
 # Created Date: Monday, August 26th 2019, 12:13:26 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Thu Sep 05 2019
+# Last Modified: Mon Sep 16 2019
 ###
 
+import os
 import numpy as np
 import random
 
@@ -22,13 +23,14 @@ np.random.seed(SEED)
 random.seed(SEED)
 
 class FilteredMNIST(Dataset):
-    def __init__(self, label=0, split=0.8, n_noise_clusters=2, output_dir=""):
+    def __init__(self, label=0, split=0.8, n_noise_clusters=2, download_dir='', output_dir=''):
         super(Dataset, self).__init__()
 
-        if output_dir=="":      # If training
+        if output_dir=='':      # If training
             self.LABEL = label
             self.N_NOISE_CLUSTERS = n_noise_clusters
             self.SPLIT= split
+            self.DOWNLOAD_DIR = download_dir
             self.train, self.test = self._load_filtered_mnist()
         else:
             self.load_dataset(output_dir)
@@ -37,14 +39,14 @@ class FilteredMNIST(Dataset):
         # =================== LOAD DATA ===================== #
         # MNIST dataset - download from torchvision.datasets.mnist
         # https://pytorch.org/docs/stable/torchvision/datasets.html#mnist
-        mnist_train = MNIST('./',                  # Download dir
+        mnist_train = MNIST(self.DOWNLOAD_DIR,                  # Download dir
                 train=True,                         # Download training data 
                 transform=transforms.ToTensor(),    # Converts a PIL.Image or numpy.ndarray (H x W x C) [0, 255]
                                                     # to a torch.FloatTensor of shape (C x H x W) in the range [0.0, 1.0].
                 download=True
                 )
 
-        mnist_test = MNIST('./',                    # Download dir
+        mnist_test = MNIST(self.DOWNLOAD_DIR,                    # Download dir
                 train=False,                         # Download test data
                 transform=transforms.ToTensor()
                 )
@@ -122,7 +124,7 @@ class FilteredMNIST(Dataset):
         return full, test
 
     def save_dataset(self, output_dir):
-        save_path = output_dir+'/filtered_mnist.pt'
+        save_path = os.path.join(output_dir, 'filtered_mnist.pt')
         torch.save({
             'label': self.LABEL,
             'n_noise_clusters': self.N_NOISE_CLUSTERS,
@@ -134,7 +136,7 @@ class FilteredMNIST(Dataset):
             )
     
     def load_dataset(self, output_dir):
-        path = output_dir+'/filtered_mnist.pt'
+        path = os.path.join(output_dir, 'filtered_mnist.pt')
         dataset = torch.load(path, map_location=lambda storage, loc: storage)
         self.LABEL = dataset['label']
         self.N_NOISE_CLUSTERS = dataset['n_noise_clusters']

@@ -3,10 +3,12 @@
 ###
 # Created Date: Thursday, September 12th 2019, 9:53:52 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Sat Sep 14 2019
+# Last Modified: Mon Sep 16 2019
 ###
 
 import numpy as np
+SEED = 489
+np.random.seed(SEED)
 
 class SOM(object):
     def __init__(self, data, dims, n_iter, lr):
