@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 6:11:05 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Sep 16 2019
+# Last Modified: Wed Sep 18 2019
 ###
 
 # server/config.py
@@ -15,7 +15,8 @@ ROOT_DIR = os.path.dirname(__file__)
 class BaseConfig(object):
     """Base configuration."""
     WTF_CSRF_ENABLED = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///{}'.format(os.path.join(ROOT_DIR, 'images.db'))
+    DB_FILE = os.path.join(ROOT_DIR, 'imgs.db')
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///{}'.format(DB_FILE)
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     REDIS_URL = os.getenv('REDIS_URL') or 'redis://'
     QUEUES = ['default']

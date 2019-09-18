@@ -3,7 +3,7 @@
 ###
 # Created Date: Thursday, September 5th 2019, 9:14:26 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Sep 16 2019
+# Last Modified: Wed Sep 18 2019
 ###
 
 import warnings
@@ -18,7 +18,8 @@ from flask import render_template, url_for
 from flask import request, redirect, jsonify
 from flask_sqlalchemy import SQLAlchemy
 
-from server import create_app
+from server import create_app, db
+# from server.main import routes, models
 
 import redis
 from rq import Connection, Worker
@@ -39,6 +40,9 @@ def run_worker():
 
 if __name__ == '__main__':
     # run_worker()
+    # Create tables
+
+
     app.run(host=HOST,
             debug=True,  # automatic reloading enabled
             port=PORT)

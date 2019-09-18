@@ -6,7 +6,7 @@
  * Created Date: Saturday, September 14th 2019, 4:24:23 pm
  * Author: Charlene Leong
  * -----
- * Last Modified: Tue Sep 17 2019
+ * Last Modified: Wed Sep 18 2019
  * Modified By: Charlene Leong
  * -----
  * Copyright (c) 2019 Victoria University of Wellington ECS
@@ -23,7 +23,7 @@ $( document ).ready(() => {
 
 $('#upload').bind('click', function() {
   $.ajax({
-    url: '/tasks/process_imgs',
+    url: '/tasks/save_imgs',
     method: 'POST'
   })
   .done((res) => {
