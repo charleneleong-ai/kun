@@ -4,7 +4,7 @@
  * Created Date: Monday, September 16th 2019, 3:42:24 pm
  * Author: Charlene Leong
  * -----
- * Last Modified: Tue Sep 17 2019
+ * Last Modified: Thu Sep 19 2019
  * Modified By: Charlene Leong
  * -----
  * Copyright (c) 2019 Victoria University of Wellington ECS
@@ -30,6 +30,9 @@ class Demo {
     this.addFilterButtons();
     this.addSorting();
     this.addSearchFilter();
+    //document.querySelector('#remove').addEventListener('click', this.onRemoveClick.bind(this));
+    this.shuffle.element.addEventListener('click', this.onContainerClick.bind(this));
+
   }
 
   /**
@@ -158,6 +161,22 @@ class Demo {
       const titleText = titleElement.textContent.toLowerCase().trim();
       return titleText.indexOf(searchText) !== -1;
     });
+  }
+}
+
+/**
+ * Remove a shuffle item when it's clicked.
+ * @param {Object} event Event object.
+ */
+Demo.prototype.onContainerClick = function (event) {
+  // Bail in older browsers. https://caniuse.com/#feat=element-closest
+  if (typeof event.target.closest !== 'function') {
+    return;
+  }
+
+  var element = event.target.closest('.js-item');
+  if (element !== null) {
+    this.shuffle.remove([element]);
   }
 }
 

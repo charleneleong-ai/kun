@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 4:18:39 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Wed Sep 18 2019
+# Last Modified: Thu Sep 19 2019
 ###
 import os
 import glob
@@ -17,12 +17,12 @@ from sklearn.metrics import pairwise_distances_argmin_min
 from hdbscan import HDBSCAN
 from torchvision.utils import save_image, make_grid
 
-from server.__init__ import create_app, db
+from server.__init__ import create_app
 from server.model.ae import AutoEncoder
 from server.model.som import SOM
 from server.model.utils.plt import plt_scatter
 from server.utils.filtered_MNIST import FilteredMNIST
-from server.main import models
+from server.main.models import Image
 
 # Import current app settings for tasks
 app = create_app()
@@ -84,42 +84,45 @@ def cluster():
 
     return c_labels, feat
 
-
+def som(label_0_idx):
+    OUTPUT_DIR = max(glob.iglob(app.config['MODEL_OUTPUT_DIR']+'/ae*/'), key=os.path.getctime)
+    ae, feat_ae, labels, imgs = load_model(OUTPUT_DIR)
+    # feat = tsne(feat_ae, 2)     # HDBSCAN works best with 2dim w/ small dataset 
+    
     # label_0_idx = np.where(c_labels==0)[0]  # Assume largest cluster is img label
     # label_0_imgs = imgs[label_0_idx]
-    # lut = dict(enumerate(list(label_0_idx)))
+    lut = dict(enumerate(list(label_0_idx)))
+
     # Sample 3D feat for better cluster seperation in SOM
-    # data = feat_ae[label_0_idx].numpy()
-    # data = tsne(data, 3)
+    label_0_idx = np.array(label_0_idx)
+    data = feat_ae[label_0_idx].numpy()
+    data = tsne(data, 2)
+    print('Ordering image grid with Self Organising Map...\n')
+    iter = 1000
+
+    som = SOM(data=data, dims=[20, 10], n_iter = iter, lr=0.01)
+    net = som.train()
+    print(net.shape)
+    net_w = np.array([net[x-1, y-1, :] for x in range(net.shape[0]) for y in range(net.shape[1])])
+    print(net_w.shape)
     
-    
+    # Produces duplicate
+    img_grd_idx, _ = pairwise_distances_argmin_min(net_w, data)
+    print(img_grd_idx, img_grd_idx.shape)
+    img_grd_idx = np.array([lut[i] for i in img_grd_idx])   # Remapping to label 0 idx
+    print(img_grd_idx, img_grd_idx.shape, len(np.unique(img_grd_idx)))
+
+    # Saving image grid
+    img_grd = imgs[img_grd_idx].view(-1, 1, 28, 28)
+    save_image(img_grd, OUTPUT_DIR+'_img_grd_som_3D_{}.png'.format(iter), nrow=20)
+    ae.tb.add_images(tag='_img_grd_som_3D_{}.png'.format(iter), 
+                            img_tensor=img_grd, 
+                            global_step = ae.EPOCH)
+                            
+    return img_grd_idx
 
     
-
-    # print('Saving images to database...')
-    # models.clear_tables()
-    # for idx, img in enumerate(label_0_imgs):
-    #     img_path = app.config['IMG_DIR']+'/{}.png'.format(idx)
-    #     print(idx, img_path, data[idx])
-    #     save_image(img.view(-1, 1, 28, 28), img_path)
-    #     img_db = models.Image(label_0_idx=idx, feat=data[idx], img_path=img_path)
-    #     img_db.save_to_db()
-
-    # print('Ordering image grid with Self Organising Map...\n')
-    # iter = 1000
-    # som = SOM(data=data, dims=[20, 10], n_iter = iter, lr=0.01)
-    # net = som.train()
-    # print(net.shape)
-    # net_w = np.array([net[x-1, y-1, :] for x in range(net.shape[0]) for y in range(net.shape[1])])
-    # print(net_w.shape)
-    
-    # # This is producing duplicate
-    # img_grd_idx, _ = pairwise_distances_argmin_min(net_w, data)
-    # print(img_grd_idx, img_grd_idx.shape)
-    # img_grd_idx = np.array([lut[i] for i in img_grd_idx])   # Remapping to label 0 idx
-    # print(img_grd_idx, img_grd_idx.shape)
-
-    # # Saving image grid scatter
+    # # # Saving image grid scatter
     # img_plt = plt_scatter([feat, feat[img_grd_idx]], c_labels, colors=['blue'], 
     #                         output_dir=OUTPUT_DIR, plt_name='_{}_som_3D_{}.png'.format('hdbscan', iter), pltshow=False)
     # ae.tb.add_image(tag='_{}_som_3D_{}.png'.format('hdbscan', iter), 
@@ -127,15 +130,8 @@ def cluster():
     #                                     global_step = ae.EPOCH, dataformats='HWC')
     
 
-    # Saving image grid
-    # img_grd = imgs[img_grd_idx]
-    # print(img_grd.size())
-    # img_grd = img_grd.view(-1, 1, 28, 28)
-    # print(img_grd.size())
-    # save_image(img_grd, OUTPUT_DIR+'_img_grd_som_3D_{}.png'.format(iter), nrow=20)
-    # ae.tb.add_images(tag='_img_grd_som_3D_{}.png'.format(iter), 
-    #                         img_tensor=img_grd, 
-    #                         global_step = ae.EPOCH)
+    
+
 
     # Saving imgs to client imgs folders
     # for i, img in enumerate(img_grd):

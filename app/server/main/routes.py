@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 6:35:09 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Wed Sep 18 2019
+# Last Modified: Thu Sep 19 2019
 ###
 
 # project/server/main/views.py
@@ -14,29 +14,43 @@ import redis
 from rq import Queue, Connection
 from flask import render_template, Blueprint, jsonify, \
     url_for, request, redirect, current_app, session
-
+    
+from torchvision.utils import save_image
+import matplotlib.pyplot as plt
 from server.worker import conn
 from server.main import bp
-from server.main.tasks import train, filtered_MNIST, cluster
-from server.main.models import Image, clear_tables
+from server.main.tasks import train, filtered_MNIST, cluster, som
+from server.main.models import Image, ImageGrid, clear_tables
+
+
 
 @bp.route('/', methods=['GET'])
 def home():
-    img_names = os.listdir(current_app.config['IMG_DIR'])
-    imgs = [url_for('static', filename=os.path.join('imgs', img)) for img in img_names]
-    return render_template('/shuffle.html', imgs=imgs)
+    # img_names = os.listdir(current_app.config['IMG_GRD_DIR'])
+    # imgs = [url_for('static', filename=os.path.join('img_grd', img)) for img in img_names]
+    
+    return render_template('/shuffle.html', imgs=session['img_grd_paths'])
 
+# @bp.route('/img_grd', methods=['GET'])
+# def img_grd(img_grd_idx):
+#     img_grd = ImageGrid(img_grd_idx).imgs
+#     img_grd_paths = [img.img_path for img in img_grd]
+
+#     return render_template('/shuffle.html', imgs=img_grd_paths)
 
 @bp.route('/tasks/<task_type>', methods=['POST'])
 def run_task(task_type):
     if task_type=='upload':
         task = current_app.task_queue.enqueue(filtered_MNIST, 8)
     if task_type=='cluster':
-        task = current_app.task_queue.enqueue(cluster,  job_timeout=300)
+        task = current_app.task_queue.enqueue(cluster, job_timeout=180)
        
     if task_type=='save_imgs':
-        print(Image.query.order_by(Image.idx).all())
-        # User.query.order_by(User.username).all()
+        label_0_db = Image.query.filter_by(c_label=0).all()
+        label_0_idx = [img.idx for img in label_0_db]
+        
+        task = current_app.task_queue.enqueue(som, label_0_idx, job_timeout=180)
+        # temp will load from cluster task later
 
     response_object = {
         'status': 'success',
@@ -51,10 +65,8 @@ def run_task(task_type):
 
 @bp.route('/tasks/<task_type>/<task_id>', methods=['GET'])
 def get_status(task_type, task_id):
-
     task = current_app.task_queue.fetch_job(task_id)
-    
-    #TODO: create seperate routes instead
+    #TODO: create separate routes instead
     if task_type=='upload' and task.get_status()=='finished':
         task_type = 'train'
         dataset = task.result   #TODO: Save to output folder
@@ -68,7 +80,34 @@ def get_status(task_type, task_id):
         c_labels, feat = task.result
         print(len(c_labels), len(feat))
         save_img_db(c_labels)
+    elif task_type=='save_imgs' and task.get_status()=='finished':
+        task_type = 'som'
+        img_grd_idx = task.result
+        img_grd = ImageGrid(img_grd_idx).imgs
+        img_grd_paths = [img.img_path for img in img_grd]
+        session['img_grd_paths'] = img_grd_paths
+        # for img in img_grd_paths:
+        #     plt.imread(img)
+        #     save_image(img, app.config['IMG_GRD_DIR']+'/{}.png'.format(i))
+        print(img_grd_paths)
         
+        # for img in img_grd:
+        #     print(img)
+        
+        # for i, label_0_idx in enumerate(img_grd_idx):
+        #     print(i, label_0_idx, type(label_0_idx))
+        #     img = Image.query.filter_by(idx=int(label_0_idx)).first()
+        #     img.img_grd_idx = i
+        #     Image.commit()
+        
+            
+            # save_image(img.view(-1, 1, 28, 28), 
+            #             current_app.config['IMG_GRD_DIR']+'/{}_{}.png'.format(i, label_0_idx))
+            # print(img)
+        
+        # img_grd = Image.query.order_by(Image.img_grd_idx).filter(Image.img_grd_idx!=None).all()
+        # print(len(img_grd))
+
     if task:
         response_object = {
             'status': 'success',
@@ -83,6 +122,7 @@ def get_status(task_type, task_id):
         response_object = {'status': 'error'}
     return jsonify(response_object)
 
+
 def save_img_db(c_labels):
     img_names = os.listdir(current_app.config['IMG_DIR'])
     img_paths = [url_for('static', filename=os.path.join('imgs', img)) for img in img_names]
@@ -90,5 +130,4 @@ def save_img_db(c_labels):
     for img_path in img_paths:
         idx = int(os.path.basename(os.path.normpath(img_path)).split('.')[0])
         print(idx, img_path, c_labels[idx])
-        img_db = Image(idx=idx, c_label=int(c_labels[idx]), img_grd_idx=None, img_path=img_path)
-        img_db.save_to_db()
+        img = Image(idx=idx, c_label=int(c_labels[idx]), img_path=img_path, seen=False).add()

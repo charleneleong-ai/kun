@@ -1,0 +1,496 @@
+<!--
+Created Date: Thursday, September 19th 2019, 7:51:55 pm
+Author: Charlene Leong leongchar@myvuw.ac.nz
+Last Modified: Thu Sep 19 2019
+-->
+
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Shuffle Adding and Removing Elements Demo</title>
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta property="og:title" content="Shuffle Adding and Removing Elements Demo" />
+  <meta property="og:description" content="This demo of shuffle shows how to add and removing items." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://vestride.github.io/Shuffle/adding-removing" />
+  <meta property="og:image" content="https://vestride.github.io/Shuffle/demos/adding-removing.jpg" />
+  <meta property="og:site_name" content="" />
+  <meta property="fb:admins" content="771347349" />
+  <meta name="author" content="Glen Cheney" />
+  <meta name="description" content="This demo of shuffle shows how to add and removing items.">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:creator" content="@Vestride">
+  <meta name="twitter:title" content="Shuffle Adding and Removing Elements Demo">
+  <meta name="twitter:description" content="This demo of shuffle shows how to add and removing items.">
+  <meta name="twitter:image" content="https://vestride.github.io/Shuffle/demos/adding-removing.jpg">
+
+  <link href="https://plus.google.com/u/0/100210640453700033824" rel="author" />
+
+
+  <link id="favicon" rel="icon" type="image/png" href="favicon.png" >
+
+  <script>window.location.host.indexOf("github.io")>-1&&"https:"!=window.location.protocol&&(window.location.protocol="https:");</script>
+
+  <!-- Prefetch DNS for external assets -->
+  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
+  <link rel="dns-prefetch" href="https://www.google-analytics.com">
+  <link rel="dns-prefetch" href="https://unpkg.com">
+
+  <link rel="stylesheet" href="/Shuffle/css/prism.css" />
+  <link rel="stylesheet" href="/Shuffle/css/normalize.css" />
+  <link rel="stylesheet" href="/Shuffle/css/style.css" />
+  <link rel="stylesheet" href="/Shuffle/css/shuffle-styles.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:400,700">
+  
+  
+  <script>window.site_url = "/Shuffle";</script>
+</head>
+<body class="">
+
+<nav class="site-nav">
+  <div class="container">
+    <div class="row">
+      <div class="col-12@sm site-nav__content">
+        <a class="site-nav__logo" href="/Shuffle/">
+          <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" clip-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="1.414">
+            <title>Shuffle.js logo</title>
+            <rect x="2" y="2" width="8" height="18" fill="#2dcb71"/>
+            <rect x="12" y="2" width="8" height="8" fill="#9b59b5"/>
+            <rect x="22" y="2" width="8" height="12" fill="#f39b11"/>
+            <rect x="2" y="22" width="8" height="8" fill="#e74b3b"/>
+            <rect x="12" y="12" width="8" height="8" fill="#3397db"/>
+            <rect x="22" y="16" width="8" height="4" fill="#1abb9b"/>
+            <rect x="12" y="22" width="18" height="8" fill="#33495d"/>
+          </svg>
+          <span class="site-nav__name">Shuffle.js</span>
+        </a>
+        <div class="site-nav__links">
+          <div class="site-nav__link site-nav__link--dropdown">
+            <button class="site-nav__link-toggle btn" id="docs-dropdown-btn" aria-label="Click to reveal list of Shuffle demos" aria-haspopup="true" aria-controls="docs-dropdown" aria-expanded="false">Docs</button>
+            <div class="site-nav__dropdown site-nav__dropdown--simple-links" id="docs-dropdown" aria-labelledby="docs-dropdown-btn">
+              <ol class="unstyled">
+                <li><a href="/Shuffle/#install">Install</a></li>
+                <li><a href="/Shuffle/#features">Features</a></li>
+                <li><a href="/Shuffle/#options">Options</a></li>
+                <li><a href="/Shuffle/#usage">Usage</a></li>
+                <li><a href="/Shuffle/#filters">Filters</a></li>
+                <li><a href="/Shuffle/#advanced-filters">Advanced Filters</a></li>
+                <li><a href="/Shuffle/#sorting">Sorting</a></li>
+                <li><a href="/Shuffle/#events">Events</a></li>
+                <li><a href="/Shuffle/#adding-removing">Adding and Removing Items</a></li>
+                <li><a href="/Shuffle/#public-methods">Public Methods</a></li>
+                <li><a href="/Shuffle/#custom-styles">Custom Styles</a></li>
+                <li><a href="/Shuffle/#dependencies">Dependencies</a></li>
+                <li><a href="/Shuffle/#supported-browsers">Supported Browsers</a></li>
+                <li><a href="/Shuffle/#changelog">Changelog</a></li>
+              </ol>
+            </div>
+          </div>
+          <div class="site-nav__link site-nav__link--dropdown">
+            <button class="site-nav__link-toggle btn" id="demos-dropdown-btn" aria-label="Click to reveal list of Shuffle demos" aria-haspopup="true" aria-controls="demos-dropdown" aria-expanded="false">Demos</button>
+            <div class="site-nav__dropdown" id="demos-dropdown" aria-labelledby="demos-dropdown-btn">
+              <ul class="unstyled">
+                
+                  <li class="">
+                    
+                    <a href="/Shuffle/basic">
+                    
+                      <figure>
+                        <picture>
+                          <source srcset="/Shuffle/img/demos/basic.webp" type="image/webp">
+                          <img src="/Shuffle/img/demos/basic.jpg" alt="Basic masonry layout">
+                        </picture>
+                        <figcaption>Basic masonry layout</figcaption>
+                      </figure>
+                    </a>
+                  </li>
+                
+                  <li class="">
+                    
+                    <a href="/Shuffle/adding-removing">
+                    
+                      <figure>
+                        <picture>
+                          <source srcset="/Shuffle/img/demos/adding-removing.webp" type="image/webp">
+                          <img src="/Shuffle/img/demos/adding-removing.jpg" alt="Adding and removing items">
+                        </picture>
+                        <figcaption>Adding and removing items</figcaption>
+                      </figure>
+                    </a>
+                  </li>
+                
+                  <li class="">
+                    
+                    <a href="/Shuffle/compound-filters">
+                    
+                      <figure>
+                        <picture>
+                          <source srcset="/Shuffle/img/demos/compound-filters.webp" type="image/webp">
+                          <img src="/Shuffle/img/demos/compound-filters.jpg" alt="Compound filtering">
+                        </picture>
+                        <figcaption>Compound filtering</figcaption>
+                      </figure>
+                    </a>
+                  </li>
+                
+                  <li class="">
+                    
+                    <a href="/Shuffle/images">
+                    
+                      <figure>
+                        <picture>
+                          <source srcset="/Shuffle/img/demos/images.webp" type="image/webp">
+                          <img src="/Shuffle/img/demos/images.jpg" alt="Using images">
+                        </picture>
+                        <figcaption>Using images</figcaption>
+                      </figure>
+                    </a>
+                  </li>
+                
+                  <li class="">
+                    
+                    <a href="/Shuffle/animated">
+                    
+                      <figure>
+                        <picture>
+                          <source srcset="/Shuffle/img/demos/animated.webp" type="image/webp">
+                          <img src="/Shuffle/img/demos/animated.jpg" alt="Animated viewport entry">
+                        </picture>
+                        <figcaption>Animated viewport entry</figcaption>
+                      </figure>
+                    </a>
+                  </li>
+                
+                  <li class="">
+                    
+                    <a href="/Shuffle/bootstrap3-grid">
+                    
+                      <figure>
+                        <picture>
+                          <source srcset="/Shuffle/img/demos/bootstrap3-grid.webp" type="image/webp">
+                          <img src="/Shuffle/img/demos/bootstrap3-grid.jpg" alt="Bootstrap 3 grid">
+                        </picture>
+                        <figcaption>Bootstrap 3 grid</figcaption>
+                      </figure>
+                    </a>
+                  </li>
+                
+                  <li class="">
+                    
+                    <a href="/Shuffle/flexbox-grid">
+                    
+                      <figure>
+                        <picture>
+                          <source srcset="/Shuffle/img/demos/flexbox-grid.webp" type="image/webp">
+                          <img src="/Shuffle/img/demos/flexbox-grid.jpg" alt="Flexbox grid">
+                        </picture>
+                        <figcaption>Flexbox grid</figcaption>
+                      </figure>
+                    </a>
+                  </li>
+                
+                  <li class="">
+                    
+                    <a href="/Shuffle/requirejs">
+                    
+                      <figure>
+                        <picture>
+                          <source srcset="/Shuffle/img/demos/requirejs.webp" type="image/webp">
+                          <img src="/Shuffle/img/demos/requirejs.jpg" alt="Shuffle with RequireJS">
+                        </picture>
+                        <figcaption>Shuffle with RequireJS</figcaption>
+                      </figure>
+                    </a>
+                  </li>
+                
+                  <li class="">
+                    
+                    <a href="/Shuffle/shuffle-with-react">
+                    
+                      <figure>
+                        <picture>
+                          <source srcset="/Shuffle/img/demos/shuffle-with-react.webp" type="image/webp">
+                          <img src="/Shuffle/img/demos/shuffle-with-react.jpg" alt="Shuffle with React">
+                        </picture>
+                        <figcaption>Shuffle with React</figcaption>
+                      </figure>
+                    </a>
+                  </li>
+                
+                  <li class="">
+                    
+                    <a href="/Shuffle/ajax">
+                    
+                      <figure>
+                        <picture>
+                          <source srcset="/Shuffle/img/demos/ajax.webp" type="image/webp">
+                          <img src="/Shuffle/img/demos/ajax.jpg" alt="Loading ajax content">
+                        </picture>
+                        <figcaption>Loading ajax content</figcaption>
+                      </figure>
+                    </a>
+                  </li>
+                
+                  <li class="">
+                    
+                    <a href="http://codepen.io/pen?template=qrjOpX" target="_blank" rel="noopener">
+                    
+                      <figure>
+                        <picture>
+                          <source srcset="/Shuffle/img/demos/codepen-template.webp" type="image/webp">
+                          <img src="/Shuffle/img/demos/codepen-template.jpg" alt="CodePen template">
+                        </picture>
+                        <figcaption>CodePen template</figcaption>
+                      </figure>
+                    </a>
+                  </li>
+                
+              </ul>
+            </div>
+          </div>
+          <a class="site-nav__link hidden@xs" href="/Shuffle/faq">FAQ</a>
+          <a class="site-nav__link hidden@xs" href="https://github.com/Vestride/Shuffle">
+            <img class="site-nav__link-img" src="/Shuffle/img/github.svg" alt="View Shuffle on GitHub" title="" width="16" height="16">
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+
+<main role="main" id="main">
+  <style>
+
+  /* Styles for shuffle */
+  .container {
+    counter-reset: boxes;
+  }
+
+  .box {
+    position: relative;
+    width: 18%;
+    margin-left: 2.5%;
+    height: 100px;
+    margin-top: 20px;
+    float: left;
+    background: #E74C3C;
+    counter-increment: boxes;
+  }
+
+  .box::before {
+    content: 'DOM: ' counter(boxes);
+    position: absolute;
+    color: white;
+    top: .5em;
+    left: .5em;
+  }
+
+
+  .box::after {
+    content: 'Reviews: ' attr(data-reviews);
+    position: absolute;
+    color: white;
+    bottom: .5em;
+    left: .5em;
+  }
+
+  @media (min-width: 1024px) {
+    .box::before {
+      content: 'DOM order: ' counter(boxes);
+    }
+
+    .box::after {
+      content: 'Total Reviews: ' attr(data-reviews);
+    }
+  }
+
+  .box.shuffle-item,
+  .box:first-child {
+    margin-left: 0;
+  }
+
+  .w2 {
+    width: 38.5%;
+  }
+
+  .w3 {
+    width: 59%;
+  }
+
+  .h2 {
+    height: 220px;
+  }
+</style>
+
+<section class="container">
+  <div class="row">
+    <div class="col-12@sm">
+      <h2>Adding and Removing Items</h2>
+      <p>When you add elements to the Shuffle container, notify the Shuffle instance with the <code>add</code> method. You must add the elements to the DOM yourself. This lets you control the default (DOM) sort order.</p>
+      <p>When you want to remove item(s), use <code>remove</code>. This will fade out the item(s) then remove it from the DOM.</p>
+    </div>
+  </div>
+</section>
+
+<section class="container">
+  <div class="row">
+    <div class="col-12@sm">
+
+      <fieldset class="filters-group">
+        <legend class="filter-label">Sort</legend>
+        <div class="btn-group" id="sorter">
+          <label class="btn active">
+            <input type="radio" name="sort-value" value="dom" checked /> DOM Order
+          </label>
+          <label class="btn">
+            <input type="radio" name="sort-value" value="most-reviews" /> Most Reviews
+          </label>
+          <label class="btn">
+            <input type="radio" name="sort-value" value="least-reviews" /> Least Reviews
+          </label>
+        </div>
+      </fieldset>
+
+      <br>
+      <fieldset class="filters-group">
+        <legend class="filter-label">Filter</legend>
+        <div class="btn-group" id="filterer">
+          <label class="btn active">
+            <input type="radio" name="filter-value" value="none" checked /> None
+          </label>
+          <label class="btn">
+            <input type="radio" name="filter-value" value="odd-reviews" /> Odd number of reviews
+          </label>
+          <label class="btn">
+            <input type="radio" name="filter-value" value="even-reviews" /> Even number of reviews
+          </label>
+        </div>
+      </fieldset>
+
+      <div>
+        <br>
+        <p class="filter-label">Actions</p>
+        <div class="btn-group">
+          <button class="btn" id="prepend">Prepend 5 Boxes</button>
+          <button class="btn" id="append">Append 5 Boxes</button>
+          <button class="btn" id="remove">Remove Some Boxes</button>
+          <button class="btn" id="randomize">Randomize</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="container">
+  <div class="row">
+    <div class="col-12@sm">
+      <div id="my-shuffle" class="items">
+        <div class="box" data-reviews="45"></div>
+        <div class="box h2 w2" data-reviews="19"></div>
+        <div class="box" data-reviews="66"></div>
+        <div class="box" data-reviews="148"></div>
+        <div class="box w2" data-reviews="99"></div>
+        <div class="box" data-reviews="3"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+  <div class="row">
+    <div class="col-12@sm">
+      <h3>Adding elements</h3>
+      <p>Wherever you add the element in the DOM is where it will show up in the grid (assuming you&rsquo;re using the default sort-by-dom-order). With this in mind, you can append, prepend, or insert elements wherever you need to get them to show up in the right order.</p>
+      <div class="code-block">
+        <pre rel="JavaScript"><code class="language-javascript">Demo.prototype.setupEvents = function () {
+  document.querySelector('#append').addEventListener('click', this.onAppendBoxes.bind(this));
+};
+
+/**
+ * Create some DOM elements, append them to the shuffle container, then notify
+ * shuffle about the new items. You could also insert the HTML as a string.
+ */
+Demo.prototype.onAppendBoxes = function () {
+  var elements = this._getArrayOfElementsToAdd();
+
+  elements.forEach(function (element) {
+    this.element.appendChild(element);
+  }, this);
+
+  // Tell shuffle elements have been appended.
+  // It expects an array of elements as the parameter.
+  this.shuffle.add(elements);
+};</code></pre>
+      </div>
+
+    </div>
+    <div class="col-12@sm">
+      <h3>Removing elements</h3>
+      <p>Shuffle will animate the element away and then remove it from the DOM once it's finished. It will then emit the <code>Shuffle.EventType.REMOVED</code> event with the array of elements in <code>data.collection</code>.</p>
+      <div class="code-block">
+        <pre rel="JavaScript"><code class="language-javascript">this.shuffle.remove([element1, element2]);</code></pre>
+      </div>
+
+    </div>
+    <div class="col-12@sm">
+      <h2>Source code for this demo</h2>
+      <p><a href="/Shuffle/js/demos/adding-removing.js">Demo source</a></p>
+    </div>
+  </div>
+</div>
+
+</main>
+<footer class="site-footer light-text-dark-box">
+    <div class="container">
+      <div class="row">
+        <nav class="col-6@xs visible@xs">
+          <ul class="unstyled">
+            <li><a href="/Shuffle/faq">FAQ</a></li>
+            <li><a href="https://github.com/Vestride/Shuffle">View Shuffle on GitHub</a></li>
+          </ul>
+        </nav>
+        <div class="col-6@xs col-12@sm">
+          
+        </div>
+      </div>
+    </div>
+  </footer>
+
+
+<script crossorigin="anonymous" src="https://polyfill.io/v3/polyfill.min.js?features=default%2Ces5%2Ces6%2Ces7"></script>
+<!-- Syntax highlighting via Prism -->
+<script src="/Shuffle/js/prism.js"></script>
+<!-- Shuffle! -->
+<script src="/Shuffle/dist/shuffle.js"></script>
+
+<script src="/Shuffle/js/site-nav.js"></script>
+
+
+
+
+
+<script src="/Shuffle/js/demos/adding-removing.js"></script>
+
+
+
+
+<script>
+window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+ga('create', 'UA-39355642-1', 'auto');
+ga('send', 'pageview');
+</script>
+<script async src='https://www.google-analytics.com/analytics.js'></script>
+
+
+</body>
+</html>
+

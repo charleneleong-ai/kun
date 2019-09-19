@@ -11,7 +11,7 @@ var Demo = function (element) {
 // Column width and gutter width options can be functions
 Demo.prototype.initShuffle = function () {
   this.shuffle = new Shuffle(this.element, {
-    itemSelector: '.box',
+    itemSelector: '.js-item',
     speed: 250,
     easing: 'ease',
     columnWidth: function (containerWidth) {
@@ -29,7 +29,7 @@ Demo.prototype.initShuffle = function () {
 Demo.prototype.setupEvents = function () {
   document.querySelector('#append').addEventListener('click', this.onAppendBoxes.bind(this));
   document.querySelector('#prepend').addEventListener('click', this.onPrependBoxes.bind(this));
-  document.querySelector('#randomize').addEventListener('click', this.onRandomize.bind(this));
+  // document.querySelector('#randomize').addEventListener('click', this.onRandomize.bind(this));
   document.querySelector('#remove').addEventListener('click', this.onRemoveClick.bind(this));
   document.querySelector('#sorter').addEventListener('change', this.onSortChange.bind(this));
   document.querySelector('#filterer').addEventListener('change', this.onFilterChange.bind(this));
@@ -254,12 +254,12 @@ Demo.prototype.onContainerClick = function (event) {
     return;
   }
 
-  var element = event.target.closest('.box');
+  var element = event.target.closest('.js-item');
   if (element !== null) {
     this.shuffle.remove([element]);
   }
 };
 
 document.addEventListener('DOMContentLoaded', function () {
-  window.demo = new Demo(document.getElementById('my-shuffle'));
+  window.demo = new Demo(document.getElementById('img-grid'));
 });
