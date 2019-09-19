@@ -1,7 +1,7 @@
 <!--
 Created Date: Monday, September 16th 2019, 7:03:49 pm
 Author: Charlene Leong leongchar@myvuw.ac.nz
-Last Modified: Thu Sep 19 2019
+Last Modified: Fri Sep 20 2019
 -->
 
 
@@ -15,8 +15,8 @@ Last Modified: Thu Sep 19 2019
 <!-- Shuffle JS Grid -->
 <div class="container">
     <div id='img-grid' class="js-grid shuffle-grid">
-        {%- for img in imgs %}
-        <figure class="js-item column">
+        {%- for img, idx in imgs %}
+        <figure class="js-item column" data-groups='["{{idx}}"]' img_idx='{{idx}}'>
             <div class="aspect">
                 <div class="aspect__inner">
                     <img src="{{img}}" alt="{{img}}">

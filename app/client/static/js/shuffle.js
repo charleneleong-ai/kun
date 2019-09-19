@@ -4,7 +4,7 @@
  * Created Date: Monday, September 16th 2019, 3:42:24 pm
  * Author: Charlene Leong
  * -----
- * Last Modified: Thu Sep 19 2019
+ * Last Modified: Fri Sep 20 2019
  * Modified By: Charlene Leong
  * -----
  * Copyright (c) 2019 Victoria University of Wellington ECS
@@ -162,6 +162,8 @@ class Demo {
       return titleText.indexOf(searchText) !== -1;
     });
   }
+
+  
 }
 
 /**
@@ -173,12 +175,66 @@ Demo.prototype.onContainerClick = function (event) {
   if (typeof event.target.closest !== 'function') {
     return;
   }
-
   var element = event.target.closest('.js-item');
   if (element !== null) {
-    this.shuffle.remove([element]);
+    element_idx = element.getAttribute('img_idx')
+
+    // Return all items with same idx
+    var items = this.shuffle.items
+    var indicesToRemove = [];
+    for (i=0; i<items.length; i++){
+      if(items[i].element.getAttribute('img_idx')==element_idx){
+        indicesToRemove.push(i);
+      }
+    }
+    // Make an array of elements to remove.
+    var collection = indicesToRemove.map(function (index) {
+      console.log()
+      return this.shuffle.items[index].element;
+    }, this);
+
+    this.shuffle.remove(collection)
+
   }
 }
+
+// Demo.prototype.search = function (evt) {
+//   var searchText = evt.target.value.toLowerCase();
+
+//   this.shuffle.filter(function (element, shuffle) {
+//     var titleElement = element.querySelector('.picture-item__title');
+//     var titleText = titleElement.textContent.toLowerCase().trim();
+
+//     return titleText.indexOf(searchText) !== -1;
+//   });
+// };
+
+// // Randomly choose some elements to remove
+// Demo.prototype.onRemoveClick = function () {
+//   var total = this.shuffle.visibleItems;
+
+//   // None left
+//   if (!total) {
+//     return;
+//   }
+
+//   var numberToRemove = Math.min(3, total);
+//   var indiciesToRemove = [];
+
+//   // This has the possibility to choose the same index for more than
+//   // one in the array, meaning sometimes less than 3 will be removed
+//   for (var i = 0; i < numberToRemove; i++) {
+//     indiciesToRemove.push(this.getRandomInt(0, total - 1));
+//   }
+
+//   // Make an array of elements to remove.
+//   var collection = indiciesToRemove.map(function (index) {
+//     return this.shuffle.items[index].element;
+//   }, this);
+
+//   // Tell shuffle to remove them
+//   this.shuffle.remove(collection);
+// };
 
 document.addEventListener('DOMContentLoaded', () => {
   window.demo = new Demo(document.getElementById('img-grid'));

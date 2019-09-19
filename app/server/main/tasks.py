@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 4:18:39 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Thu Sep 19 2019
+# Last Modified: Fri Sep 20 2019
 ###
 import os
 import glob
@@ -98,7 +98,7 @@ def som(label_0_idx):
     data = feat_ae[label_0_idx].numpy()
     data = tsne(data, 2)
     print('Ordering image grid with Self Organising Map...\n')
-    iter = 1000
+    iter = 5000
 
     som = SOM(data=data, dims=[20, 10], n_iter = iter, lr=0.01)
     net = som.train()
