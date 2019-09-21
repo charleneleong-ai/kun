@@ -3,7 +3,7 @@
 ###
 # Created Date: Thursday, September 5th 2019, 3:19:07 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Sep 16 2019
+# Last Modified: Sat Sep 21 2019
 ###
 
 
@@ -41,7 +41,7 @@ random.seed(SEED)
 GRID_SIZE = 200
 
 # Return latest model by default
-OUTPUT_DIR = max(glob.iglob('./output/*output/'), key=os.path.getctime)
+OUTPUT_DIR = max(glob.iglob('./output/train_ae*/'), key=os.path.getctime)
 print(OUTPUT_DIR)
 
 def load_model(model):
@@ -124,53 +124,54 @@ if __name__ == '__main__':
     lut = dict(enumerate(list(label_0_idx)))
     
     # Sample 3D feat for better cluster seperation
-    data = feat_ae[label_0_idx].numpy()
-    data = tsne(data, 3)
-    # data = feat[label_0_idx]
+    # data = feat_ae[label_0_idx].numpy()
+    # data = tsne(data, 3)
+    data = feat[label_0_idx]
     print(data.shape)
     for iter in [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000]:  
-    # for iter in [1000, 2000, 3000, 4000, 5000]:  
-        som = SOM(data=data, dims=[20, 10], n_iter = iter, lr=0.01)
-        net = som.train()
-        print(net.shape)
-        net_w = np.array([net[x-1, y-1, :] for x in range(net.shape[0]) for y in range(net.shape[1])])
-        print(net_w.shape)
-        
-        # This is producing duplicate
-        img_grd_idx, _ = pairwise_distances_argmin_min(net_w, data)
-        print(img_grd_idx, img_grd_idx.shape)
+        for lr in [0.01, 0.1, 0.2, 0.5, 0.8, 1]:
+            som = SOM(data=data, dims=[10, 20], n_iter = iter, lr=lr)
+            # ae.tb.add_scalar('LR', lr, self.EPOCH)
+            net = som.train()
+            print(net.shape)
+            net_w = np.array([net[x-1, y-1, :] for x in range(net.shape[0]) for y in range(net.shape[1])])
+            print(net_w.shape)
+            
+            # This is producing duplicate
+            img_grd_idx, _ = pairwise_distances_argmin_min(net_w, data)
+            print(img_grd_idx, img_grd_idx.shape)
 
-        img_grd_idx = np.array([lut[i] for i in img_grd_idx])
-        print(img_grd_idx, img_grd_idx.shape)
+            img_grd_idx = np.array([lut[i] for i in img_grd_idx])
+            print(img_grd_idx, img_grd_idx.shape)
 
-        # data_sample = data
-        # mindist = np.array([min(net_w, key=lambda p: np.sqrt(sum((p - c)**2))) for c in net_w])
-        # # print(mindist, mindist.shape)
-        # mindist_idx = np.where(mindist==net_w)[0]
-        # # print(mindist_idx, mindist_idx.shape)
-        # mindist_idx = np.unique(mindist_idx)
-        # mindist_idx = np.array([lut[i] for i in mindist_idx]
-        
-        # img_plt = plt_scatter([feat, feat[mindist_idx]], c_labels, colors=['blue'], 
-        #                     output_dir=OUTPUT_DIR, plt_name='mindist/_{}_som_3D_{}.png'.format(args.cluster, iter), pltshow=False)
+            # data_sample = data
+            # mindist = np.array([min(net_w, key=lambda p: np.sqrt(sum((p - c)**2))) for c in net_w])
+            # # print(mindist, mindist.shape)
+            # mindist_idx = np.where(mindist==net_w)[0]
+            # # print(mindist_idx, mindist_idx.shape)
+            # mindist_idx = np.unique(mindist_idx)
+            # mindist_idx = np.array([lut[i] for i in mindist_idx]
+            
+            # img_plt = plt_scatter([feat, feat[mindist_idx]], c_labels, colors=['blue'], 
+            #                     output_dir=OUTPUT_DIR, plt_name='mindist/_{}_som_3D_{}.png'.format(args.cluster, iter), pltshow=False)
 
-        # img_grd = imgs[mindist_idx]
-        # print(img_grd.size())
-        # img_grd = img_grd.view(-1, 1, 28, 28)
-        # print(img_grd.size())
-        # save_image(img_grd, OUTPUT_DIR+'mindist/_img_grd_som_3D_{}.png'.format(iter), nrow=20)
+            # img_grd = imgs[mindist_idx]
+            # print(img_grd.size())
+            # img_grd = img_grd.view(-1, 1, 28, 28)
+            # print(img_grd.size())
+            # save_image(img_grd, OUTPUT_DIR+'mindist/_img_grd_som_3D_{}.png'.format(iter), nrow=20)
+            
+            img_plt = plt_scatter([feat, feat[img_grd_idx]], c_labels, colors=['blue'], 
+                                output_dir=OUTPUT_DIR, plt_name='_{}_som_2D_{}_lr={}.png'.format(args.cluster, iter, lr), pltshow=False)
+            ae.tb.add_image(tag='_{}_som_3D_{}.png'.format(args.cluster, iter), 
+                                            img_tensor=img_plt, 
+                                            global_step = ae.EPOCH, dataformats='HWC')
 
-        img_plt = plt_scatter([feat, feat[img_grd_idx]], c_labels, colors=['blue'], 
-                            output_dir=OUTPUT_DIR, plt_name='_{}_som_3D_{}.png'.format(args.cluster, iter), pltshow=False)
-        ae.tb.add_image(tag='_{}_som_3D_{}.png'.format(args.cluster, iter), 
-                                        img_tensor=img_plt, 
-                                        global_step = ae.EPOCH, dataformats='HWC')
-
-        img_grd = imgs[img_grd_idx]
-        print(img_grd.size())
-        img_grd = img_grd.view(-1, 1, 28, 28)
-        print(img_grd.size())
-        save_image(img_grd, OUTPUT_DIR+'_img_grd_som_3D_{}.png'.format(iter), nrow=20)
-        ae.tb.add_images(tag='_img_grd_som_3D_{}.png'.format(iter), 
-                                img_tensor=img_grd, 
-                                global_step = ae.EPOCH)
+            img_grd = imgs[img_grd_idx]
+            print(img_grd.size())
+            img_grd = img_grd.view(-1, 1, 28, 28)
+            print(img_grd.size())
+            save_image(img_grd, OUTPUT_DIR+'_img_grd_som_2D_{}_lr={}.png'.format(iter, lr), nrow=20)
+            ae.tb.add_images(tag='_img_grd_som_2D_{}_lr={}.png'.format(iter, lr), 
+                                    img_tensor=make_grid(img_grd, nrow=20), 
+                                    global_step = ae.EPOCH)

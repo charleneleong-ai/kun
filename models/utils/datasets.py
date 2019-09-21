@@ -3,7 +3,7 @@
 ###
 # Created Date: Monday, August 26th 2019, 12:13:26 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Thu Sep 05 2019
+# Last Modified: Sat Sep 21 2019
 ###
 
 import numpy as np
@@ -17,8 +17,8 @@ from torchvision.datasets import MNIST
 from sklearn.model_selection import train_test_split
 
 SEED = 489
-torch.manual_seed(SEED)    # reproducible
-np.random.seed(SEED)
+torch.manual_seed(SEED)
+np.random.seed(SEED)   
 random.seed(SEED)
 
 class FilteredMNIST(Dataset):

@@ -3,7 +3,7 @@
 ###
 # Created Date: Thursday, September 12th 2019, 9:53:52 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Sep 16 2019
+# Last Modified: Sat Sep 21 2019
 ###
 
 import numpy as np
@@ -11,10 +11,11 @@ SEED = 489
 np.random.seed(SEED)
 
 class SOM(object):
-    def __init__(self, data, dims, n_iter, lr):
+    def __init__(self, data, dims, n_iter, lr_init):
         self.DIMS = np.array(dims)
         self.N_ITER = n_iter
-        self.LR = lr
+        self.LR_INIT = lr_init
+        self.LR_FINAL = 0.0001
 
         # establish size variables based on data
         self.data = data
@@ -23,25 +24,28 @@ class SOM(object):
 
         # weight matrix (i.e. the SOM) needs to be a m-dim vector for each neuron in the SOM
         # setup random weights between 0 and 1
-        self.net = np.random.random((dims[0], dims[1], self.M))
+        # init the weight matrix using a normal distribution with a small standard deviation
+        self.net = np.random.normal(0, 0.1, size=(dims[0], dims[1], self.M))
         
         # initial neighbourhood radius
-        self.RADIUS = max(dims[0], dims[1]) / 2
+        self.RADIUS_INIT = max(dims[0], dims[1]) / 2
+        self.RADIUS_FINAL = 1
+        
         # radius decay parameter
-        self.TIME_CONSTANT = n_iter / np.log(self.RADIUS)
+        self.RAD_DECAY = self.N_ITER / np.log(self.RADIUS_INIT)
+        # self.LR_DECAY = self.N_ITER / np.log(self.LR_INIT/self.LR_FINAL)
 
     def __repr__(self):
-        return '<SOM: {} N_ITER: {} LR: {}>'.format(self.DIMS, self.N_ITER, self.LR)
+        return '<SOM: {} N_ITER: {} LR_INIT: {}>'.format(self.DIMS, self.N_ITER, self.LR_INIT)
 
     def find_bmu(self, t, net, m):
         #  Find the best matching unit for a given vector, t, in the SOM
         #  Returns: a (bmu, bmu_idx) tuple where bmu is the high-dimensional BMU
         #                 and bmu_idx is the index of this vector in the SOM
-        
         bmu_idx = np.array([0, 0])
         # set the initial minimum distance to a huge number
         min_dist = np.iinfo(np.int).max
-        # calculate the high-dimensional distance between each neuron and the input
+        # calculate the distance between each neuron and the input
         for x in range(net.shape[0]):
             for y in range(net.shape[1]):
                 w = net[x, y, :].reshape(m, 1)
@@ -53,11 +57,12 @@ class SOM(object):
         # get vector corresponding to bmu_idx
         bmu = net[bmu_idx[0], bmu_idx[1], :].reshape(m, 1)
         # return the (bmu, bmu_idx) tuple
+        
         return (bmu, bmu_idx)
+
 
     def train(self):
         for i in range(self.N_ITER):
-
             if i % 100 == 0: print('Iteration %d' % i)
             
             # select a training example at random
@@ -67,8 +72,9 @@ class SOM(object):
             bmu, bmu_idx = self.find_bmu(t, self.net, self.M)
             
             # decay the SOM parameters
-            radius = self.RADIUS * np.exp(-i / self.TIME_CONSTANT)
-            lr = self.LR * np.exp(-i / self.N_ITER)
+            radius = self.RADIUS_INIT * np.exp(-i / self.RAD_DECAY)
+            # print(radius)
+            lr = self.LR_INIT * np.exp(-i / self.N_ITER)
             
             # update weight vector to move closer to input
             # and move its neighbours in 2-D vector space closer
@@ -91,6 +97,3 @@ class SOM(object):
         
         return self.net
     
-    def get_net_nn(self):
-        centroids = np.array([net[x-1, y-1, :] for x in range(net.shape[0]) for y in range(net.shape[1])])
-        

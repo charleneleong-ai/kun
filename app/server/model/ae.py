@@ -4,7 +4,7 @@
 ###
 # Created Date: Thursday, August 22nd 2019, 11:50:30 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Sep 16 2019
+# Last Modified: Sat Sep 21 2019
 ###
 
 import os
@@ -166,12 +166,12 @@ class AutoEncoder(nn.Module):
                 test_loss, _, _, _ = self.eval_model(dataset, plt_imgs, scatter_plt, pltshow, self.OUTPUT_DIR)
                 if es.step(test_loss):  # Early Stopping
                     if plt_imgs != None: 
-                        plt_imgs = (plt_imgs[0], self.EPOCH)
+                        plt_imgs = (plt_imgs[0], self.EPOCH)        # (N_TEST_IMGS, plt_interval)
                     if scatter_plt != None:
-                        scatter_plt = (scatter_plt[0], self.EPOCH)
+                        scatter_plt = (scatter_plt[0], self.EPOCH)  # ('method', plt_interval)
                     self.eval_model(dataset,           # Plot last epoch
-                                    plt_imgs=plt_imgs,         # (N_TEST_IMGS, plt_interval)
-                                    scatter_plt=scatter_plt,   # ('method', plt_interval)
+                                    plt_imgs=plt_imgs,         
+                                    scatter_plt=scatter_plt,   
                                     pltshow=pltshow, output_dir=self.OUTPUT_DIR)
                     break
 

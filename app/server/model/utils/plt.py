@@ -3,7 +3,7 @@
 ###
 # Created Date: Thursday, August 22nd 2019, 9:25:01 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Sep 16 2019
+# Last Modified: Sat Sep 21 2019
 ###
 
 import numpy as np
@@ -17,7 +17,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
 sns.set(font_scale=2)
 
-def plt_scatter(feat=[], labels=[], colors=[], output_dir='.', plt_name='', pltshow=False):
+def plt_scatter(feat=[], labels=[], colors=[], output_dir='.', plt_name='', pltshow=False, plt_grd_dims=None):
     print('Plotting {}\n'.format(plt_name))
     labels_list = np.unique(labels[labels!=-1])     # -1 is noise 
     palette = sns.color_palette('hls', labels_list.max()+1)
@@ -31,18 +31,28 @@ def plt_scatter(feat=[], labels=[], colors=[], output_dir='.', plt_name='', plts
         plt.scatter(*feat[0].T, c=feat_colors, s=8, linewidths=1)
         for i, f in enumerate(feat[1:]):
             plt.scatter(*f.T, c=colors[i], s=8, linewidths=1)
-        feat = feat[0]
+
+        if plt_grd_dims != None:     # plt som grid
+            dims = plt_grd_dims # [row, col]
+            for i, f in enumerate(feat[1]):   
+                if i % dims[1] == 0:    # plot first col idx only
+                    txt = ax.text(f[0], f[1], str(i), fontsize=8)
+                    txt.set_path_effects([PathEffects.Stroke(linewidth=1, foreground='w'), PathEffects.Normal()])
+            plt_grid(feat[1].T[0], feat[1].T[1], dims)
+
+        feat = feat[0]  # for plting labels
 
     for label in labels_list:   
         xtext, ytext = np.median(feat[labels == label, :], axis=0)
         txt = ax.text(xtext, ytext, str(label), fontsize=18)
         txt.set_path_effects([PathEffects.Stroke(linewidth=5, foreground='w'), PathEffects.Normal()])
-    
+
     plt.savefig(output_dir+'/'+plt_name, bbox_inches='tight')
     if pltshow:
         plt.show()
     plt.close()
     return plt.imread(output_dir+'/'+plt_name)
+    
 
 def plt_scatter_3D(feat=[], labels=[], colors=[], output_dir='.', plt_name='', pltshow=False):
     print('Plotting {}\n'.format(plt_name))
@@ -112,4 +122,20 @@ def plt_clusters(output_dir, data, algorithm, args, kwds):
     return plt.imread(output_dir)
 
 
-    
+def plt_grid(x, y, dims):   # dims [row, col]
+    for i in range(1, len(x)):
+        if i% dims[1] == 0: # plt first row
+            # print('\nRow', i)
+            # print(i-dims[1], i, '\n')
+            connectpoints(x, y, i, i-dims[1])
+        else:
+            connectpoints(x, y, i, i-1)
+            if i < dims[1]: continue    # skip first row
+            # print(i, i-dims[1])
+            connectpoints(x, y, i, i-dims[1])
+            
+
+def connectpoints(x,y,p1,p2):
+    x1, x2 = x[p1], x[p2]
+    y1, y2 = y[p1], y[p2]
+    plt.plot([x1,x2],[y1,y2],'k-')

@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 6:35:09 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Fri Sep 20 2019
+# Last Modified: Sat Sep 21 2019
 ###
 
 # project/server/main/views.py
@@ -78,12 +78,18 @@ def get_status(task_type, task_id):
         c_labels, feat = task.result
         print(len(c_labels), len(feat))
         save_img_db(c_labels)
+        
+        # label_0_db = Image.query.filter_by(c_label=0).all()
+        # label_0_idx = [img.idx for img in label_0_db]
+        # task = current_app.task_queue.enqueue(som, (label_0_idx, feat, c_labels), job_timeout=180)
+
     elif task_type=='save_imgs' and task.get_status()=='finished':
         task_type = 'som'
         img_grd_idx = task.result
-        img_grd = ImageGrid(img_grd_idx).imgs
-        img_grd_paths = [img.img_path for img in img_grd]
-        img_idx = [img.idx for img in img_grd]
+        img_grd = ImageGrid(img_grd_idx)
+        img_grd_paths = img_grd.img_paths
+        img_idx = img_grd.img_idx
+
         session['img_grd_paths'] = img_grd_paths
         print(img_idx)
         session['img_idx'] = img_idx
@@ -125,6 +131,25 @@ def get_status(task_type, task_id):
 
 
 
+@bp.route('/seen/<img_idx>/<img_grd_idx>', methods=['POST'])
+def seen_image(img_idx, img_grd_idx):
+    
+    img_grd_idx = img_grd_idx.split(',')
+    img = Image.query.filter_by(idx=int(img_idx)).first().seen()
+    # print(seen)
+    # imgs = Image.query.filter(Image.idx in indices).all()
+    
+
+    response_object = {
+        'status': 'success',
+        'data': {
+            'img_idx': img_idx
+        }
+    }
+    return jsonify(response_object), 202
+
+
+# TODO: Should be done as tasks but yet to work out how to declare db instance in tasks.py ><
 def save_img_db(c_labels):
     img_names = os.listdir(current_app.config['IMG_DIR'])
     img_paths = [url_for('static', filename=os.path.join('imgs', img)) for img in img_names]
@@ -132,4 +157,4 @@ def save_img_db(c_labels):
     for img_path in img_paths:
         idx = int(os.path.basename(os.path.normpath(img_path)).split('.')[0])
         print(idx, img_path, c_labels[idx])
-        img = Image(idx=idx, c_label=int(c_labels[idx]), img_path=img_path, seen=False).add()
+        img = Image(idx=idx, c_label=int(c_labels[idx]), img_path=img_path, processed=False).add()

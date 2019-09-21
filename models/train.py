@@ -3,7 +3,7 @@
 ###
 # Created Date: Thursday, September 5th 2019, 2:25:54 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Sat Sep 14 2019
+# Last Modified: Sat Sep 21 2019
 ###
 
 import warnings
@@ -58,7 +58,7 @@ if __name__ == '__main__':
     # tb = SummaryWriter(log_dir='./tb_runs/'+log_dir_name)    # Tensorboard
 
     if args.model=='ae':
-        ae = AutoEncoder(label=args.label) 
+        ae = AutoEncoder() 
     elif args.model=='conv_ae':
         ae = ConvAutoEncoder() 
 

@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 10:41:07 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Thu Sep 19 2019
+# Last Modified: Fri Sep 20 2019
 ###
 
 import os
@@ -59,14 +59,21 @@ class Image(db.Model):
     c_label = db.Column(db.Integer, index=True, nullable=False)
     # img_grd_idx = db.Column(db.Integer, index=True, nullable=False)
     img_path = db.Column(db.String, nullable=False)
-    seen = db.Column(db.Boolean, nullable=False)
+    processed = db.Column(db.Boolean, nullable=False)
 
     def __repr__(self):
-        return '<Image {} {} {} {}>\n'.format(self.idx, self.c_label, self.img_path, self.seen)
+        return '<Image {} {} {} {}>\n'.format(self.idx, self.c_label, self.img_path, self.processed)
         
     def add(self):
         db.session.add(self)
         db.session.commit()
+
+    def seen(self):
+        if self.processed:
+            return True
+        self.processed = True
+        db.session.commit()
+        return False
 
     def commit():
         db.session.commit()
@@ -74,10 +81,19 @@ class Image(db.Model):
 class ImageGrid(object):
     def __init__(self, img_grid_idx):
         self.imgs = self.load_imgs(img_grid_idx)
+        self.img_paths = self.img_paths()
+        self.img_idx = self.img_idx()
         
     def load_imgs(self, img_grid_idx):
-        return [Image.query.filter_by(idx=int(label_0_idx)).first() for label_0_idx in img_grid_idx]
+        self.imgs = [Image.query.filter_by(idx=int(label_0_idx)).first() for label_0_idx in img_grid_idx]
+        return self.imgs
         # imgs = db.relationship('Image', backref='img_grid', lazy=True)
+    
+    def img_paths(self):
+        return [img.img_path for img in self.imgs]
+        
+    def img_idx(self):
+        return [img.idx for img in self.imgs]
 
     def __repr__(self):
         return '<ImageGrid {} Images>\n'.format(len(self.imgs))

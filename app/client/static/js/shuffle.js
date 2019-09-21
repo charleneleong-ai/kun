@@ -12,6 +12,8 @@
  * Javascript will save your soul!
  */
 
+// Adapted Shuffle demo https://codepen.io/Vestride/pen/ZVWmMX
+
 $( document ).ready(() => {
   console.log('Shuffle');
 });
@@ -177,64 +179,40 @@ Demo.prototype.onContainerClick = function (event) {
   }
   var element = event.target.closest('.js-item');
   if (element !== null) {
-    element_idx = element.getAttribute('img_idx')
+    elementIdx = element.getAttribute('img_idx')
 
     // Return all items with same idx
     var items = this.shuffle.items
-    var indicesToRemove = [];
+    var removeIdx = [];
     for (i=0; i<items.length; i++){
-      if(items[i].element.getAttribute('img_idx')==element_idx){
-        indicesToRemove.push(i);
+      if(items[i].element.getAttribute('img_idx')==elementIdx){
+        removeIdx.push(i);
       }
     }
+    console.log(removeIdx)
     // Make an array of elements to remove.
-    var collection = indicesToRemove.map(function (index) {
-      console.log()
+    var collection = removeIdx.map(function (index) {
       return this.shuffle.items[index].element;
     }, this);
 
     this.shuffle.remove(collection)
-
+    seenImage(elementIdx, removeIdx)
   }
 }
 
-// Demo.prototype.search = function (evt) {
-//   var searchText = evt.target.value.toLowerCase();
+function seenImage(imgIdx, imgGridIdx) {
+  $.ajax({
+    url: `/seen/${imgIdx}/${imgGridIdx}`,
+    method: 'POST'
+  })
+  .done((res) => {
+    console.log('seen img_idx '+ res.data.img_idx)   
+  })
+  .fail((err) => {
+    console.log(err)
+  });
+}
 
-//   this.shuffle.filter(function (element, shuffle) {
-//     var titleElement = element.querySelector('.picture-item__title');
-//     var titleText = titleElement.textContent.toLowerCase().trim();
-
-//     return titleText.indexOf(searchText) !== -1;
-//   });
-// };
-
-// // Randomly choose some elements to remove
-// Demo.prototype.onRemoveClick = function () {
-//   var total = this.shuffle.visibleItems;
-
-//   // None left
-//   if (!total) {
-//     return;
-//   }
-
-//   var numberToRemove = Math.min(3, total);
-//   var indiciesToRemove = [];
-
-//   // This has the possibility to choose the same index for more than
-//   // one in the array, meaning sometimes less than 3 will be removed
-//   for (var i = 0; i < numberToRemove; i++) {
-//     indiciesToRemove.push(this.getRandomInt(0, total - 1));
-//   }
-
-//   // Make an array of elements to remove.
-//   var collection = indiciesToRemove.map(function (index) {
-//     return this.shuffle.items[index].element;
-//   }, this);
-
-//   // Tell shuffle to remove them
-//   this.shuffle.remove(collection);
-// };
 
 document.addEventListener('DOMContentLoaded', () => {
   window.demo = new Demo(document.getElementById('img-grid'));

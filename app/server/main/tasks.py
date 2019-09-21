@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 4:18:39 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Fri Sep 20 2019
+# Last Modified: Sat Sep 21 2019
 ###
 import os
 import glob
@@ -44,7 +44,7 @@ def train(dataset):
 
     ae = AutoEncoder()
 
-    timestamp = datetime.now().strftime('%Y.%d.%m-%H:%M:%S')
+    timestamp = datetime.now().strftime('%Y.%m.%d-%H%M%S')
     MODEL_OUTPUT_DIR = app.config['MODEL_OUTPUT_DIR']
     OUTPUT_DIR = os.path.join(MODEL_OUTPUT_DIR, '{}_{}_{}'.format('ae', dataset.LABEL, timestamp))
     print(OUTPUT_DIR)
@@ -85,25 +85,27 @@ def cluster():
     return c_labels, feat
 
 def som(label_0_idx):
+    
     OUTPUT_DIR = max(glob.iglob(app.config['MODEL_OUTPUT_DIR']+'/ae*/'), key=os.path.getctime)
     ae, feat_ae, labels, imgs = load_model(OUTPUT_DIR)
-    # feat = tsne(feat_ae, 2)     # HDBSCAN works best with 2dim w/ small dataset 
-    
-    # label_0_idx = np.where(c_labels==0)[0]  # Assume largest cluster is img label
-    # label_0_imgs = imgs[label_0_idx]
+    feat = tsne(feat_ae, 2)
     lut = dict(enumerate(list(label_0_idx)))
 
     # Sample 3D feat for better cluster seperation in SOM
     label_0_idx = np.array(label_0_idx)
-    data = feat_ae[label_0_idx].numpy()
-    data = tsne(data, 2)
-    print('Ordering image grid with Self Organising Map...\n')
-    iter = 5000
+    # data = feat_ae[label_0_idx].numpy()
+    # data = tsne(data, 3)
+    data = feat[label_0_idx]
 
-    som = SOM(data=data, dims=[20, 10], n_iter = iter, lr=0.01)
+    iter = 2000
+    lr = 0.2
+    dims= [10, 20]  # dims[row, col]
+    print('Ordering image grid with Self Organising Map...\n')
+    print('iter: {} lr: {}'.format(iter, lr))
+    som = SOM(data=data, dims=dims, n_iter = iter, lr_init=lr)  
     net = som.train()
     print(net.shape)
-    net_w = np.array([net[x-1, y-1, :] for x in range(net.shape[0]) for y in range(net.shape[1])])
+    net_w = np.array([net[x, y, :] for x in range(net.shape[0]) for y in range(net.shape[1])])
     print(net_w.shape)
     
     # Produces duplicate
@@ -111,31 +113,27 @@ def som(label_0_idx):
     print(img_grd_idx, img_grd_idx.shape)
     img_grd_idx = np.array([lut[i] for i in img_grd_idx])   # Remapping to label 0 idx
     print(img_grd_idx, img_grd_idx.shape, len(np.unique(img_grd_idx)))
-
+    
+    img_plt = plt_scatter([feat, feat[img_grd_idx]], labels, colors=['blue'], 
+                            output_dir=OUTPUT_DIR, 
+                            plt_name='_{}_som_2D_{}_lr={}.png'.format('hdbscan', iter, lr), 
+                            pltshow=False, 
+                            plt_grd_dims=dims)
+    ae.tb.add_image(tag='_{}_som_3D_{}.png'.format('hdbscan', iter), 
+                                    img_tensor=img_plt, 
+                                    global_step = ae.EPOCH, dataformats='HWC')
     # Saving image grid
     img_grd = imgs[img_grd_idx].view(-1, 1, 28, 28)
-    save_image(img_grd, OUTPUT_DIR+'_img_grd_som_3D_{}.png'.format(iter), nrow=20)
-    ae.tb.add_images(tag='_img_grd_som_3D_{}.png'.format(iter), 
-                            img_tensor=img_grd, 
+    save_image(img_grd, OUTPUT_DIR+'_img_grd_som_2D_{}_lr={}.png'.format(iter, lr), nrow=20)
+    ae.tb.add_image(tag='_img_grd_som_2D_{}_lr={}.png'.format(iter, lr), 
+                            img_tensor=make_grid(img_grd, nrow=20), 
                             global_step = ae.EPOCH)
                             
     return img_grd_idx
 
-    
-    # # # Saving image grid scatter
-    # img_plt = plt_scatter([feat, feat[img_grd_idx]], c_labels, colors=['blue'], 
-    #                         output_dir=OUTPUT_DIR, plt_name='_{}_som_3D_{}.png'.format('hdbscan', iter), pltshow=False)
-    # ae.tb.add_image(tag='_{}_som_3D_{}.png'.format('hdbscan', iter), 
-    #                                     img_tensor=img_plt, 
-    #                                     global_step = ae.EPOCH, dataformats='HWC')
-    
-
-    
-
-
     # Saving imgs to client imgs folders
     # for i, img in enumerate(img_grd):
-    #     save_image(img, app.config['IMG_DIR']+'/{}_{}.png'.format(i, img_grd_idx[i]))
+    #     save_image(img, app.config['IMG_GRD_DIR']+'/{}_{}.png'.format(i, img_grd_idx[i]))
     
                             
 # Helper functions for cluster()
