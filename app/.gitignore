@@ -14,5 +14,5 @@ node_modules
 *imgs*
 
 # ====== Docs ====== #
-*gif
-*mov
+*.gif
+*.mov
