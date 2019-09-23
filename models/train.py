@@ -3,11 +3,8 @@
 ###
 # Created Date: Thursday, September 5th 2019, 2:25:54 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Sat Sep 21 2019
+# Last Modified: Mon Sep 23 2019
 ###
-
-import warnings
-warnings.filterwarnings('ignore')
 
 import sys
 import os

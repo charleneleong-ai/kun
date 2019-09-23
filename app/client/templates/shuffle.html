@@ -1,11 +1,11 @@
 <!--
 Created Date: Monday, September 16th 2019, 7:03:49 pm
 Author: Charlene Leong leongchar@myvuw.ac.nz
-Last Modified: Fri Sep 20 2019
+Last Modified: Sun Sep 22 2019
 -->
 
 
-{% extends "_base.html" %}
+{% extends "home.html" %}
 
 {% block css %}
 <link href="{{url_for('static', filename='css/shufflejs.css')}}" rel="stylesheet" media="screen">
@@ -13,7 +13,7 @@ Last Modified: Fri Sep 20 2019
 
 {% block content %}
 <!-- Shuffle JS Grid -->
-<div class="container">
+<div class='container'>
     <div id='img-grid' class="js-grid shuffle-grid">
         {%- for img, idx in imgs %}
         <figure class="js-item column" data-groups='["{{idx}}"]' img_idx='{{idx}}'>
@@ -21,9 +21,17 @@ Last Modified: Fri Sep 20 2019
                 <div class="aspect__inner">
                     <img src="{{img}}" alt="{{img}}">
                 </div>
-            </div> 
+            </div>
         </figure>
         {%- endfor %}
+    </div>
+</div>
+
+</br>
+
+<div class='row'>
+    <div class="col-sm-12 col-md-10 col-md-offset-1">
+        <button id="remove" type="button" class="hide btn btn-primary" style='margin: 0 auto;'>Remove</a>
     </div>
 </div>
 

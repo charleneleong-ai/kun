@@ -1,19 +1,35 @@
 <!--
 Created Date: Saturday, September 14th 2019, 4:24:23 pm
 Author: Charlene Leong leongchar@myvuw.ac.nz
-Last Modified: Tue Sep 17 2019
+Last Modified: Sun Sep 22 2019
 -->
 
 {% extends "_base.html" %}
 
-{% block content %}
+{% block tasks %}
 
-  <div class='grid'>
-    <div class="grid-sizer"></div>
-    {%- for img in imgs %}
-    <div class="grid-item">
-      <img src="{{img}}" />
-    </div>
-    {%- endfor %}
+<div class="starter-template">
+  <div>
+    <br>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Task</th>
+          <th>ID</th>
+          <th>Status</th>
+          <th>Result</th>
+        </tr> 
+      </thead>
+      <tbody>
+        <tr>
+          <td id='task_type'></td>
+          <td id='task_id'></td>
+          <td id='task_status'></td>
+          <td id='task_result'></td>
+        </tr>
+      </tbody>
+    </table>
   </div>
+</div>
+
 {% endblock %}

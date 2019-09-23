@@ -3,15 +3,16 @@
 ###
 # Created Date: Thursday, September 12th 2019, 9:53:52 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Sat Sep 21 2019
+# Last Modified: Mon Sep 23 2019
 ###
 
 import numpy as np
+from server.utils.load import json_np
 SEED = 489
 np.random.seed(SEED)
 
 class SOM(object):
-    def __init__(self, data, dims, n_iter, lr_init):
+    def __init__(self, data, dims, n_iter, lr_init, net_path=None):
         self.DIMS = np.array(dims)
         self.N_ITER = n_iter
         self.LR_INIT = lr_init
@@ -26,7 +27,12 @@ class SOM(object):
         # setup random weights between 0 and 1
         # init the weight matrix using a normal distribution with a small standard deviation
         self.net = np.random.normal(0, 0.1, size=(dims[0], dims[1], self.M))
-        
+        self.update_interval = 100
+        if net_path != None: # Load net from file
+            print('Loading SOM weights... '+net_path)
+            self.net = json_np(net_path)
+            self.update_interval = 10
+
         # initial neighbourhood radius
         self.RADIUS_INIT = max(dims[0], dims[1]) / 2
         self.RADIUS_FINAL = 1
@@ -63,7 +69,7 @@ class SOM(object):
 
     def train(self):
         for i in range(self.N_ITER):
-            if i % 100 == 0: print('Iteration %d' % i)
+            if i % self.update_interval == 0: print('Iteration %d' % i)
             
             # select a training example at random
             t = self.data[np.random.randint(0, self.N), :].reshape(np.array([self.M, 1]))

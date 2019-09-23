@@ -3,11 +3,12 @@
 ###
 # Created Date: Sunday, September 15th 2019, 4:18:39 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Sat Sep 21 2019
+# Last Modified: Mon Sep 23 2019
 ###
 import os
 import glob
 from datetime import datetime
+import json, codecs
 
 import numpy as np
 import random
@@ -23,8 +24,9 @@ from server.model.som import SOM
 from server.model.utils.plt import plt_scatter
 from server.utils.filtered_MNIST import FilteredMNIST
 from server.main.models import Image
+from server.utils.load import np_json, json_np
 
-# Import current app settings for tasks
+# Import current app settings for app config
 app = create_app()
 app.app_context().push()
 
@@ -82,59 +84,73 @@ def cluster():
     for i, img in enumerate(imgs):
         save_image(img.view(-1, 1, 28, 28), app.config['IMG_DIR']+'/{}.png'.format(i))
 
-    return c_labels, feat
+    print('Saving ae feat...')
+    np_json(feat, OUTPUT_DIR+'feat.json')
 
-def som(label_0_idx):
-    
+    return feat, c_labels
+
+def som(args):
+    img_idx = np.array(args[0])
+    c_labels = np.array(args[1])
+
     OUTPUT_DIR = max(glob.iglob(app.config['MODEL_OUTPUT_DIR']+'/ae*/'), key=os.path.getctime)
-    ae, feat_ae, labels, imgs = load_model(OUTPUT_DIR)
-    feat = tsne(feat_ae, 2)
-    lut = dict(enumerate(list(label_0_idx)))
+    ae, feat_ae, labels, imgs = load_model(OUTPUT_DIR)  # for plotting
+    feat = json_np(OUTPUT_DIR+'feat.json')
+    lut = dict(enumerate(list(img_idx)))
 
-    # Sample 3D feat for better cluster seperation in SOM
-    label_0_idx = np.array(label_0_idx)
-    # data = feat_ae[label_0_idx].numpy()
-    # data = tsne(data, 3)
-    data = feat[label_0_idx]
+    data = feat[img_idx]
 
-    iter = 2000
-    lr = 0.2
     dims= [10, 20]  # dims[row, col]
-    print('Ordering image grid with Self Organising Map...\n')
-    print('iter: {} lr: {}'.format(iter, lr))
-    som = SOM(data=data, dims=dims, n_iter = iter, lr_init=lr)  
+    som_path = OUTPUT_DIR+'som.json'
+    if os.path.exists(som_path):  # Declare new SOM else update net
+        iter = 100
+        lr = 0.0001 
+        som = SOM(data=data, dims=dims, n_iter = iter, lr_init=lr, net_path=som_path)
+    else:
+        iter = 3000
+        lr = 0.2  
+        som = SOM(data=data, dims=dims, n_iter = iter, lr_init=lr)
+    
+    print('Ordering image grid with Self Organising Map...')
+    print('iter: {} lr: {}\n'.format(iter, lr))
     net = som.train()
-    print(net.shape)
+    # Save SOM net
+    print('Saving SOM weights...')
+    np_json(net, som_path)
+    
     net_w = np.array([net[x, y, :] for x in range(net.shape[0]) for y in range(net.shape[1])])
-    print(net_w.shape)
-    
-    # Produces duplicate
     img_grd_idx, _ = pairwise_distances_argmin_min(net_w, data)
-    print(img_grd_idx, img_grd_idx.shape)
+    # print(img_grd_idx, img_grd_idx.shape)
     img_grd_idx = np.array([lut[i] for i in img_grd_idx])   # Remapping to label 0 idx
-    print(img_grd_idx, img_grd_idx.shape, len(np.unique(img_grd_idx)))
+    # print(img_grd_idx, img_grd_idx.shape, len(np.unique(img_grd_idx)))
     
-    img_plt = plt_scatter([feat, feat[img_grd_idx]], labels, colors=['blue'], 
+    # Plotting HDBSCAN SOM grid 
+    img_plt = plt_scatter([feat, feat[img_grd_idx]], c_labels, colors=['blue'], 
                             output_dir=OUTPUT_DIR, 
                             plt_name='_{}_som_2D_{}_lr={}.png'.format('hdbscan', iter, lr), 
                             pltshow=False, 
                             plt_grd_dims=dims)
-    ae.tb.add_image(tag='_{}_som_3D_{}.png'.format('hdbscan', iter), 
+    ae.tb.add_image(tag='_{}_som_2D_{}_lr={}.png'.format('hdbscan', iter, lr), 
+                                    img_tensor=img_plt, 
+                                    global_step = ae.EPOCH, dataformats='HWC')
+    # Plotting TSNE SOM grid 
+    img_plt = plt_scatter([feat, feat[img_grd_idx]], labels, colors=['blue'], 
+                            output_dir=OUTPUT_DIR, 
+                            plt_name='_{}_som_2D_{}_lr={}.png'.format('tsne', iter, lr), 
+                            pltshow=False, 
+                            plt_grd_dims=dims)
+    ae.tb.add_image(tag='_{}_som_2D_{}_lr={}.png'.format('tsne', iter, lr), 
                                     img_tensor=img_plt, 
                                     global_step = ae.EPOCH, dataformats='HWC')
     # Saving image grid
     img_grd = imgs[img_grd_idx].view(-1, 1, 28, 28)
-    save_image(img_grd, OUTPUT_DIR+'_img_grd_som_2D_{}_lr={}.png'.format(iter, lr), nrow=20)
+    save_image(img_grd, OUTPUT_DIR+'_img_grd_som_2D_{}_lr={}.png'.format(iter, lr), nrow=20)    # nrow = num in row
     ae.tb.add_image(tag='_img_grd_som_2D_{}_lr={}.png'.format(iter, lr), 
                             img_tensor=make_grid(img_grd, nrow=20), 
                             global_step = ae.EPOCH)
                             
     return img_grd_idx
 
-    # Saving imgs to client imgs folders
-    # for i, img in enumerate(img_grd):
-    #     save_image(img, app.config['IMG_GRD_DIR']+'/{}_{}.png'.format(i, img_grd_idx[i]))
-    
                             
 # Helper functions for cluster()
 def load_model(output_dir):
