@@ -12,8 +12,8 @@
  * Javascript will save your soul!
  */
 
- 
-$( document ).ready(() => {
+
+$(document).ready(() => {
   console.log('ShuffleImgGrd');
 });
 
@@ -35,7 +35,7 @@ class ShuffleImgGrid {
     this.addFilterButtons();
     this.addSorting();
     this.addSearchFilter();
-    
+
     this.shuffle.element.addEventListener('click', this.onElementClick.bind(this));
     document.querySelector('#remove').addEventListener('click', this.onRemoveClick.bind(this));
   }
@@ -58,7 +58,7 @@ class ShuffleImgGrid {
     if (!options) {
       return;
     }
-    
+
     const filterButtons = Array.from(options.children);
     const onClick = this._handleFilterClick.bind(this);
     filterButtons.forEach((button) => {
@@ -70,9 +70,9 @@ class ShuffleImgGrid {
     const btn = evt.currentTarget;
     const isActive = btn.classList.contains('active');
     const btnGroup = btn.getAttribute('data-group');
-    
+
     this._removeActiveClassFromChildren(btn.parentNode);
-    
+
     let filterGroup;
     if (isActive) {
       btn.classList.remove('active');
@@ -81,7 +81,7 @@ class ShuffleImgGrid {
       btn.classList.add('active');
       filterGroup = btnGroup;
     }
-    
+
     this.shuffle.filter(filterGroup);
   }
 
@@ -110,19 +110,19 @@ class ShuffleImgGrid {
         button.classList.remove('active');
       }
     });
-    
+
     // Create the sort options to give to Shuffle.
     const { value } = evt.target;
     let options = {};
-    
+
     function sortByDate(element) {
       return element.getAttribute('data-created');
     }
-    
+
     function sortByTitle(element) {
       return element.getAttribute('data-title').toLowerCase();
     }
-    
+
     if (value === 'date-created') {
       options = {
         reverse: true,
@@ -168,7 +168,7 @@ class ShuffleImgGrid {
     });
   }
 
-  
+
 }
 
 /**
@@ -183,7 +183,7 @@ ShuffleImgGrid.prototype.onElementClick = function (event) {
   var element = event.target.closest('.js-item');
   if (element !== null) {
     selectElement(element)
-    
+
     // elementIdx = element.getAttribute('img_idx')
 
     // // Return all items with same idx
@@ -201,49 +201,57 @@ ShuffleImgGrid.prototype.onElementClick = function (event) {
     // }, this);
 
     // this.shuffle.remove(collection)
-    
+
     // this.shuffle.add([this.shuffle.items[removeIdx].element])
     // seenImage(elementIdx, removeIdx)
   }
 }
 
 ShuffleImgGrid.prototype.onRemoveClick = function () {
-  var selectedItems = document.getElementsByClassName('selected')
   var shuffleItems = this.shuffle.items
   
-  var selectedImgIdx = []
+  var selectedItems = document.getElementsByClassName('selected')
+  var selectedImgIdx = [] 
   for (i=0; i<selectedItems.length; i++){
     selectedImgIdx.push(selectedItems[i].getAttribute('img_idx'))
   }
+
+  var imgIdx = [] 
+  for (i = 0; i < shuffleItems.length; i++) {
+    imgIdx.push(shuffleItems[i].element.getAttribute('img_idx'))
+  }
+
   console.log(selectedImgIdx)
-  var removeIdx = [] 
-  for(i=0; i<shuffleItems.length; i++){
-    if(selectedImgIdx.includes(shuffleItems[i].element.getAttribute('img_idx'))){
+  var removeIdx = []
+  for (i = 0; i < shuffleItems.length; i++) {
+    if (selectedImgIdx.includes(shuffleItems[i].element.getAttribute('img_idx'))) {
       removeIdx.push(i)
     }
   }
   console.log(removeIdx)
-  seenImgs(selectedImgIdx, removeIdx)
+  var imgGridIdx = Array.from(Array(shuffleItems.length), (x, index) => index)
+
+  seenImgs(selectedImgIdx, imgGridIdx)
 };
 
-function selectElement(element){
-    showRemoveBtn()
-    // Unselect if selected
-    if (element.className.includes('selected')){
-      $(element).removeClass('selected') 
-    }else{
-      $(element).addClass('selected')
-    }
-    showRemoveBtn()
+function selectElement(element) {
+  showRemoveBtn()
+  // Unselect if selected
+  if (element.className.includes('selected')) {
+    $(element).removeClass('selected')
+  } else {
+    $(element).addClass('selected')
+  }
+  showRemoveBtn()
 }
 
 
-function showRemoveBtn(){
+function showRemoveBtn() {
   // Show Remove button once at least one item is clicked, else hide
-  if (document.getElementsByClassName('selected').length==0){
+  if (document.getElementsByClassName('selected').length == 0) {
     $(document.getElementById('remove')).removeClass('show')
     $(document.getElementById('remove')).addClass('hide')
-  }else{
+  } else {
     $(document.getElementById('remove')).removeClass('hide')
     $(document.getElementById('remove')).addClass('show')
   }
@@ -255,16 +263,18 @@ function seenImgs(imgIdx, imgGridIdx) {
     url: `/seen/${imgIdx}/${imgGridIdx}`,
     method: 'POST'
   })
-  .done((res) => {
-    console.log('SEEN img_idx: '+ res.img.img_idx +' img_grd_idx: '+ res.img.img_grd_idx + ' ' + res.img.seen +' '+res.img.num_seen)
-    getStatus(res.data.task_type, res.data.task_id)   
-  })
-  .fail((err) => {
-    console.log(err)
-  });
+    .done((res) => {
+      console.log('SEEN img_idx: ' + res.img.img_idx + ' img_grd_idx: ' + res.img.img_grd_idx + ' ' + res.img.seen + ' ' + res.img.num_seen)
+      getStatus(res.data.task_type, res.data.task_id)
+    })
+    .fail((err) => {
+      console.log(err)
+    });
 }
+
 
 
 document.addEventListener('DOMContentLoaded', () => {
   window.shuffle = new ShuffleImgGrid(document.getElementById('img-grid'));
 });
+

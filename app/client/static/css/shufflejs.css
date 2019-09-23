@@ -80,7 +80,7 @@ figure {
     padding: 0;
 }
 
-.selected {
+.shuffle-grid figure.selected {
     filter: brightness(20%);
 } 
 
@@ -94,4 +94,10 @@ figure {
     visibility: visible;
     opacity: 1;
     transition: visibility 0s linear 0.33s, opacity 0.33s linear;
+} 
+
+.selection {
+    background: rgba(0, 0, 255, 0.1);
+    border-radius: 0.1em;
+    border: 0.05em solid rgba(0, 0, 255, 0.2);
 }

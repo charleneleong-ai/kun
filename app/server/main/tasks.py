@@ -45,7 +45,7 @@ def train(dataset):
     N_TEST_IMGS = 8
 
     ae = AutoEncoder()
-
+    
     timestamp = datetime.now().strftime('%Y.%m.%d-%H%M%S')
     MODEL_OUTPUT_DIR = app.config['MODEL_OUTPUT_DIR']
     OUTPUT_DIR = os.path.join(MODEL_OUTPUT_DIR, '{}_{}_{}'.format('ae', dataset.LABEL, timestamp))
@@ -66,10 +66,12 @@ def train(dataset):
     return OUTPUT_DIR
 
 def cluster():
+
     # Return latest model by default
     OUTPUT_DIR = max(glob.iglob(app.config['MODEL_OUTPUT_DIR']+'/ae*/'), key=os.path.getctime)
     ae, feat_ae, labels, imgs = load_model(OUTPUT_DIR)
-
+    clear_cluster_output(OUTPUT_DIR)   # Clearing old output
+    
     print('Clustering with HDBSCAN...\n')
     feat = tsne(feat_ae, 2)     # HDBSCAN works best with 2dim w/ small dataset 
     c_labels = hdbscan(feat, min_cluster_size=10)   
@@ -84,8 +86,10 @@ def cluster():
     for i, img in enumerate(imgs):
         save_image(img.view(-1, 1, 28, 28), app.config['IMG_DIR']+'/{}.png'.format(i))
 
-    print('Saving ae feat...')
-    np_json(feat, OUTPUT_DIR+'feat.json')
+    print('Saving processed ae feat...')      # Saving feat to json bcz tsne slow
+    np_json(feat, OUTPUT_DIR+'_feat.json')
+
+
 
     return feat, c_labels
 
@@ -101,7 +105,7 @@ def som(args):
     data = feat[img_idx]
 
     dims= [10, 20]  # dims[row, col]
-    som_path = OUTPUT_DIR+'som.json'
+    som_path = OUTPUT_DIR+'_som.json'
     if os.path.exists(som_path):  # Declare new SOM else update net
         iter = 100
         lr = 0.0001 
@@ -180,3 +184,7 @@ def sort_c_labels(c_labels):
     c_labels[c_labels!=-1] = lut[c_labels[c_labels!=-1]]    # Keep noise c_labels
     return c_labels
 
+def clear_cluster_output(output_dir):
+    files = glob.glob(output_dir+'_*')
+    for f in files:
+        os.remove(f)
