@@ -12,3 +12,7 @@ node_modules
 
 # ====== Image dirs ====== #
 *imgs*
+
+# ====== Docs ====== #
+*gif
+*mov

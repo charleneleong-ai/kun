@@ -28,7 +28,7 @@
 }
 
 /* default styles so shuffle doesn't have to set them (it will if they're missing) */
-.shuffle-grid {
+.shuffle-grd {
     position: relative;
     overflow: hidden;
 }
@@ -80,7 +80,7 @@ figure {
     padding: 0;
 }
 
-.shuffle-grid figure.selected {
+.shuffle-grd figure.selected {
     filter: brightness(20%);
 } 
 

@@ -32,6 +32,8 @@ app = create_app()
 
 if __name__ == '__main__':
     # run_worker()
+    app.jinja_env.auto_reload = True
+    app.config['TEMPLATES_AUTO_RELOAD'] = True
     app.run(host=HOST,
             debug=True,  # automatic reloading enabled
             port=PORT,

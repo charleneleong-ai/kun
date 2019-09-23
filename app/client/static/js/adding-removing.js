@@ -11,7 +11,7 @@ var Demo = function (element) {
 // Column width and gutter width options can be functions
 Demo.prototype.initShuffle = function () {
   this.shuffle = new Shuffle(this.element, {
-    itemSelector: '.js-item',
+    itemSelector: '.grd-item',
     speed: 250,
     easing: 'ease',
     columnWidth: function (containerWidth) {
@@ -254,12 +254,12 @@ Demo.prototype.onContainerClick = function (event) {
     return;
   }
 
-  var element = event.target.closest('.js-item');
+  var element = event.target.closest('.grd-item');
   if (element !== null) {
     this.shuffle.remove([element]);
   }
 };
 
 document.addEventListener('DOMContentLoaded', function () {
-  window.demo = new Demo(document.getElementById('img-grid'));
+  window.demo = new Demo(document.getElementById('img-grd'));
 });

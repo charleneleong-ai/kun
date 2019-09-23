@@ -107,7 +107,7 @@ def som(args):
     dims= [10, 20]  # dims[row, col]
     som_path = OUTPUT_DIR+'_som.json'
     if os.path.exists(som_path):  # Declare new SOM else update net
-        iter = 100
+        iter = 50
         lr = 0.0001 
         som = SOM(data=data, dims=dims, n_iter = iter, lr_init=lr, net_path=som_path)
     else:

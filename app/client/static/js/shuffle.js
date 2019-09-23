@@ -14,16 +14,16 @@
 
 
 $(document).ready(() => {
-  console.log('ShuffleImgGrd');
+  console.log('ShuffleGrd');
 });
 
 
 
-class ShuffleImgGrid {
+class ShuffleGrd {
   constructor(element) {
     this.element = element;
     this.shuffle = new Shuffle(element, {
-      itemSelector: '.js-item',
+      itemSelector: '.grd-item',
       sizer: element.querySelector('.my-sizer-element'),
       speed: 300,
       staggerAmount: 30
@@ -38,6 +38,16 @@ class ShuffleImgGrid {
 
     this.shuffle.element.addEventListener('click', this.onElementClick.bind(this));
     document.querySelector('#remove').addEventListener('click', this.onRemoveClick.bind(this));
+
+  }
+
+  refreshShuffle(element){
+    this.shuffle = new Shuffle(element, {
+      itemSelector: '.grd-item',
+      sizer: element.querySelector('.my-sizer-element'),
+      speed: 300,
+      staggerAmount: 30
+    });
   }
 
   /**
@@ -175,14 +185,14 @@ class ShuffleImgGrid {
  * Select shuffle element when clicked
  * @param {Object} event Event object.
  */
-ShuffleImgGrid.prototype.onElementClick = function (event) {
+ShuffleGrd.prototype.onElementClick = function (event) {
   // Bail in older browsers. https://caniuse.com/#feat=element-closest
   if (typeof event.target.closest !== 'function') {
     return;
   }
-  var element = event.target.closest('.js-item');
+  var element = event.target.closest('.grd-item');
   if (element !== null) {
-    selectElement(element)
+    // selectElement(element)
 
     // elementIdx = element.getAttribute('img_idx')
 
@@ -207,21 +217,23 @@ ShuffleImgGrid.prototype.onElementClick = function (event) {
   }
 }
 
-ShuffleImgGrid.prototype.onRemoveClick = function () {
+ShuffleGrd.prototype.onRemoveClick = function () {
+
+  this.refreshShuffle(document.getElementById('img-grd'))
   var shuffleItems = this.shuffle.items
-  
   var selectedItems = document.getElementsByClassName('selected')
   var selectedImgIdx = [] 
   for (i=0; i<selectedItems.length; i++){
     selectedImgIdx.push(selectedItems[i].getAttribute('img_idx'))
   }
-
+  console.log(selectedImgIdx)
+  
   var imgIdx = [] 
   for (i = 0; i < shuffleItems.length; i++) {
     imgIdx.push(shuffleItems[i].element.getAttribute('img_idx'))
   }
-
-  console.log(selectedImgIdx)
+  // console.log(imgIdx)
+  
   var removeIdx = []
   for (i = 0; i < shuffleItems.length; i++) {
     if (selectedImgIdx.includes(shuffleItems[i].element.getAttribute('img_idx'))) {
@@ -229,21 +241,20 @@ ShuffleImgGrid.prototype.onRemoveClick = function () {
     }
   }
   console.log(removeIdx)
-  var imgGridIdx = Array.from(Array(shuffleItems.length), (x, index) => index)
-
-  seenImgs(selectedImgIdx, imgGridIdx)
+  seenImgs(selectedImgIdx, removeIdx)
+  showRemoveBtn()
 };
 
-function selectElement(element) {
-  showRemoveBtn()
-  // Unselect if selected
-  if (element.className.includes('selected')) {
-    $(element).removeClass('selected')
-  } else {
-    $(element).addClass('selected')
-  }
-  showRemoveBtn()
-}
+// function selectElement(element) {
+//   showRemoveBtn()
+//   // Unselect if selected
+//   if (element.className.includes('selected')) {
+//     $(element).removeClass('selected')
+//   } else {
+//     $(element).addClass('selected')
+//   }
+//   showRemoveBtn()
+// }
 
 
 function showRemoveBtn() {
@@ -275,6 +286,6 @@ function seenImgs(imgIdx, imgGridIdx) {
 
 
 document.addEventListener('DOMContentLoaded', () => {
-  window.shuffle = new ShuffleImgGrid(document.getElementById('img-grid'));
+  window.shuffle = new ShuffleGrd(document.getElementById('img-grd'));
 });
 

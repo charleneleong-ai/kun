@@ -52,20 +52,33 @@ function getStatus(taskType, taskID) {
     method: 'GET'
   })
     .done((res) => {
-      document.getElementById("task_type").innerHTML = res.data.task_type;
-      document.getElementById("task_id").innerHTML = res.data.task_id;
-      document.getElementById("task_status").innerHTML = res.data.task_status;
-      document.getElementById("task_result").innerHTML = res.data.task_result;
+      //For task table
+      document.getElementById('task_type').innerHTML = res.data.task_type;
+      document.getElementById('task_id').innerHTML = res.data.task_id;
+      document.getElementById('task_status').innerHTML = res.data.task_status;
+      document.getElementById('task_result').innerHTML = res.data.task_result;
+
+      // For progress bar
+      if (taskType === 'upload'){
+        document.getElementById('progress').innerHTML = 'Uploading images with label '+res.data.task_data+' ...'
+      }else if (taskType === 'train'){
+        document.getElementById('progress').innerHTML = 'Training autoencoder '+res.data.task_data+' ...'
+      }else if (taskType === 'cluster'){
+        document.getElementById('progress').innerHTML = 'Clustering with hdbscan ...'
+      }else if (taskType === 'som'){
+        document.getElementById('progress').innerHTML = 'Loading image grid with self organising map ...'
+      }
 
       const taskStatus = res.data.task_status;
-      if (taskStatus === 'finished' && taskType === 'save_imgs'){
-        console.log('Reloading shuffle grid')
-        location.reload(true);
-        // setTimeout(function () {  // Give time for flask session to update
-        //   $("#img_grd").load(location.href+" #img_grd>*","");
-        // }, 1000);
+      if (taskType === 'som' && taskStatus === 'finished'){
+        reloadShuffleGrid()
       }
-      if (taskStatus === 'finished' || taskStatus === 'failed') return false;
+      
+      if (taskStatus === 'finished' || taskStatus === 'failed') {
+        document.getElementById('progress').innerHTML = ''
+        return false;
+      }
+      
       setTimeout(function () {
         getStatus(res.data.task_type, res.data.task_id);
       }, 1000);
@@ -76,3 +89,17 @@ function getStatus(taskType, taskID) {
     });
 }
 
+function reloadShuffleGrid(){
+  $.ajax({
+    url: `/`,
+    method: 'GET'
+  })
+  .done(function () {
+    console.log('Reloading shuffle grid...')
+    $('#img-grd').load(location.href+' #img-grd>*','');  //Reload img-grd
+  })
+  .fail((err) => {
+    console.log(err)
+  });
+
+}

@@ -9,15 +9,14 @@ Last Modified: Mon Sep 23 2019
 
 {% block css %}
 <link href="{{url_for('static', filename='css/shufflejs.css')}}" rel="stylesheet" media="screen">
-<!-- <link href="{{url_for('static', filename='css/selectables.css')}}" rel="stylesheet" media="screen"> -->
 {% endblock %}
 
 {% block content %}
 <!-- Shuffle JS Grid -->
 <div class='container'>
-    <div id='img-grid' class="js-grid shuffle-grid">
+    <div id='img-grd' class="shuffle-grd">
         {%- for img, idx in imgs %}
-        <figure class="js-item column" data-groups='["{{idx}}"]' img_idx='{{idx}}'>
+        <figure class="grd-item column" data-groups='["{{idx}}"]' img_idx='{{idx}}'>
             <div class="aspect">
                 <div class="aspect__inner">
                     <img src="{{img}}" alt="{{img}}">
@@ -26,27 +25,22 @@ Last Modified: Mon Sep 23 2019
         </figure>
         {%- endfor %}
     </div>
-</div>
-
-</br>
-
-<div class='row'>
-    <div class="col-sm-12 col-md-10 col-md-offset-1">
-        <button id="remove" type="button" class="hide btn btn-primary" style='margin: 0 auto;'>Remove</a>
+    </br>
+    <div><p id='progress'></p></div>
+    </br>
+    <div class='row'>
+        <div class="col-sm-12 col-md-10 col-md-offset-1">
+            <button id="remove" type="button" class="hide btn btn-primary" style='margin: 0 auto;'>Remove</a>
+        </div>
     </div>
 </div>
+
 
 {% endblock %}
 
 {% block js %}
-
-<!-- <script src="{{ url_for('static', filename='js/selectables.js') }}"></script> -->
-<!-- <script src="{{ url_for('static', filename='js/shuffle.min.js') }}"></script>-->
-<!-- <script src="{{ url_for('static', filename='js/selection.min.js') }}"></script>  -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Shuffle/5.2.3/shuffle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@simonwep/selection-js/dist/selection.min.js"></script>
 <script src="{{ url_for('static', filename='js/shuffle.js') }}"></script>
-<script src="{{ url_for('static', filename='js/selection.js') }}"></script> 
-
-
+<script src="{{ url_for('static', filename='js/selection.js') }}"></script>
 {% endblock %}

@@ -20,12 +20,11 @@ const selection = Selection.create({
     class: 'selection',
 
     // All elements in this container can be selected
-    selectables: ['.shuffle-grid > figure'],
+    selectables: ['.shuffle-grd > figure'],
 
     // The container is also the boundary in this case
-    boundaries: ['.shuffle-grid']
+    boundaries: ['.shuffle-grd']
 }).on('start', ({inst, selected, oe}) => {
-
     // Remove class if the user isn't pressing the control key or ⌘ key
     if (!oe.ctrlKey && !oe.metaKey) {
 
@@ -38,9 +37,9 @@ const selection = Selection.create({
         // Clear previous selection
         inst.clearSelection();
     }
+    
 
 }).on('move', ({changed: {removed, added}}) => {
-
     // Add a custom class to the elements that where selected.
     for (const el of added) {
         el.classList.add('selected');
@@ -55,5 +54,29 @@ const selection = Selection.create({
 }).on('stop', ({inst}) => {
     inst.keepSelection();
     showRemoveBtn() 
+});
+
+// Remove selected when clicking outside img-grd
+window.addEventListener('click', function(e){  
+    if (!document.getElementById('img-grd').contains(e.target)){
+        
+        // console.log(elements.length)
+    var elements = document.getElementsByClassName('selected')
+    while (elements.length!=0){
+        for (let el of elements) {
+            $(el).removeClass('selected')
+        }
+        elements = document.getElementsByClassName('selected')
+    }
+
+
+    showRemoveBtn() 
+    // removeSelected(elements)
+    // elements.forEach(function(el){
+    //     $(el).removeClass('selected')
+    // });
+    // console.log(elements.length)
+    }
+    
 });
 
