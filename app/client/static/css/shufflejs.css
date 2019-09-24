@@ -54,7 +54,7 @@
 
 
 img {
-    display: block;
+    visibility: visible;
     width: 100%;
 
     max-width: none;
@@ -66,13 +66,6 @@ img:hover
 {
   opacity: 0.3;
   filter: alpha(opacity=30);
-}
-
-/* Small reset */
-*,
-    ::before,
-    ::after {
-    box-sizing: border-box;
 }
 
 figure {
@@ -89,6 +82,7 @@ figure {
     opacity: 0;
     transition: visibility 0s linear 0.33s, opacity 0.33s linear;
 }
+
 .show{
 
     visibility: visible;

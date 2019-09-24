@@ -3,10 +3,10 @@
 ###
 # Created Date: Sunday, September 15th 2019, 6:35:09 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Sep 23 2019
+# Last Modified: Tue Sep 24 2019
 ###
 
-# project/server/main/views.py
+# project/server/main/routes.py
 
 import os
 from datetime import datetime
@@ -20,13 +20,9 @@ from server.main.models import Image, ImageGrid, clear_tables
 
 @bp.route('/', methods=['GET'])
 def home():
-    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
     if 'img_grd_paths' not in session:
         session['img_grd_paths'] = []
         session['img_idx'] = []
-    # else:   # To bypass img caching
-    #     session['img_grd_paths'] = [img+'?'+timestamp for img in session['img_grd_paths']]
-        # print(session['img_grd_paths'])
     return render_template('/shuffle.html', imgs=zip(session['img_grd_paths'], session['img_idx']))
     
     
@@ -51,7 +47,6 @@ def run_task(task_type):
             'task_id': task.get_id()
         }
     }
-    # session['task'] = task.get_id()
     return jsonify(response_object), 202
 
 
@@ -81,16 +76,10 @@ def get_status(task_type, task_id):
         task = current_app.task_queue.enqueue(som, (label_0_idx, c_labels), job_timeout=300)
 
     elif task_type=='som' and task.get_status()=='finished':
-        # task_type = 'som'
         img_grd_idx = task.result
-
-        img_grd = ImageGrid(img_grd_idx)
+        img_grd = ImageGrid(img_grd_idx)    # Update img_grd
         session['img_grd_paths'] = img_grd.img_paths
         session['img_idx'] = img_grd.img_idx
-
-        # session['net_w'] = net_w
-        # print(session['net_w'])
-        
 
     if task:
         response_object = {
@@ -109,11 +98,12 @@ def get_status(task_type, task_id):
 
 
 
-@bp.route('/seen/<img_idx>/<img_grd_idx>', methods=['POST'])
-def seen_imgs(img_idx, img_grd_idx):
+@bp.route('/selected/<img_idx>/<img_grd_idx>', methods=['POST'])
+def selected_imgs(img_idx, img_grd_idx):
     img_idx = img_idx.split(',')
     img_grd_idx = img_grd_idx.split(',')
     seen = [Image.query.filter_by(idx=int(idx)).first().seen() for idx in img_idx]
+    selected = [Image.query.filter_by(idx=int(idx)).first() for idx in img_idx]
 
     # Get new imgs to replace seen img_grd_idx
     imgs = Image.query.filter_by(processed=False).filter_by(c_label=0).all()

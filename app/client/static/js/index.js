@@ -6,7 +6,7 @@
  * Created Date: Saturday, September 14th 2019, 4:24:23 pm
  * Author: Charlene Leong
  * -----
- * Last Modified: Mon Sep 23 2019
+ * Last Modified: Tue Sep 24 2019
  * Modified By: Charlene Leong
  * -----
  * Copyright (c) 2019 Victoria University of Wellington ECS
@@ -70,6 +70,7 @@ function getStatus(taskType, taskID) {
       }
 
       const taskStatus = res.data.task_status;
+
       if (taskType === 'som' && taskStatus === 'finished'){
         reloadShuffleGrid()
       }

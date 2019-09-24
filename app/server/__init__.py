@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 4:44:15 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Sep 23 2019
+# Last Modified: Tue Sep 24 2019
 ###
 
 import os
@@ -45,7 +45,6 @@ def create_app(script_info=None):
     app_settings = DevelopmentConfig
     app.config.from_object(app_settings)
     app.config['IMG_DIR'] = os.path.join(app.static_folder, 'imgs')
-    app.config['IMG_GRD_DIR'] = os.path.join(app.static_folder, 'img_grd')
     
     # set up extensions
     bootstrap.init_app(app)
