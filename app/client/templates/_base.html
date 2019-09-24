@@ -30,14 +30,14 @@ Last Modified: Tue Sep 24 2019
 <script>
     $(window).load(function() {
         // Animate loader off screen
-        $(".se-pre-con").fadeOut("slow");;
+        $(".page-loader").fadeOut("slow");
     });
 </script>
 
 <div class="common">
 
     <body>
-        <div class="se-pre-con"></div>
+        <div class="page-loader"></div>
         <div id='page-container'>
             <header class="sticky row">
                 <div class="col-sm-12 col-md-10 col-md-offset-1">
@@ -79,8 +79,8 @@ Last Modified: Tue Sep 24 2019
                 </div>
                 <div class="container">{% block content %}{% endblock %}</div>
 
-                <!-- <div class="container">{% block tasks %}{% endblock %}</div>
-  </br> -->
+                <div class="container">{% block tasks %}{% endblock %}</div>
+
                 <!-- <div class='row'>
     <div class="col-sm col-md-8 col-md-offset-2 col-lg-5 col-lg-offset-4">
       <p style="text-align: center;">Non-exhaustive list of functionalities that could be added.</p>
@@ -93,7 +93,7 @@ Last Modified: Tue Sep 24 2019
       </div>
     </div>
   </div> -->
-
+                </br>
                 <script src="//ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
                 <script src="{{ url_for('static', filename='js/index.js') }}"></script>

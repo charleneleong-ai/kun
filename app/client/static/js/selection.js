@@ -53,49 +53,30 @@ const selection = Selection.create({
 
 }).on('stop', ({ inst }) => {
     inst.keepSelection();
-    showRemove()
+    showProgress()
 });
 
 // Remove selected when clicking outside img-grd
-window.addEventListener('click', function (e) {
+window.addEventListener('click', function(e) {
     if (!document.getElementById('img-grd').contains(e.target)) {
-        clearSelection()
+        $('#img-grd figure.selected').toggleClass('selected')
     }
-    showRemove()
+    showProgress()
 });
 
 
-function clearSelection() {
-    var elements = document.getElementsByClassName('selected')
-    while (elements.length != 0) {
-        for (let el of elements) {
-            $(el).removeClass('selected')
-        }
-        elements = document.getElementsByClassName('selected')
-    }
-}
-
-
-function removeSelection() {
-    var elements = document.getElementsByClassName('selected')
-    console.log(elements.length)
-    // while (elements.length != 0) {
-    for (let el of elements) {
-        $(el).addClass('hide')
-        // $(el).removeClass('selected')
-    }
-    // elements = document.getElementsByClassName('selected')
-    // }
-    showRemove() 
-}
-
-function showRemove() {
+function showProgress() {
     // Show Remove if at least one item is selected, else hide
     if (document.getElementsByClassName('selected').length == 0) {
-        $(document.getElementById('remove')).removeClass('show')
-        $(document.getElementById('remove')).addClass('hide')
+        $('#progress').removeClass('show')
+        $('#progress').addClass('hide')
     } else {
-        $(document.getElementById('remove')).removeClass('hide')
-        $(document.getElementById('remove')).addClass('show')
+        $('#progress').removeClass('hide')
+        $('#progress').addClass('show')
+    }
+    // On first img grid load show progress
+    if (document.getElementsByClassName('grd-item').length == 0) {
+        $('#progress').removeClass('hide')
+        $('#progress').addClass('show')
     }
 }

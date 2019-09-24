@@ -5,41 +5,37 @@ Last Modified: Tue Sep 24 2019
 -->
 
 
-{% extends "home.html" %}
-
-{% block css %}
-<link href="{{url_for('static', filename='css/shufflejs.css')}}" rel="stylesheet" media="screen">
-{% endblock %}
-
-{% block content %}
+{% extends "home.html" %} {% block css %}
+<link href="{{url_for('static', filename='css/shuffle.css')}}" rel="stylesheet" media="screen"> {% endblock %} {% block content %}
 <!-- Shuffle JS Grid -->
 <div class='container'>
     <div id='img-grd' class="shuffle-grd">
         {%- for img, idx in imgs %}
-        <figure class="grd-item column" data-groups='["{{idx}}"]' img_idx='{{idx}}'>
+        <figure class="grd-item column loading" data-groups='["{{idx}}"]' img_idx='{{idx}}'>
             <div class="aspect">
-                <div class="aspect__inner">
-                    <img src="{{img}}" alt="{{img}}">
+                <div class="aspect__inner ">
+                    <!-- <img class='bottom' src="{{url_for('static', filename='css/loading.gif')}}"> -->
+                    <img class='top' src="{{img}}" alt="{{img}}">
                 </div>
             </div>
         </figure>
         {%- endfor %}
     </div>
-    </br>
-    <div><p id='progress'></p></div>
-    </br>
+
+    <br/>
+
     <div class='row'>
-        <div class="col-sm-12 col-md-10 col-md-offset-1">
-            <!-- <button id="remove" type="button" class="hide btn btn-primary" style='margin: 0 auto;'>Remove</a> -->
-                <p id='remove' class='hide'>Press <b>[ Space ]</b> to remove</p>
+        <div class='container'>
+            <div class="col-sm-12 col-md-10 col-md-offset-1">
+                <p id='progress' class='hide'>Press <b>[ SPACE ]</b> to remove</p>
+            </div>
         </div>
+
     </div>
 </div>
 
 
-{% endblock %}
-
-{% block js %}
+{% endblock %} {% block js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Shuffle/5.2.3/shuffle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@simonwep/selection-js/dist/selection.min.js"></script>
 <script src="{{ url_for('static', filename='js/shuffle.js') }}"></script>
