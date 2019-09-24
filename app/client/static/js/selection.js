@@ -4,7 +4,7 @@
  * Created Date: Monday, September 23rd 2019, 5:10:29 pm
  * Author: Charlene Leong
  * -----
- * Last Modified: Mon Sep 23 2019
+ * Last Modified: Tue Sep 24 2019
  * Modified By: Charlene Leong
  * -----
  * Copyright (c) 2019 Victoria University of Wellington ECS
@@ -24,7 +24,7 @@ const selection = Selection.create({
 
     // The container is also the boundary in this case
     boundaries: ['.shuffle-grd']
-}).on('start', ({inst, selected, oe}) => {
+}).on('start', ({ inst, selected, oe }) => {
     // Remove class if the user isn't pressing the control key or ⌘ key
     if (!oe.ctrlKey && !oe.metaKey) {
 
@@ -37,9 +37,9 @@ const selection = Selection.create({
         // Clear previous selection
         inst.clearSelection();
     }
-    
 
-}).on('move', ({changed: {removed, added}}) => {
+
+}).on('move', ({ changed: { removed, added } }) => {
     // Add a custom class to the elements that where selected.
     for (const el of added) {
         el.classList.add('selected');
@@ -51,32 +51,51 @@ const selection = Selection.create({
         el.classList.remove('selected');
     }
 
-}).on('stop', ({inst}) => {
+}).on('stop', ({ inst }) => {
     inst.keepSelection();
-    showRemoveBtn() 
+    showRemove()
 });
 
 // Remove selected when clicking outside img-grd
-window.addEventListener('click', function(e){  
-    if (!document.getElementById('img-grd').contains(e.target)){
-        
-        // console.log(elements.length)
+window.addEventListener('click', function (e) {
+    if (!document.getElementById('img-grd').contains(e.target)) {
+        clearSelection()
+    }
+    showRemove()
+});
+
+
+function clearSelection() {
     var elements = document.getElementsByClassName('selected')
-    while (elements.length!=0){
+    while (elements.length != 0) {
         for (let el of elements) {
             $(el).removeClass('selected')
         }
         elements = document.getElementsByClassName('selected')
     }
+}
 
 
-    showRemoveBtn() 
-    // removeSelected(elements)
-    // elements.forEach(function(el){
-    //     $(el).removeClass('selected')
-    // });
-    // console.log(elements.length)
+function removeSelection() {
+    var elements = document.getElementsByClassName('selected')
+    console.log(elements.length)
+    // while (elements.length != 0) {
+    for (let el of elements) {
+        $(el).addClass('hide')
+        // $(el).removeClass('selected')
     }
-    
-});
+    // elements = document.getElementsByClassName('selected')
+    // }
+    showRemove() 
+}
 
+function showRemove() {
+    // Show Remove if at least one item is selected, else hide
+    if (document.getElementsByClassName('selected').length == 0) {
+        $(document.getElementById('remove')).removeClass('show')
+        $(document.getElementById('remove')).addClass('hide')
+    } else {
+        $(document.getElementById('remove')).removeClass('hide')
+        $(document.getElementById('remove')).addClass('show')
+    }
+}

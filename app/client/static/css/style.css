@@ -1,39 +1,72 @@
 /*
  * Created Date: Saturday, September 21st 2019, 7:22:08 pm
  * Author: Charlene Leong leongchar@myvuw.ac.nz
- * Last Modified: Mon Sep 23 2019
+ * Last Modified: Tue Sep 24 2019
  */
 
 
- .common {
-    text-align: center;
+/******** PAGE CONTENT ********/
+
+#page-container {
+    position: relative;
+    min-height: 100vh;
 }
 
-* { box-sizing: border-box; }
+#content-wrap {
+    padding-bottom: 3.5rem;
+    /* Footer height */
+}
 
+#footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 3.5rem;
+    /* Footer height */
+}
+
+.common {
+    text-align: center;
+}
 
 .container {
     width: 93%;
     margin: auto;
 }
 
-.grid {
-    height: 75%; /* inherit height from body */
-  }
-
-/* clear fix */
-.grid:after {
-    content: '';
-    display: block;
-    clear: both;
-  }
-  
-.grid-sizer,
-.grid-item {
-    float: left;
-    width: 5%;
-    height: 5%;
-    border: 2px solid #333;
-    border-color: hsla(0, 0%, 0%, 0.7);
+* {
+    box-sizing: border-box;
 }
 
+
+/* Small reset */
+
+*,
+ ::before,
+ ::after {
+    box-sizing: border-box;
+}
+
+
+/******** PAGE LOADER ********/
+
+.no-js #loader {
+    display: none;
+}
+
+.js #loader {
+    display: block;
+    position: absolute;
+    left: 100px;
+    top: 0;
+}
+
+.se-pre-con {
+    position: fixed;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    background: url('loading.gif') center no-repeat #fff;
+}

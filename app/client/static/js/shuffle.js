@@ -4,7 +4,7 @@
  * Created Date: Monday, September 16th 2019, 3:42:24 pm
  * Author: Charlene Leong
  * -----
- * Last Modified: Mon Sep 23 2019
+ * Last Modified: Tue Sep 24 2019
  * Modified By: Charlene Leong
  * -----
  * Copyright (c) 2019 Victoria University of Wellington ECS
@@ -36,12 +36,11 @@ class ShuffleGrd {
     this.addSorting();
     this.addSearchFilter();
 
-    this.shuffle.element.addEventListener('click', this.onElementClick.bind(this));
-    document.querySelector('#remove').addEventListener('click', this.onRemoveClick.bind(this));
-
+    document.addEventListener('keyup', this.removeImgs.bind(this), false);
+ 
   }
 
-  refreshShuffle(element){
+  refreshShuffle(element) {
     this.shuffle = new Shuffle(element, {
       itemSelector: '.grd-item',
       sizer: element.querySelector('.my-sizer-element'),
@@ -181,97 +180,69 @@ class ShuffleGrd {
 
 }
 
-/**
- * Select shuffle element when clicked
- * @param {Object} event Event object.
- */
-ShuffleGrd.prototype.onElementClick = function (event) {
-  // Bail in older browsers. https://caniuse.com/#feat=element-closest
-  if (typeof event.target.closest !== 'function') {
-    return;
-  }
-  var element = event.target.closest('.grd-item');
-  if (element !== null) {
-    // selectElement(element)
+// ShuffleGrd.prototype.onRemoveClick = function () {
 
-    // elementIdx = element.getAttribute('img_idx')
-
-    // // Return all items with same idx
-    // var items = this.shuffle.items
-    // var removeIdx = [];
-    // for (i=0; i<items.length; i++){
-    //   if(items[i].element.getAttribute('img_idx')==elementIdx){
-    //     removeIdx.push(i);
-    //   }
-    // }
-    // // console.log(removeIdx)
-    // // Make an array of elements to remove.
-    // var collection = removeIdx.map(function (index) {
-    //   return this.shuffle.items[index].element;
-    // }, this);
-
-    // this.shuffle.remove(collection)
-
-    // this.shuffle.add([this.shuffle.items[removeIdx].element])
-    // seenImage(elementIdx, removeIdx)
-  }
-}
-
-ShuffleGrd.prototype.onRemoveClick = function () {
-
-  this.refreshShuffle(document.getElementById('img-grd'))
-  var shuffleItems = this.shuffle.items
-  var selectedItems = document.getElementsByClassName('selected')
-  var selectedImgIdx = [] 
-  for (i=0; i<selectedItems.length; i++){
-    selectedImgIdx.push(selectedItems[i].getAttribute('img_idx'))
-  }
-  console.log(selectedImgIdx)
-  
-  var imgIdx = [] 
-  for (i = 0; i < shuffleItems.length; i++) {
-    imgIdx.push(shuffleItems[i].element.getAttribute('img_idx'))
-  }
-  // console.log(imgIdx)
-  
-  var removeIdx = []
-  for (i = 0; i < shuffleItems.length; i++) {
-    if (selectedImgIdx.includes(shuffleItems[i].element.getAttribute('img_idx'))) {
-      removeIdx.push(i)
-    }
-  }
-  console.log(removeIdx)
-  seenImgs(selectedImgIdx, removeIdx)
-  showRemoveBtn()
-};
-
-// function selectElement(element) {
-//   showRemoveBtn()
-//   // Unselect if selected
-//   if (element.className.includes('selected')) {
-//     $(element).removeClass('selected')
-//   } else {
-//     $(element).addClass('selected')
+//   this.refreshShuffle(document.getElementById('img-grd'))
+//   var shuffleItems = this.shuffle.items
+//   var selectedItems = document.getElementsByClassName('selected')
+//   var selectedImgIdx = [] 
+//   for (i=0; i<selectedItems.length; i++){
+//     selectedImgIdx.push(selectedItems[i].getAttribute('img_idx'))
 //   }
-//   showRemoveBtn()
-// }
+//   console.log(selectedImgIdx)
+
+//   var imgIdx = [] 
+//   for (i = 0; i < shuffleItems.length; i++) {
+//     imgIdx.push(shuffleItems[i].element.getAttribute('img_idx'))
+//   }
+//   // console.log(imgIdx)
+
+//   var removeIdx = []
+//   for (i = 0; i < shuffleItems.length; i++) {
+//     if (selectedImgIdx.includes(shuffleItems[i].element.getAttribute('img_idx'))) {
+//       removeIdx.push(i)
+//     }
+//   }
+//   console.log(removeIdx)
+//   selectedImgs(selectedImgIdx, removeIdx)
+//   showRemove()
+// };
 
 
-function showRemoveBtn() {
-  // Show Remove button once at least one item is clicked, else hide
-  if (document.getElementsByClassName('selected').length == 0) {
-    $(document.getElementById('remove')).removeClass('show')
-    $(document.getElementById('remove')).addClass('hide')
-  } else {
-    $(document.getElementById('remove')).removeClass('hide')
-    $(document.getElementById('remove')).addClass('show')
+ShuffleGrd.prototype.removeImgs = function (evt) {
+  if (evt.keyCode === 32){    // if space pressed
+    this.refreshShuffle(document.getElementById('img-grd'))
+    var shuffleItems = this.shuffle.items
+    var selectedItems = document.getElementsByClassName('selected')
+    var selectedImgIdx = []
+    for (i = 0; i < selectedItems.length; i++) {
+      selectedImgIdx.push(selectedItems[i].getAttribute('img_idx'))
+    }
+    console.log(selectedImgIdx)
+  
+    var imgIdx = []
+    for (i = 0; i < shuffleItems.length; i++) {
+      imgIdx.push(shuffleItems[i].element.getAttribute('img_idx'))
+    }
+    // console.log(imgIdx)
+  
+    var removeIdx = []
+    for (i = 0; i < shuffleItems.length; i++) {
+      if (selectedImgIdx.includes(shuffleItems[i].element.getAttribute('img_idx'))) {
+        removeIdx.push(i)
+      }
+    }
+    console.log(removeIdx)
+    selectedImgs(selectedImgIdx, removeIdx)
+    removeSelection()
   }
+
 }
 
 
-function seenImgs(imgIdx, imgGridIdx) {
+function selectedImgs(imgIdx, imgGridIdx) {
   $.ajax({
-    url: `/seen/${imgIdx}/${imgGridIdx}`,
+    url: `/selected/${imgIdx}/${imgGridIdx}`,
     method: 'POST'
   })
     .done((res) => {
@@ -282,7 +253,6 @@ function seenImgs(imgIdx, imgGridIdx) {
       console.log(err)
     });
 }
-
 
 
 document.addEventListener('DOMContentLoaded', () => {
