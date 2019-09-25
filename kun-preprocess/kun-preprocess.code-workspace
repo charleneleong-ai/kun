@@ -1,15 +1,11 @@
 {
-	
 	"folders": [
 		{
+			"name": "kun-preprocess",
 			"path": "."
-		},
-		{
-			"path": "/Users/chaleong/Google Drive/engr489-2019/kun.wiki"
 		}
 	],
 	"settings": {
-		// "python.pythonPath": "/root/anaconda3/bin/python",
 		"python.pythonPath": "/Users/chaleong/anaconda3/bin/python3",
 		"psi-header.config": {
 			"forceToTop": true,
@@ -106,8 +102,3 @@
 		]
 	}
 }
-
-
-
-
-
