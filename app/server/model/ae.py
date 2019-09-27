@@ -4,7 +4,7 @@
 ###
 # Created Date: Thursday, August 22nd 2019, 11:50:30 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Sat Sep 21 2019
+# Last Modified: Fri Sep 27 2019
 ###
 
 import os
@@ -219,7 +219,7 @@ class AutoEncoder(nn.Module):
 
             # =================== PLOT COMPARISON ===================== #
             if plt_imgs!=None and self.EPOCH % plt_imgs[1] == 0:         # (N_TEST_IMGS, plt_interval)
-                batch_test = batch_test.view(-1, 1, 28, 28)         # (N_TEST_IMG, 1, 28, 28)
+                batch_test = batch_test.view(-1, 1, 28, 28)              # (N_TEST_IMG, 1, 28, 28)
                 decoded = decoded.view(-1, 1, 28, 28)
                 comparison = torch.cat([batch_test[:plt_imgs[0]], decoded[:plt_imgs[0]]])
                 output_dir = self._check_output_dir(output_dir)

@@ -1,0 +1,11 @@
+# ====== Imgs ====== #
+
+*.jpg
+*.jpeg
+*.tif
+
+*cropped*
+
+credentials.json
+
+NZCGMJ_processed

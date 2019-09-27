@@ -4,7 +4,7 @@
  * Created Date: Monday, September 16th 2019, 3:42:24 pm
  * Author: Charlene Leong
  * -----
- * Last Modified: Tue Sep 24 2019
+ * Last Modified: Fri Sep 27 2019
  * Modified By: Charlene Leong
  * -----
  * Copyright (c) 2019 Victoria University of Wellington ECS
@@ -176,8 +176,6 @@ class ShuffleGrd {
             return titleText.indexOf(searchText) !== -1;
         });
     }
-
-
 }
 
 // ShuffleGrd.prototype.onRemoveClick = function () {
@@ -214,7 +212,7 @@ ShuffleGrd.prototype.selectedImgs = function(evt) {
     var shuffleItems = this.shuffle.items
     var selectedItems = document.getElementsByClassName('selected')
 
-    if (evt.keyCode === 32 && selectedItems.length != 0) { // if space pressed
+    if (evt.keyCode === 13 && selectedItems.length != 0) { // if space pressed
         var selectedImgIdx = []
         for (i = 0; i < selectedItems.length; i++) {
             selectedImgIdx.push(selectedItems[i].getAttribute('img_idx'))
