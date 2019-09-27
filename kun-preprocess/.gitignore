@@ -1,9 +1,0 @@
-# ====== Imgs ====== #
-
-*.jpg
-*.jpeg
-*.tif
-
-*cropped*
-
-credentials.json
