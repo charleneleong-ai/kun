@@ -4,7 +4,7 @@
  * Created Date: Monday, September 23rd 2019, 5:10:29 pm
  * Author: Charlene Leong
  * -----
- * Last Modified: Tue Sep 24 2019
+ * Last Modified: Sat Sep 28 2019
  * Modified By: Charlene Leong
  * -----
  * Copyright (c) 2019 Victoria University of Wellington ECS
@@ -58,14 +58,16 @@ const selection = Selection.create({
 
 // Remove selected when clicking outside img-grd
 window.addEventListener('click', function(e) {
-    if (!document.getElementById('img-grd').contains(e.target)) {
+    if (document.getElementsByClassName('grd-item').length != 0 &&
+        !document.getElementById('img-grd').contains(e.target)) {
         $('#img-grd figure.selected').toggleClass('selected')
+        showProgress()
     }
-    showProgress()
 });
 
 
 function showProgress() {
+
     // Show Remove if at least one item is selected, else hide
     if (document.getElementsByClassName('selected').length == 0) {
         $('#progress').removeClass('show')

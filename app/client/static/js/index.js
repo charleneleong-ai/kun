@@ -4,7 +4,7 @@
  * Created Date: Saturday, September 14th 2019, 4:24:23 pm
  * Author: Charlene Leong
  * -----
- * Last Modified: Fri Sep 27 2019
+ * Last Modified: Sat Sep 28 2019
  * Modified By: Charlene Leong
  * -----
  * Copyright (c) 2019 Victoria University of Wellington ECS
@@ -74,7 +74,6 @@ function getStatus(taskType, taskID) {
             if (taskType === 'som' && taskStatus === 'finished') {
                 // Reload page first time for grid to render
                 if (document.getElementsByClassName('grd-item').length == 0) location.reload()
-
                 refreshImgGrd()
                 showProgress()
 
