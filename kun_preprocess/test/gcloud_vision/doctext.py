@@ -48,14 +48,11 @@ def draw_boxes(image, bounds, color):
     draw = ImageDraw.Draw(image)
 
     for bound in bounds:
-        # draw.polygon([bound.vertices[0].x-10, bound.vertices[0].y-20,
-        #                 bound.vertices[1].x+10, bound.vertices[1].y-20,
-        #                 bound.vertices[2].x+10, bound.vertices[2].y+10,
-        #                 bound.vertices[3].x-10, bound.vertices[3].y+10], None, color)
-        draw.polygon([bound.vertices[0].x, bound.vertices[0].y,
-                    bound.vertices[1].x, bound.vertices[1].y,
-                    bound.vertices[2].x, bound.vertices[2].y,
-                    bound.vertices[3].x, bound.vertices[3].y], None, color)
+        draw.polygon([bound.vertices[0].x-10, bound.vertices[0].y-20,
+                        bound.vertices[1].x+10, bound.vertices[1].y-20,
+                        bound.vertices[2].x+10, bound.vertices[2].y+10,
+                        bound.vertices[3].x-10, bound.vertices[3].y+10], None, color)
+
     return image
 
 
@@ -63,7 +60,6 @@ def get_document_bounds(image_file, feature):
     # [START vision_document_text_tutorial_detect_bounds]
     """Returns document bounds given an image."""
     client = vision.ImageAnnotatorClient()
-
     bounds = []
 
     with io.open(image_file, 'rb') as image_file:
@@ -180,13 +176,12 @@ def render_doc_text(filein, fileout):
         h = (y2-y1)
         if (w*h) < 784: continue    # If smaller than MNIST ~(28*28)
             
-        
         if not os.path.exists('char_output/{}/{}'.format(char_type, s.text)):
             os.makedirs('char_output/{}/{}'.format(char_type, s.text))
 
         bbox_draw.rectangle([x1, y1, x2, y2], outline='purple', width=5)
-        # crop = image.crop([x1, y1, x2, y2])
-        # crop.save('char_output/{}/{}/{}_{}_{}_{}.png'.format(char_type, s.text, x1, y1, x2, y2))
+        crop = image.crop([x1, y1, x2, y2])
+        crop.save('char_output/{}/{}/{}_{}_{}_{}.png'.format(char_type, s.text, x1, y1, x2, y2))
 
     bbox_img.show()
 
@@ -206,11 +201,6 @@ if __name__ == '__main__':
     parser.add_argument('detect_file', help='The image for text detection.')
     parser.add_argument('--out_file', help='Optional output file', default=0)
     args = parser.parse_args()
-    # import glob
-    # files = glob.glob('../preprocess/cropped/*')
-    # for f in files:
-    #     fname = f.split('/')[-1]
-    #     render_doc_text(f, '../preprocess/cropped_output/'+fname)
 
     render_doc_text(args.detect_file, args.out_file)
     # [END vision_document_text_tutorial_run_application]

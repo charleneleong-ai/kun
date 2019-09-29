@@ -3,7 +3,7 @@
 ###
 # Created Date: Wednesday, September 25th 2019, 12:09:26 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Fri Sep 27 2019
+# Last Modified: Sun Sep 29 2019
 ###
 
 import glob
@@ -123,7 +123,7 @@ def four_point_transform(img, pts):
 
 
 ### Adapted from https://docs.opencv.org/3.4/da/d0c/tutorial_bounding_rects_circles.htmls
-def plt_bbox(input_img, num_merge):
+def plt_bbox_img(input_img, num_merge):
     bbox_img = input_img
     img_h, img_w = input_img.shape[0], input_img.shape[1]
     area = img_h*img_w
@@ -162,7 +162,7 @@ def dilate(edges, N, iterations):
 
 def process_image(path, out_path):
     orig_im = cv2.imread(path)
-    scale, img = downscale_image(orig_im)
+    # scale, img = downscale_image(orig_im)
     
     img =  cv2.GaussianBlur(img, (3,3), 0)   #Remove high freq noise
     
@@ -219,7 +219,7 @@ def process_image(path, out_path):
     dilated_img.show() 
     dilated_img.convert('RGB').save('6_dilated.png', 'PNG')
 
-    bbox, bbox_img = plt_bbox(dilated, num_merge=2)
+    bbox, bbox_img = plt_bbox_img(dilated, num_merge=2)
     # bbox_img = Image.fromarray(bbox_img)
     # bbox_img.convert('RGB').save('7_bbox.png', 'PNG')
     
@@ -282,10 +282,3 @@ if __name__ == '__main__':
             continue
         print('Processing') 
         process_image(path, out_path)     
-
-        ## To read error o/p
-        # try:
-        #     print('Processing')
-        #     process_image(path, out_path)
-        # except Exception as e:
-        #     print ('%s %s Error' % (path, e))
