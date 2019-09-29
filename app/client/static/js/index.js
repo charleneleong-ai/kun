@@ -4,7 +4,7 @@
  * Created Date: Saturday, September 14th 2019, 4:24:23 pm
  * Author: Charlene Leong
  * -----
- * Last Modified: Sat Sep 28 2019
+ * Last Modified: Mon Sep 30 2019
  * Modified By: Charlene Leong
  * -----
  * Copyright (c) 2019 Victoria University of Wellington ECS
@@ -35,8 +35,9 @@ $('#upload').bind('click', function() {
             method: 'POST'
         })
         .done((res) => {
+            $('#progress').addClass('show')
             console.log(res)
-            getStatus(res.data.task_type, res.data.task_id)
+            getStatus(res.data.task_type, res.data.task_id, res.data.task_data)
 
         })
         .fail((err) => {
@@ -44,9 +45,9 @@ $('#upload').bind('click', function() {
         });
 });
 
-function getStatus(taskType, taskID) {
+function getStatus(taskType, taskID, taskData) {
     $.ajax({
-            url: `/tasks/${taskType}/${taskID}`,
+            url: `/tasks/${taskType}/${taskID}/${taskData}`,
             method: 'GET'
         })
         .done((res) => {
@@ -55,35 +56,37 @@ function getStatus(taskType, taskID) {
             document.getElementById('task_id').innerHTML = res.data.task_id;
             document.getElementById('task_status').innerHTML = res.data.task_status;
             document.getElementById('task_result').innerHTML = res.data.task_result;
+            document.getElementById('task_data').innerHTML = res.data.task_data;
 
             // For progress bar
             $('#img-grd figure.selected').toggleClass('selected')
             $('#progress').fadeIn()
             if (taskType === 'upload') {
+                document.getElementsByClassName('grd-item').length = 0
                 document.getElementById('progress').innerHTML = 'Uploading images with label ' + res.data.task_data + ' ...'
             } else if (taskType === 'train') {
                 document.getElementById('progress').innerHTML = 'Training autoencoder ' + res.data.task_data + ' ...'
             } else if (taskType === 'cluster') {
-                document.getElementById('progress').innerHTML = 'Clustering with hdbscan ...'
+                document.getElementById('progress').innerHTML = 'Clustering label '+taskData+' with hdbscan ...'    //label
             } else if (taskType === 'som') {
                 document.getElementById('progress').innerHTML = 'Loading image grid with self organising map ...'
+                
             }
 
             const taskStatus = res.data.task_status;
-
             if (taskType === 'som' && taskStatus === 'finished') {
                 // Reload page first time for grid to render
                 if (document.getElementsByClassName('grd-item').length == 0) location.reload()
-                refreshImgGrd()
-                showProgress()
 
+                refreshImgGrd(res.data.task_data)
+                showProgress()
             }
             if (taskStatus === 'finished' || taskStatus === 'failed') {
-                document.getElementById('progress').innerHTML = 'Press <b>[ SPACE ]</b> to remove'
+                document.getElementById('progress').innerHTML = 'Press <b>[ ENTER ]</b> to remove'
                 return false;
             }
             setTimeout(function() {
-                getStatus(res.data.task_type, res.data.task_id);
+                getStatus(res.data.task_type, res.data.task_id,  res.data.task_data);
             }, 1000);
 
         })
@@ -92,18 +95,23 @@ function getStatus(taskType, taskID) {
         });
 }
 
-function refreshImgGrd() {
+function refreshImgGrd(num_seen) {
     $.ajax({
             url: `/`,
             method: 'GET'
         })
         .done(function() {
             console.log('Reloading image grid...')
-            console.log($('#img-grd').attr('class'))
+                // console.log($('#img-grd').attr('class'))
+            $('#num-status').fadeOut();
             $('#img-grd').fadeOut();
-            $('#img-grd ').toggleClass('shade')
+            $('#img-grd ').toggleClass('shade') // Need to reset toggle class before reloading
             $('#img-grd').load(location.href + ' #img-grd>*', ''); //Reload img-grd div
+            document.getElementById('num-seen').innerHTML = num_seen
+            $('#num-status').fadeIn();
+            $('#num-status').toggleClass('shade')
             $('#img-grd').fadeIn();
+            
         })
         .fail((err) => {
             console.log(err)

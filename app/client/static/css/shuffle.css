@@ -84,6 +84,10 @@ figure {
     transition: visibility 0s linear 0.33s, opacity 0.33s linear;
 }
 
+.hide .shade{
+    opacity:0.2
+}
+
 .show {
     visibility: visible;
     opacity: 1;
@@ -148,3 +152,4 @@ figure {
         opacity: 1;
     }
 }
+

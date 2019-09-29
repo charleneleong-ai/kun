@@ -3,9 +3,13 @@
 *.jpg
 *.jpeg
 *.tif
+*.zip
 
+# ====== Output folders ====== #
+NZCGMJ_*
 *cropped*
 
+# ====== Gcloud Vision API  ====== #
 credentials.json
 
-NZCGMJ_processed
+
