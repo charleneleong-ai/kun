@@ -4,7 +4,7 @@
  * Created Date: Monday, September 16th 2019, 3:42:24 pm
  * Author: Charlene Leong
  * -----
- * Last Modified: Fri Sep 27 2019
+ * Last Modified: Mon Sep 30 2019
  * Modified By: Charlene Leong
  * -----
  * Copyright (c) 2019 Victoria University of Wellington ECS
@@ -219,12 +219,6 @@ ShuffleGrd.prototype.selectedImgs = function(evt) {
         }
         console.log(selectedImgIdx)
 
-        var imgIdx = []
-        for (i = 0; i < shuffleItems.length; i++) {
-            imgIdx.push(shuffleItems[i].element.getAttribute('img_idx'))
-        }
-        // console.log(imgIdx)
-
         var imgGrdIdx = []
         for (i = 0; i < shuffleItems.length; i++) {
             if (selectedImgIdx.includes(shuffleItems[i].element.getAttribute('img_idx'))) {
@@ -232,24 +226,33 @@ ShuffleGrd.prototype.selectedImgs = function(evt) {
             }
         }
         console.log(imgGrdIdx)
+
+        var imgIdx = []
+        for (i = 0; i < shuffleItems.length; i++) {
+            imgIdx.push(shuffleItems[i].element.getAttribute('img_idx'))
+        }
+        // console.log(imgIdx)
+
         $('#img-grd figure.selected').toggleClass('fadeout')
         $('#img-grd').toggleClass('shade')
+        $('#num-status').toggleClass('shade')
+        
 
-        sendSelectedImgIdx(selectedImgIdx, imgGrdIdx)
+        sendSelectedImgIdx(selectedImgIdx, imgGrdIdx, imgIdx)
 
     }
 
 }
 
 
-function sendSelectedImgIdx(imgIdx, imgGridIdx) {
+function sendSelectedImgIdx(selectedImgIdx, imgGridIdx, imgIdx) {
     $.ajax({
-            url: `/selected/${imgIdx}/${imgGridIdx}`,
+            url: `/selected/${selectedImgIdx}/${imgGridIdx}/${imgIdx}`,
             method: 'POST'
         })
         .done((res) => {
-            console.log('SEEN img_idx: ' + res.img.img_idx + ' img_grd_idx: ' + res.img.img_grd_idx + ' ' + res.img.seen + ' ' + res.img.num_seen)
-            getStatus(res.data.task_type, res.data.task_id)
+            console.log('SEEN img_idx: ' + res.img.selected_img_idx + ' img_grd_idx: ' + res.img.img_grd_idx + ' ' + res.img.seen + ' ' + res.img.num_seen)
+            getStatus(res.data.task_type, res.data.task_id, res.img.num_seen)
         })
         .fail((err) => {
             console.log(err)

@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 10:41:07 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Sep 23 2019
+# Last Modified: Mon Sep 30 2019
 ###
 
 import os
@@ -85,7 +85,7 @@ class ImageGrid(object):
         self.img_idx = self.img_idx()
         
     def load_imgs(self, img_grid_idx):
-        self.imgs = [Image.query.filter_by(idx=int(label_0_idx)).first() for label_0_idx in img_grid_idx]
+        self.imgs = [Image.query.filter_by(idx=int(idx)).first() for idx in img_grid_idx]
         return self.imgs
         # imgs = db.relationship('Image', backref='img_grid', lazy=True)
     
