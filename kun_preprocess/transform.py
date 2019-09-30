@@ -3,7 +3,7 @@
 ###
 # Created Date: Friday, September 27th 2019, 2:20:58 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Sun Sep 29 2019
+# Last Modified: Mon Sep 30 2019
 ###
 
 import numpy as np
@@ -155,18 +155,23 @@ def downscale(img, max_dim=2048):
     
     return scale, new_img
 
-def make_square(img, min_size=28, fill_color=(255, 255, 255, 255)): # fill white
+def square_img(img, min_size=28, fill_color=(255, 255, 255, 255)): # fill white
     if type(img) == np.ndarray:
         img = Image.fromarray(img)
     h, w = img.size
     size = max(min_size, h, w)
     new_im = Image.new('RGBA', (size, size), fill_color)
-    new_im.paste(img, (int((size - w) / 2), int((size - h) / 2)))
+    new_im.paste(img, (int((size - h) / 2), int((size - w) / 2)))
     return new_im
 
-def square_img(img_crop):
+def make_square(img_crop, min_size=28):
 	x1, y1, w, h = img_crop
 
+	if h < min_size:
+		h = min_size
+	if w<min_size:
+		w = min_size
+		
 	if h-w > 0: # taller
 		x1 = x1
 		y1 = y1+0.5*(h-w)

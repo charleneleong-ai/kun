@@ -19,9 +19,10 @@ from google.cloud.vision import types
 from PIL import Image, ImageDraw
 import cv2
 import string
+import re
 
-from transform import center_img, translate_bbox, square_img, resize
-from utils import find_contours, find_bbox, add_padding
+from transform import center_img, translate_bbox, square_img, resize, make_square
+from utils import find_contours, find_bbox, add_padding_img, add_padding_bbox
 
 class FeatureType(Enum):
     PAGE = 1
@@ -42,6 +43,17 @@ class FeatureType(Enum):
 #                       bound.vertices[3].x-10, bound.vertices[3].y+10], None, color)
 #     return image
 
+def cjk_detect(texts):
+    # korean
+    if re.search("[\uac00-\ud7a3]", texts):
+        return "ko"
+    # japanese
+    if re.search("[\u3040-\u30ff]", texts):
+        return "ja"
+    # chinese
+    if re.search("[\u4e00-\u9FFF]", texts):
+        return "zh"
+    return None
 
 def get_document_bounds(document, feature):
     """Returns document bounds given an image."""
@@ -120,13 +132,18 @@ def crop_symbols(file, symbols, img):
                 s.text='backslash'
             elif s.text==':':
                 s.text='colon'
-        else:
+        elif cjk_detect(s.text) == 'zh':
             char_type = 'zh'
+        else:
+            print('Not valid character')
+            continue
   
-        ## Correcting bbox crop for chinese chars!!
-        if char_type == 'zh':
+        ## Correcting bbox crop
+        if char_type == 'punctuation':  # Punctuation bbox is small, so make square img
+            img = square_img(img)   
+        elif char_type == 'zh':         # Pad zh chars
             # Adding padding if cut off
-            crop, img_crop, bbox = add_padding(img, [b_x, b_y, b_w, b_h], [x1, y1, w, h], padding=20)
+            crop, img_crop, bbox = add_padding_img(img, [b_x, b_y, b_w, b_h], [x1, y1, w, h], padding=20)
             x1, y1, w, h = img_crop
             b_x, b_y, b_w, b_h = bbox
 
@@ -135,38 +152,39 @@ def crop_symbols(file, symbols, img):
             #   Image.fromarray(bbox_img).show()
             
             # Centering character
-            x1, y1, w, h = center_img([b_x, b_y, b_w, b_h], img_crop)  
-            
-            # if idx % 100 == 0:
-            #     crop = img.crop([x1, y1, x1+w, y1+h])
-            #     bbox_crop = cv2.rectangle(np.asarray(crop), (int(b_x), int(b_y)), (int(b_x+b_w), int(b_y+b_h)), 255, -1)   # x, y, x+w, y+h
- 
-            #     Image.fromarray(bbox_crop).show()
-            #     # crop.show()
-
-            x1, y1, w, h = square_img([x1, y1, w, h]) 
+            x1, y1, w, h = center_img([b_x, b_y,b_w, b_h], img_crop)  
+            x1, y1, w, h = make_square([x1, y1, w, h]) 
             if x1 < 0 or y1 < 0:
                 print('Invalid coord')
                 continue
             
-            
-            crop = img.crop([x1, y1, x1+w, y1+h])
-            crop = resize(np.asarray(crop), width=28, height=28)
-            crop = Image.fromarray(crop)
-     
-            # if idx % 100 == 0:
-            #     crop.show()
+        else:   # Grow bbox for en and digits
+            x1, y1, w, h = add_padding_bbox([b_x, b_y, b_w, b_h], [x1, y1, w, h], padding=20)
+            x1, y1, w, h = make_square([x1, y1, w, h]) 
+            if x1 < 0 or y1 < 0:
+                print('Invalid coord')
+                continue
+
+        crop = img.crop([x1, y1, x1+w, y1+h])
+        crop = resize(np.asarray(crop), width=28, height=28)
+        crop = Image.fromarray(crop)
+
+        contours, hierarchy = find_contours(crop)   # Last contour check
+        if len(contours) == 0:
+            print('No contours found')
+            continue
         
         if not os.path.exists('char_output/{}/{}'.format(char_type, s.text)):
             os.makedirs('char_output/{}/{}'.format(char_type, s.text))
-        
-        bbox_draw.rectangle([x1, y1, x1+w, y1+h], outline='purple', width=5)
+    
         fname = os.path.basename(os.path.normpath(file))
         fname, ext = os.path.splitext(fname)
         print('Saving {}/{}/{:.2f}_{}_{}.{}.{}.{}.png'.format(
             char_type, s.text, s.confidence*100, fname, x1, y1, x2, y2))
         crop.save('char_output/{}/{}/{:.2f}_{}_{}.{}.{}.{}.png'.format(
             char_type, s.text, s.confidence*100, fname, x1, y1, x2, y2))
+
+        bbox_draw.rectangle([x1, y1, x1+w, y1+h], outline='purple', width=5)
             
     return bbox_img
 

@@ -8,6 +8,7 @@
 # ====== Output folders ====== #
 NZCGMJ_*
 *cropped*
+char_output
 
 # ====== Gcloud Vision API  ====== #
 credentials.json

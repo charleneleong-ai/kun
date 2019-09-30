@@ -3,14 +3,14 @@
 - [Setup](https://cloud.google.com/vision/docs/libraries#installing_the_client_library) Vision API
 
 ```bash
-pip install --upgrade google-cloud-vision
+$ pip install --upgrade google-cloud-vision
 
 $ export GOOGLE_APPLICATION_CREDENTIALS=kun-preprocess-d7592da5db6d.json
 
 $ python doctext.py sample.png -out_file out.png
 ```
 Output Example!! :) :) 
-![](out.png)
+![](sample_out.png)
 
 TODO:
 - Fix bounding boxes

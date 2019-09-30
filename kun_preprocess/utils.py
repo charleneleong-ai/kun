@@ -3,7 +3,7 @@
 ###
 # Created Date: Friday, September 27th 2019, 1:36:19 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Sun Sep 29 2019
+# Last Modified: Mon Sep 30 2019
 ###
 
 import cv2
@@ -59,7 +59,7 @@ def find_bbox(img):
     return cv2.boundingRect(contours_poly)    # x, y, w, h
 
 
-def add_padding(img, bbox=[], img_crop=[], padding=20, pltshow=False):
+def add_padding_img(img, bbox=[], img_crop=[], padding=20, pltshow=False):
     b_x, b_y, b_w, b_h = bbox
     x1, y1, w, h = img_crop
     x2 = x1+w   # bot_right
@@ -93,7 +93,36 @@ def add_padding(img, bbox=[], img_crop=[], padding=20, pltshow=False):
 
     return crop, [x1, y1, (x2-x1), (y2-y1)], [b_x, b_y, b_w, b_h]     # x, y, w, h
 
+def add_padding_bbox(bbox=[], img_crop=[], padding=20):
+    x1, y1, w, h = img_crop
+    b_x, b_y, b_w, b_h = bbox
+    
+    if b_x > padding:  # Adding padding top left if possible
+        b_x = b_x-padding
+        b_w = b_w+padding    # compensate
+    else:
+        b_w = b_x+b_w   
+        b_x = 0
+        
+    if b_y > padding:
+        b_y = b_y-padding
+        b_h = b_h+padding # compensate
+    else:
+        b_h = b_y+b_h
+        b_y = 0
 
+    if (w-b_w) > padding:
+        b_w = b_w+padding
+    else:
+        b_w = b_w+(w-b_w)
+            
+    if (h-b_h) > padding:
+        b_h = b_h+padding
+    else:
+        b_h = b_h+(h-b_h)
+    
+    return [b_x, b_y, b_w, b_h]
+    
 
 def find_border(contours, ary):
     border = []
