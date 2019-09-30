@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 4:18:39 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Sep 23 2019
+# Last Modified: Mon Sep 30 2019
 ###
 import os
 import glob
@@ -22,7 +22,8 @@ from server.__init__ import create_app
 from server.model.ae import AutoEncoder
 from server.model.som import SOM
 from server.model.utils.plt import plt_scatter
-from server.utils.filtered_MNIST import FilteredMNIST
+from server.utils.datasets.filteredMNIST import FilteredMNIST
+from server.utils.datasets.imgbucket import ImageBucket
 from server.main.models import Image
 from server.utils.load import np_json, json_np
 
@@ -35,9 +36,15 @@ SEED = 489
 np.random.seed(SEED)
 random.seed(SEED)
 
-def filtered_MNIST(label):
+def upload_MNIST(label):
     return FilteredMNIST(label=label, split=0.8, n_noise_clusters=3, download_dir=app.config['RAW_IMG_DIR'])
     
+def upload(args):
+    label = args[0]
+    img_dir = args[1]
+    return ImageBucket(label=str(label), split=0.8, img_dir=img_dir, download_raw=True, download_dir=app.config['RAW_IMG_DIR'])
+
+
 def train(dataset):
     EPOCHS = 100
     BATCH_SIZE = 128
@@ -66,7 +73,6 @@ def train(dataset):
     return OUTPUT_DIR
 
 def cluster():
-
     # Return latest model by default
     OUTPUT_DIR = max(glob.iglob(app.config['MODEL_OUTPUT_DIR']+'/ae*/'), key=os.path.getctime)
     ae, feat_ae, labels, imgs = load_model(OUTPUT_DIR)
@@ -88,8 +94,6 @@ def cluster():
 
     print('Saving processed ae feat...')      # Saving feat to json bcz tsne slow
     np_json(feat, OUTPUT_DIR+'_feat.json')
-
-
 
     return feat, c_labels
 

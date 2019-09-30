@@ -31,7 +31,7 @@ $(document).ready(() => {
 
 $('#upload').bind('click', function() {
     $.ajax({
-            url: 'tasks/cluster',
+            url: 'tasks/upload',
             method: 'POST'
         })
         .done((res) => {
@@ -55,19 +55,19 @@ function getStatus(taskType, taskID, taskData) {
             document.getElementById('task_type').innerHTML = res.data.task_type;
             document.getElementById('task_id').innerHTML = res.data.task_id;
             document.getElementById('task_status').innerHTML = res.data.task_status;
-            document.getElementById('task_result').innerHTML = res.data.task_result;
             document.getElementById('task_data').innerHTML = res.data.task_data;
+            document.getElementById('task_result').innerHTML = res.data.task_result;
 
             // For progress bar
             $('#img-grd figure.selected').toggleClass('selected')
             $('#progress').fadeIn()
             if (taskType === 'upload') {
                 document.getElementsByClassName('grd-item').length = 0
-                document.getElementById('progress').innerHTML = 'Uploading images with label ' + res.data.task_data + ' ...'
+                document.getElementById('progress').innerHTML = 'Uploading image bucket <b>[' + res.data.task_data + ']</b> ...'
             } else if (taskType === 'train') {
-                document.getElementById('progress').innerHTML = 'Training autoencoder ' + res.data.task_data + ' ...'
+                document.getElementById('progress').innerHTML = 'Training autoencoder on <b>[' + res.data.task_data + ']</b> ...'
             } else if (taskType === 'cluster') {
-                document.getElementById('progress').innerHTML = 'Clustering label '+taskData+' with hdbscan ...'    //label
+                document.getElementById('progress').innerHTML = 'Clustering <b>['+res.data.task_data+']</b> with hdbscan ...'    
             } else if (taskType === 'som') {
                 document.getElementById('progress').innerHTML = 'Loading image grid with self organising map ...'
                 

@@ -3,7 +3,7 @@
 ###
 # Created Date: Monday, August 26th 2019, 12:13:26 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Sep 16 2019
+# Last Modified: Tue Oct 01 2019
 ###
 
 import os
@@ -11,7 +11,7 @@ import numpy as np
 import random
 
 import torch
-from torch.utils.data import Dataset, ConcatDataset, random_split
+from torch.utils.data import Dataset, ConcatDataset
 from torchvision import transforms
 from torchvision.datasets import MNIST
 
@@ -34,7 +34,13 @@ class FilteredMNIST(Dataset):
             self.train, self.test = self._load_filtered_mnist()
         else:
             self.load_dataset(output_dir)
-    
+
+
+    def __len__(self):
+        concat_dataset = ConcatDataset((self.train, self.test))
+        return len(concat_dataset)
+
+
     def _load_filtered_mnist(self):
         # =================== LOAD DATA ===================== #
         # MNIST dataset - download from torchvision.datasets.mnist
@@ -61,7 +67,7 @@ class FilteredMNIST(Dataset):
 
         return self._split_train_test(filtered_mnist, mnist_test, self.SPLIT)
 
-    
+
     def _concat_dataset(self, train, test):
         # Append test to train 
         train.data = torch.cat((train.data, test.data), dim=0)

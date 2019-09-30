@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 10:41:07 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Sep 30 2019
+# Last Modified: Tue Oct 01 2019
 ###
 
 import os
@@ -78,32 +78,34 @@ class Image(db.Model):
     def commit():
         db.session.commit()
 
+
+
 class ImageGrid(object):
     def __init__(self, img_grid_idx):
-        self.imgs = self.load_imgs(img_grid_idx)
-        self.img_paths = self.img_paths()
-        self.img_idx = self.img_idx()
+        self.imgs = self._load_imgs(img_grid_idx)
+        self.img_paths = self._img_paths()
+        self.img_idx = self._img_idx()
         
-    def load_imgs(self, img_grid_idx):
+    def __repr__(self):
+        return '<ImageGrid {} Images>\n'.format(len(self.imgs))
+
+    def __getitem__(self, index):
+        return self.imgs[index]
+    
+    def __len__(self):
+        return len(self.imgs)
+        
+    def _load_imgs(self, img_grid_idx):
         self.imgs = [Image.query.filter_by(idx=int(idx)).first() for idx in img_grid_idx]
         return self.imgs
         # imgs = db.relationship('Image', backref='img_grid', lazy=True)
     
-    def img_paths(self):
+    def _img_paths(self):
         return [img.img_path for img in self.imgs]
         
-    def img_idx(self):
+    def _img_idx(self):
         return [img.idx for img in self.imgs]
 
-    def __repr__(self):
-        return '<ImageGrid {} Images>\n'.format(len(self.imgs))
-        
-    # def add(self):
-    #     db.session.add(self)
-    #     db.session.commit()
-
-    # def commit():
-    #     db.session.commit()
 
 
 def clear_tables():

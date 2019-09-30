@@ -3,19 +3,21 @@
 ###
 # Created Date: Sunday, September 15th 2019, 4:44:15 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Tue Sep 24 2019
+# Last Modified: Mon Sep 30 2019
 ###
 
 import os
 
 # for socketio to work with redis (external process)
-import eventlet 
-eventlet.monkey_patch() 
+# import eventlet 
+# eventlet.monkey_patch() 
 
 from flask import Flask, url_for
 from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+# from flask_uploads import UploadSet, IMAGES, configure_uploads
+ 
 # from flask_socketio import SocketIO
 
 from redis import Redis
@@ -29,6 +31,8 @@ ROOT_DIR = os.path.dirname(__file__)
 bootstrap = Bootstrap()
 db = SQLAlchemy()
 migrate = Migrate()
+# images = UploadSet('images', IMAGES)
+# configure_uploads(app, images)
 # socketio = SocketIO()
 
 
@@ -54,6 +58,7 @@ def create_app(script_info=None):
     app.task_queue = Queue(connection=app.redis)
     # socketio.init_app(app, message_queue=app.config['REDIS_URL'])
     # socketio.init_app(app)
+    
     # register blueprints
     from server.main import bp as index_bp
     app.register_blueprint(index_bp)

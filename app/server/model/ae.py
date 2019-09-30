@@ -4,7 +4,7 @@
 ###
 # Created Date: Thursday, August 22nd 2019, 11:50:30 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Fri Sep 27 2019
+# Last Modified: Mon Sep 30 2019
 ###
 
 import os
@@ -222,7 +222,7 @@ class AutoEncoder(nn.Module):
                 batch_test = batch_test.view(-1, 1, 28, 28)              # (N_TEST_IMG, 1, 28, 28)
                 decoded = decoded.view(-1, 1, 28, 28)
                 comparison = torch.cat([batch_test[:plt_imgs[0]], decoded[:plt_imgs[0]]])
-                output_dir = self._check_output_dir(output_dir)
+                output_dir = self._mkdirs(output_dir)
                 filename = 'x_recon_{}_{}.png'.format(MODEL, self.EPOCH)
                 print(filename)
                 print('Saving ', filename)
@@ -230,7 +230,7 @@ class AutoEncoder(nn.Module):
 
             # =================== PLOT SCATTER ===================== #
             if scatter_plt!=None and self.EPOCH % scatter_plt[1] == 0:       # ('method', plt_interval)
-                output_dir = self._check_output_dir(output_dir)
+                output_dir = self._mkdirs(output_dir)
                 feat = test_feat.numpy()
                 labels = test_labels.numpy()
 
@@ -252,7 +252,7 @@ class AutoEncoder(nn.Module):
     
                 
     def save_model(self, dataset, output_dir):
-        output_dir = self._check_output_dir(output_dir)  
+        output_dir = self._mkdirs(output_dir)  
         dataset.save_dataset(output_dir)
         
         model_name = '{}.pth'.format(os.path.basename(os.path.normpath(output_dir)))
@@ -325,10 +325,10 @@ class AutoEncoder(nn.Module):
                 .format(self.EPOCH, self.loss))
     
 
-    def _check_output_dir(self, output_dir):
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-        return output_dir
+    def _mkdirs(self, dir_name):
+        if not os.path.exists(dir_name):
+            os.makedirs(dir_name)
+        return dir_name
 
     def _init_weights(self, layer):
         if type(layer) == nn.Linear:
