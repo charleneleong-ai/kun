@@ -11,41 +11,37 @@ from PIL import Image
 
 import numpy as np
 import torch
+from torchvision import transforms
 from torch.utils.data import Dataset
 
-
-IMG_EXTENSIONS = [
-    '.jpg', '.JPG', '.jpeg', '.JPEG',
-    '.png', '.PNG', '.ppm', '.PPM', '.bmp', '.BMP',
-]
-
-
-def is_image_file(filename):
-    return any(filename.endswith(extension) for extension in IMG_EXTENSIONS)
-
-
-def default_loader(path):
-    return Image.open(path).convert('RGB')
+from server.utils.load import is_image_file
+from server.utils.load import default_loader
 
 
 class ImageFolderLoader(Dataset):
     """Assumes download_dir = root/label/raw/train/*.png"""
-    def __init__(self, download_dir, label='', 
-                 transform=None, 
-                 loader=default_loader):
+    def __init__(self, download_dir, label='',
+                 transform=None, target_transform=None,
+                 loader=default_loader, download_raw=True):
         super(Dataset, self).__init__()
 
         self.DOWNLOAD_DIR = download_dir    
         self.LABEL = label
         self.transform = transform
+        self.target_transform = target_transform
         self.loader = loader
         self.imgs = self._mkdataset()
-
+    
+    def __repr__(self):
+        return '<ImageFolderLoader {} {}>\n download_dir: {}\n '.format(self.LABEL, len(self.imgs), self.DOWNLOAD_DIR)
+        
     def __getitem__(self, index):
         path, label = self.imgs[index]
         img = self.loader(os.path.join(self.DOWNLOAD_DIR, path))
         if self.transform is not None:
             img = self.transform(img)
+        if self.target_transform is not None:
+            label = self.target_transform(label) 
         return img, label
 
     def __len__(self):
@@ -62,5 +58,3 @@ class ImageFolderLoader(Dataset):
         if not os.path.exists(dir_name):
             os.makedirs(dir_name)
         return dir_name
-    
-    

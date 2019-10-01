@@ -57,7 +57,7 @@ class FilesystemObjectDoesNotExist(Exception):
 class Image(db.Model):
     idx = db.Column(db.Integer, primary_key=True, index=True, nullable=False)
     c_label = db.Column(db.Integer, index=True, nullable=False)
-    # img_grd_idx = db.Column(db.Integer, index=True, nullable=False)
+    label = db.Column(db.String, index=True, nullable=False)
     img_path = db.Column(db.String, nullable=False)
     processed = db.Column(db.Boolean, nullable=False)
 

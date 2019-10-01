@@ -4,7 +4,7 @@
  * Created Date: Saturday, September 14th 2019, 4:24:23 pm
  * Author: Charlene Leong
  * -----
- * Last Modified: Mon Sep 30 2019
+ * Last Modified: Tue Oct 01 2019
  * Modified By: Charlene Leong
  * -----
  * Copyright (c) 2019 Victoria University of Wellington ECS
@@ -27,8 +27,6 @@ $(document).ready(() => {
     // });
 });
 
-
-
 $('#upload').bind('click', function() {
     $.ajax({
             url: 'tasks/upload',
@@ -38,7 +36,51 @@ $('#upload').bind('click', function() {
             $('#progress').addClass('show')
             console.log(res)
             getStatus(res.data.task_type, res.data.task_id, res.data.task_data)
+        })
+        .fail((err) => {
+            console.log(err)
+        });
+});
 
+$('#train').bind('click', function() {
+    $.ajax({
+            url: 'tasks/train',
+            method: 'POST'
+        })
+        .done((res) => {
+            $('#progress').addClass('show')
+            console.log(res)
+            getStatus(res.data.task_type, res.data.task_id, res.data.task_data)
+        })
+        .fail((err) => {
+            console.log(err)
+        });
+});
+
+$('#cluster').bind('click', function() {
+    $.ajax({
+            url: 'tasks/cluster',
+            method: 'POST'
+        })
+        .done((res) => {
+            $('#progress').addClass('show')
+            console.log(res)
+            getStatus(res.data.task_type, res.data.task_id, res.data.task_data)
+        })
+        .fail((err) => {
+            console.log(err)
+        });
+});
+
+$('#som').bind('click', function() {
+    $.ajax({
+            url: 'tasks/som',
+            method: 'POST'
+        })
+        .done((res) => {
+            $('#progress').addClass('show')
+            console.log(res)
+            getStatus(res.data.task_type, res.data.task_id, res.data.task_data)
         })
         .fail((err) => {
             console.log(err)
@@ -63,21 +105,19 @@ function getStatus(taskType, taskID, taskData) {
             $('#progress').fadeIn()
             if (taskType === 'upload') {
                 document.getElementsByClassName('grd-item').length = 0
-                document.getElementById('progress').innerHTML = 'Uploading image bucket <b>[' + res.data.task_data + ']</b> ...'
+                document.getElementById('progress').innerHTML = 'Uploading image bucket <b>[ ' + res.data.task_data + ' ]</b> ...'
             } else if (taskType === 'train') {
-                document.getElementById('progress').innerHTML = 'Training autoencoder on <b>[' + res.data.task_data + ']</b> ...'
+                document.getElementById('progress').innerHTML = 'Training autoencoder on <b>[ ' + res.data.task_data + ' ]</b> ...'
             } else if (taskType === 'cluster') {
-                document.getElementById('progress').innerHTML = 'Clustering <b>['+res.data.task_data+']</b> with hdbscan ...'    
+                document.getElementById('progress').innerHTML = 'Clustering <b>[ '+res.data.task_data+' ]</b> with hdbscan ...'    
             } else if (taskType === 'som') {
                 document.getElementById('progress').innerHTML = 'Loading image grid with self organising map ...'
-                
             }
 
             const taskStatus = res.data.task_status;
             if (taskType === 'som' && taskStatus === 'finished') {
                 // Reload page first time for grid to render
                 if (document.getElementsByClassName('grd-item').length == 0) location.reload()
-
                 refreshImgGrd(res.data.task_data)
                 showProgress()
             }

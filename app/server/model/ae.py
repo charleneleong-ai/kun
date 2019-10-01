@@ -4,7 +4,7 @@
 ###
 # Created Date: Thursday, August 22nd 2019, 11:50:30 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Sep 30 2019
+# Last Modified: Tue Oct 01 2019
 ###
 
 import os
@@ -156,6 +156,7 @@ class AutoEncoder(nn.Module):
                 self.tb.add_histogram(f'{name}.grad', weight.grad, self.EPOCH)
         
             # =================== EVAL MODEL ==================== #
+            ## Plot decoded img
             if plt_imgs!=None and self.EPOCH % plt_imgs[1] == 0:
                 view_data = view_data.view(self.BATCH_SIZE, -1)
                 encoded, decoded = self.forward(view_data) 
@@ -165,9 +166,9 @@ class AutoEncoder(nn.Module):
             if eval:
                 test_loss, _, _, _ = self.eval_model(dataset, plt_imgs, scatter_plt, pltshow, self.OUTPUT_DIR)
                 if es.step(test_loss):  # Early Stopping
-                    if plt_imgs != None: 
+                    if plt_imgs != None and self.EPOCH % plt_imgs[1] !=0:  # Check if self.EPOCH == plt_interval
                         plt_imgs = (plt_imgs[0], self.EPOCH)        # (N_TEST_IMGS, plt_interval)
-                    if scatter_plt != None:
+                    if scatter_plt != None and self.EPOCH % scatter_plt[1] !=0:
                         scatter_plt = (scatter_plt[0], self.EPOCH)  # ('method', plt_interval)
                     self.eval_model(dataset,           # Plot last epoch
                                     plt_imgs=plt_imgs,         

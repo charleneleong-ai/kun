@@ -3,9 +3,10 @@
 ###
 # Created Date: Sunday, September 15th 2019, 4:18:39 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Sep 30 2019
+# Last Modified: Tue Oct 01 2019
 ###
 import os
+import shutil
 import glob
 from datetime import datetime
 import json, codecs
@@ -46,8 +47,14 @@ def upload(args):
 
 
 def train(dataset):
+    if len(dataset.train) < 500:
+        BATCH_SIZE = 32
+    elif len(dataset.train) < 2000:
+        BATCH_SIZE = 64
+    else:
+        BATCH_SIZE = 128
+        
     EPOCHS = 100
-    BATCH_SIZE = 128
     LR = 1e-3       
     N_TEST_IMGS = 8
 
@@ -70,15 +77,15 @@ def train(dataset):
             output_dir=OUTPUT_DIR, 
             save_model=True)        # Also saves dataset
     
-    return OUTPUT_DIR
+    return len(dataset), BATCH_SIZE, LR, ae.EPOCH, OUTPUT_DIR
 
-def cluster():
+def cluster(label):
     # Return latest model by default
     OUTPUT_DIR = max(glob.iglob(app.config['MODEL_OUTPUT_DIR']+'/ae*/'), key=os.path.getctime)
     ae, feat_ae, labels, imgs = load_model(OUTPUT_DIR)
     clear_cluster_output(OUTPUT_DIR)   # Clearing old output
     
-    print('Clustering with HDBSCAN...\n')
+    print('Clustering with ' +label+ ' HDBSCAN...\n')
     feat = tsne(feat_ae, 2)     # HDBSCAN works best with 2dim w/ small dataset 
     c_labels = hdbscan(feat, min_cluster_size=10)   
     c_labels = sort_c_labels(c_labels)
@@ -89,6 +96,8 @@ def cluster():
                     global_step = ae.EPOCH, dataformats='HWC')
 
     print('Saving images to img_dir...')
+    shutil.rmtree(app.config['IMG_DIR'])    # Clear img dir
+    os.makedirs(app.config['IMG_DIR'])
     for i, img in enumerate(imgs):
         save_image(img.view(-1, 1, 28, 28), app.config['IMG_DIR']+'/{}.png'.format(i))
 
@@ -103,13 +112,13 @@ def som(args):
 
     OUTPUT_DIR = max(glob.iglob(app.config['MODEL_OUTPUT_DIR']+'/ae*/'), key=os.path.getctime)
     ae, feat_ae, labels, imgs = load_model(OUTPUT_DIR)  # for plotting
-    feat = json_np(OUTPUT_DIR+'feat.json')
+    feat = json_np(OUTPUT_DIR+'_feat.json')
     lut = dict(enumerate(list(img_idx)))
 
     data = feat[img_idx]
 
     dims= [10, 20]  # dims[row, col]
-    som_path = OUTPUT_DIR+'_som.json'
+    som_path = os.path.join(OUTPUT_DIR, '_som.json')
     if os.path.exists(som_path):  # Declare new SOM else update net
         iter = 50
         lr = 0.0001 
@@ -122,10 +131,8 @@ def som(args):
     print('Ordering image grid with Self Organising Map...')
     print('iter: {} lr: {}\n'.format(iter, lr))
     net = som.train()
-    # Save SOM net
-    print('Saving SOM weights...')
-    np_json(net, som_path)
-    
+
+
     net_w = np.array([net[x, y, :] for x in range(net.shape[0]) for y in range(net.shape[1])])
     img_grd_idx, _ = pairwise_distances_argmin_min(net_w, data)
     # print(img_grd_idx, img_grd_idx.shape)
@@ -133,29 +140,33 @@ def som(args):
     # print(img_grd_idx, img_grd_idx.shape, len(np.unique(img_grd_idx)))
     
     # Plotting HDBSCAN SOM grid 
-    img_plt = plt_scatter([feat, feat[img_grd_idx]], c_labels, colors=['blue'], 
-                            output_dir=OUTPUT_DIR, 
-                            plt_name='_{}_som_2D_{}_lr={}.png'.format('hdbscan', iter, lr), 
-                            pltshow=False, 
-                            plt_grd_dims=dims)
-    ae.tb.add_image(tag='_{}_som_2D_{}_lr={}.png'.format('hdbscan', iter, lr), 
-                                    img_tensor=img_plt, 
-                                    global_step = ae.EPOCH, dataformats='HWC')
-    # Plotting TSNE SOM grid 
-    img_plt = plt_scatter([feat, feat[img_grd_idx]], labels, colors=['blue'], 
-                            output_dir=OUTPUT_DIR, 
-                            plt_name='_{}_som_2D_{}_lr={}.png'.format('tsne', iter, lr), 
-                            pltshow=False, 
-                            plt_grd_dims=dims)
-    ae.tb.add_image(tag='_{}_som_2D_{}_lr={}.png'.format('tsne', iter, lr), 
-                                    img_tensor=img_plt, 
-                                    global_step = ae.EPOCH, dataformats='HWC')
-    # Saving image grid
-    img_grd = imgs[img_grd_idx].view(-1, 1, 28, 28)
-    save_image(img_grd, OUTPUT_DIR+'_img_grd_som_2D_{}_lr={}.png'.format(iter, lr), nrow=20)    # nrow = num in row
-    ae.tb.add_image(tag='_img_grd_som_2D_{}_lr={}.png'.format(iter, lr), 
-                            img_tensor=make_grid(img_grd, nrow=20), 
-                            global_step = ae.EPOCH)
+    if not os.path.exists(som_path):   
+        img_plt = plt_scatter([feat, feat[img_grd_idx]], c_labels, colors=['blue'], 
+                                output_dir=OUTPUT_DIR, 
+                                plt_name='_{}_som_2D_{}_lr={}.png'.format('hdbscan', iter, lr), 
+                                pltshow=False, 
+                                plt_grd_dims=dims)
+        ae.tb.add_image(tag='_{}_som_2D_{}_lr={}.png'.format('hdbscan', iter, lr), 
+                                        img_tensor=img_plt, 
+                                        global_step = ae.EPOCH, dataformats='HWC')
+        # Plotting TSNE SOM grid 
+        img_plt = plt_scatter([feat, feat[img_grd_idx]], labels, colors=['blue'], 
+                                output_dir=OUTPUT_DIR, 
+                                plt_name='_{}_som_2D_{}_lr={}.png'.format('tsne', iter, lr), 
+                                pltshow=False, 
+                                plt_grd_dims=dims)
+        ae.tb.add_image(tag='_{}_som_2D_{}_lr={}.png'.format('tsne', iter, lr), 
+                                        img_tensor=img_plt, 
+                                        global_step = ae.EPOCH, dataformats='HWC')
+        # Saving image grid
+        img_grd = imgs[img_grd_idx].view(-1, 1, 28, 28)
+        save_image(img_grd, OUTPUT_DIR+'_img_grd_som_2D_{}_lr={}.png'.format(iter, lr), nrow=20)    # nrow = num in row
+        ae.tb.add_image(tag='_img_grd_som_2D_{}_lr={}.png'.format(iter, lr), 
+                                img_tensor=make_grid(img_grd, nrow=20), 
+                                global_step = ae.EPOCH)
+    
+    print('Saving SOM weights...')
+    np_json(net, som_path)
                             
     return img_grd_idx
 
@@ -163,9 +174,10 @@ def som(args):
 # Helper functions for cluster()
 def load_model(output_dir):
     ae = AutoEncoder()  
-    dataset = FilteredMNIST(output_dir=output_dir)
+    # dataset = FilteredMNIST(output_dir=output_dir)
+    dataset = ImageBucket(output_dir=output_dir)
     model_path = ae.load_model(output_dir=output_dir)
-    # dataset.test += dataset.train   # Get all the data, eval_model loads dataset.test
+    dataset.test += dataset.train   # Get all the data, eval_model loads dataset.test
     _, feat, labels, imgs = ae.eval_model(dataset=dataset, output_dir=output_dir)
     return ae, feat, labels, imgs
     

@@ -35,10 +35,13 @@ class FilteredMNIST(Dataset):
         else:
             self.load_dataset(output_dir)
 
+    def __repr__(self):
+        return '<FilteredMNIST {} train: {} test: {} split: {} noise: {}> \ndownload_dir: {}\n' \
+                .format(self.LABEL, len(self.train), len(self.test), self.SPLIT, self.N_NOISE_CLUSTERS, 
+                self.DOWNLOAD_DIR)
 
     def __len__(self):
-        concat_dataset = ConcatDataset((self.train, self.test))
-        return len(concat_dataset)
+        return len(ConcatDataset((self.train, self.test)))
 
 
     def _load_filtered_mnist(self):
