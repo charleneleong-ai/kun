@@ -1,49 +1,70 @@
 <!--
 Created Date: Monday, September 16th 2019, 7:03:49 pm
 Author: Charlene Leong leongchar@myvuw.ac.nz
-Last Modified: Mon Sep 30 2019
+Last Modified: Wed Oct 02 2019
 -->
 
 
-{% extends "home.html" %} {% block css %}
-<link href="{{url_for('static', filename='css/shuffle.css')}}" rel="stylesheet" media="screen"> {% endblock %}
-
-{% block content %}
+{% extends 'home.html' %} {% block css %}
+<link href="{{url_for('static', filename='css/shuffle.css')}}" rel='stylesheet' media='screen'>
+<link href="{{url_for('static', filename='css/shuffle_filter.css')}}" rel='stylesheet' media='screen'> {% endblock %} {% block content %}
 <!-- Shuffle JS Grid -->
 
 <div class='container'>
     <h1 id='label'><b>{{label}}</b></h1>
-    <div id='img-grd' class="shuffle-grd">
-        {%- for img, idx in imgs %}
-        <figure class="grd-item column loading" data-groups='["{{idx}}"]' img_idx='{{idx}}'>
-            <div class="aspect">
-                <div class="aspect__inner ">
-                    <img class='top' src="{{img}}" alt="{{img}}">
+    <div id='cluster-filter' class='row hide'>
+            <div class="filters-group">
+                <!-- <label for='search-input' id='num-clusters' class='filter-label'>Clusters: {{num_clusters}}</label>
+            <input id='search-input' class='textfield filter__search shuffle-search' type='search' /> -->
+
+                <div class="btn-group filter-options">
+                    {%for i in range(num_clusters)%}
+                    <button class="btn btn--primary" data-group="{{i}}">{{i}}</button> 
+                    {%- endfor %}
+                </div>
+        </div>
+        <!-- <p id='num-clusters'>Clusters: {{num_clusters}}</p> -->
+    </div>
+    <div id='img-grd' class='shuffle-grd'>
+        {%- for img, idx, c_label in imgs %}
+        <figure class='grd-item column loading' data-groups='["{{c_label}}"]' img_idx='{{idx}}'>
+            <div class='aspect'>
+                <div class='aspect__inner '>
+                    <img class='top' src='{{img}}' alt='{{img}}'>
                 </div>
             </div>
         </figure>
         {%- endfor %}
-       
     </div>
-    <div id ='num-status' class='row'>
-     <p id='num-seen'>{{num_seen}}</p>
-     <p id='num-selected' class='hide'></p>
+    <div id='som-status' class='row hide'>
+        <script>
+            if (document.getElementsByClassName('grd-item').length != 0) {
+                $('#som-status').removeClass('hide')
+                $('#som-status').addClass('show')
+                $('#cluster-filter').removeClass('hide')
+                $('#cluster-filter').addClass('show')
+                $('#search-input').removeClass('hide')
+                $('#search-input').addClass('show')
+            }
+        </script>
+        <p id='num-seen'>Images: {{num_seen}}</p>
+        <p id='num-filtered'>Filtered: {{num_filtered}}</p>
+        <p id='num-refresh'>Refresh: {{num_refresh}}</p>
+        <p id='num-selected' class='hide'></p>
     </div>
-  
+
     <div class='row'>
         <div class='container'>
-            <div class="col-sm-12 col-md-10 col-md-offset-1">
+            <div class='col-sm-12 col-md-10 col-md-offset-1'>
                 <p id='progress' class='hide'>Press <b>[ ENTER ]</b> to remove</p>
             </div>
         </div>
     </div>
 </div>
 
-{% endblock %} 
-
-{% block js %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Shuffle/5.2.3/shuffle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@simonwep/selection-js/dist/selection.min.js"></script>
+{% endblock %} {% block js %}
+<script src='https://cdnjs.cloudflare.com/ajax/libs/Shuffle/5.2.3/shuffle.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/@simonwep/selection-js/dist/selection.min.js'></script>
 <script src="{{ url_for('static', filename='js/shuffle.js') }}"></script>
 <script src="{{ url_for('static', filename='js/selection.js') }}"></script>
 {% endblock %}

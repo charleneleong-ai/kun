@@ -16,6 +16,28 @@
     margin-top: 8px;
 }
 
+.row {
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    flex-direction: row;
+}
+
+.row:after,
+.row:before {
+    content: " ";
+    display: table;
+}
+
+.row:after {
+    clear: both;
+}
+
+.row .row {
+    margin-left: -8px;
+    margin-right: -8px;
+}
+
 .col-span {
     width: 50%;
 }
@@ -84,8 +106,8 @@ figure {
     transition: visibility 0s linear 0.33s, opacity 0.33s linear;
 }
 
-.hide .shade{
-    opacity:0.2
+.hide .shade {
+    opacity: 0.2
 }
 
 .show {
@@ -152,4 +174,3 @@ figure {
         opacity: 1;
     }
 }
-

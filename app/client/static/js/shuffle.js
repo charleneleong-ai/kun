@@ -4,7 +4,7 @@
  * Created Date: Monday, September 16th 2019, 3:42:24 pm
  * Author: Charlene Leong
  * -----
- * Last Modified: Mon Sep 30 2019
+ * Last Modified: Wed Oct 02 2019
  * Modified By: Charlene Leong
  * -----
  * Copyright (c) 2019 Victoria University of Wellington ECS
@@ -147,7 +147,7 @@ class ShuffleGrd {
 
     // Advanced filtering
     addSearchFilter() {
-        const searchInput = document.querySelector('.js-shuffle-search');
+        const searchInput = document.querySelector('.shuffle-search');
         if (!searchInput) {
             return;
         }
@@ -155,13 +155,35 @@ class ShuffleGrd {
     }
 
     /**
-     * Filter the shuffle instance by items with a title that matches the search input.
+     * Filter the shuffle instance by by cluster label
      * @param {Event} evt Event object.
      */
     _handleSearchKeyup(evt) {
         const searchText = evt.target.value.toLowerCase();
+        
+        // var filter
+        
+       
+        // this.shuffle.filter(searchText)
+
+        // var shuffleItems = this.shuffle.items
+
+        
+        // for (i = 0; i < shuffleItems.length; i++) {
+        //     console.log(shuffleItems[i].element.getAttribute('data-groups'))
+            
+        // }
         this.shuffle.filter((element, shuffle) => {
             // If there is a current filter applied, ignore elements that don't match it.
+            // const groups = JSON.parse(element.getAttribute('data-groups'));
+            // console.log(groups)
+            // const isElementInCurrentGroup = groups.indexOf(shuffle.group) !== -1;
+            //     // Only search elements in the current group
+            // if (!isElementInCurrentGroup) {
+            //     return false;
+            // }
+
+            
             if (shuffle.group !== Shuffle.ALL_ITEMS) {
                 // Get the item's groups.
                 const groups = JSON.parse(element.getAttribute('data-groups'));
@@ -171,9 +193,23 @@ class ShuffleGrd {
                     return false;
                 }
             }
-            const titleElement = element.querySelector('.picture-item__title');
-            const titleText = titleElement.textContent.toLowerCase().trim();
-            return titleText.indexOf(searchText) !== -1;
+            
+            
+            const c_label = element.getAttribute('data-groups')
+            console.log(typeof(c_label), c_label)
+
+            if (c_label.indexOf(searchText) !== -1) {
+                console.log(c_label.indexOf(searchText) !== -1)
+            }
+            
+            return c_label.indexOf(searchText) !== -1;
+    
+    
+            // if (c_label.indexOf(searchText) !== -1) {
+            //     console.log(c_label.indexOf(searchText) !== -1)
+            // }
+            
+            // return c_label.indexOf(searchText) !== -1;
         });
     }
 }
@@ -235,13 +271,10 @@ ShuffleGrd.prototype.selectedImgs = function(evt) {
 
         $('#img-grd figure.selected').toggleClass('fadeout')
         $('#img-grd').toggleClass('shade')
-        $('#num-status').toggleClass('shade')
-        
+        $('#som-status').toggleClass('shade')
 
         sendSelectedImgIdx(selectedImgIdx, imgGrdIdx, imgIdx)
-
     }
-
 }
 
 
@@ -252,7 +285,7 @@ function sendSelectedImgIdx(selectedImgIdx, imgGridIdx, imgIdx) {
         })
         .done((res) => {
             console.log('SEEN img_idx: ' + res.img.selected_img_idx + ' img_grd_idx: ' + res.img.img_grd_idx + ' ' + res.img.seen + ' ' + res.img.num_seen)
-            getStatus(res.data.task_type, res.data.task_id, res.img.num_seen)
+            getStatus(res.task.task_type, res.task.task_id, res.task.task_data)
         })
         .fail((err) => {
             console.log(err)

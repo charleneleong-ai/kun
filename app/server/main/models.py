@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 10:41:07 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Tue Oct 01 2019
+# Last Modified: Wed Oct 02 2019
 ###
 
 import os
@@ -74,6 +74,12 @@ class Image(db.Model):
         self.processed = True
         db.session.commit()
         return False
+    
+    def reset(self):
+        if self.processed:
+            self.processed = False
+        db.session.commit()
+        return True
 
     def commit():
         db.session.commit()
@@ -85,6 +91,7 @@ class ImageGrid(object):
         self.imgs = self._load_imgs(img_grid_idx)
         self.img_paths = self._img_paths()
         self.img_idx = self._img_idx()
+        self.c_labels = self._c_labels()
         
     def __repr__(self):
         return '<ImageGrid {} Images>\n'.format(len(self.imgs))
@@ -105,6 +112,10 @@ class ImageGrid(object):
         
     def _img_idx(self):
         return [img.idx for img in self.imgs]
+
+    def _c_labels(self):
+        return [img.c_label for img in self.imgs]
+
 
 
 

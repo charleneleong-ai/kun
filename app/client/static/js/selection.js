@@ -4,7 +4,7 @@
  * Created Date: Monday, September 23rd 2019, 5:10:29 pm
  * Author: Charlene Leong
  * -----
- * Last Modified: Mon Sep 30 2019
+ * Last Modified: Wed Oct 02 2019
  * Modified By: Charlene Leong
  * -----
  * Copyright (c) 2019 Victoria University of Wellington ECS
@@ -69,32 +69,30 @@ window.addEventListener('click', function(e) {
 
 
 function showProgress() {
-    // // Show if task is running
-    // if (document.getElementsByClassName('selected').length == 0) {
-    //     $('#progress').removeClass('show')
-    //     $('#progress').addClass('hide')
-    // } else {
-    //     $('#progress').removeClass('hide')
-    //     $('#progress').addClass('show')
-    // }
     // Show Remove if at least one item is selected, else hide
     numSelected = document.getElementsByClassName('selected').length 
     if (numSelected == 0 || document.getElementsByClassName('grd-item').length == 0) {
-        $('#progress').removeClass('show')
-        $('#progress').addClass('hide')
-        $('#num-selected').removeClass('show')
-        $('#num-selected').addClass('hide')
+        hide($('#progress'))
+        hide($('#num-selected'))
         document.getElementById('num-selected').innerHTML = ''
     } else {
-        $('#progress').removeClass('hide')
-        $('#progress').addClass('show')
-        $('#num-selected').removeClass('hide')
-        $('#num-selected').addClass('show')
+        show($('#progress'))
+        show($('#num-selected'))
         document.getElementById('num-selected').innerHTML = numSelected
     }
-    // On first img grid load show progress
-    // if (document.getElementsByClassName('grd-item').length == 0) {
-    //     $('#progress').removeClass('hide')
-    //     $('#progress').addClass('show')
-    // }
+}
+
+function hide(elem){
+    if (elem.attr('class').includes('show')){
+        elem.removeClass('show')
+        elem.addClass('hide')
+    }
+}
+
+
+function show(elem){
+    if (elem.attr('class').includes('hide')){
+        elem.removeClass('hide')
+        elem.addClass('show')
+    }
 }

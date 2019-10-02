@@ -3,7 +3,7 @@
 ###
 # Created Date: Monday, September 30th 2019, 11:40:06 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Tue Oct 01 2019
+# Last Modified: Wed Oct 02 2019
 ###
 
 import os
@@ -84,7 +84,7 @@ class ImageBucket(Dataset):
                 if os.path.exists(train_fp): continue 
                 print('Copying ', fp, ' to ', train_fp)
                 copyfile(fp, train_fp)    
-            elif is_image_file(fp):
+            if is_image_file(fp):
                 img = default_loader(fp)
                 train_data.append(self.transform(img))
                             
@@ -97,7 +97,7 @@ class ImageBucket(Dataset):
                 if os.path.exists(test_fp): continue
                 print('Copying ', fp, ' to ', test_fp)
                 copyfile(fp, test_fp)
-            elif is_image_file(fp):
+            if is_image_file(fp):
                 img = default_loader(fp)
                 test_data.append(self.transform(img))
         

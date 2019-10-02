@@ -3,13 +3,14 @@
 ###
 # Created Date: Sunday, September 15th 2019, 6:11:05 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Tue Oct 01 2019
+# Last Modified: Wed Oct 02 2019
 ###
 
 # server/config.py
 
 import os
-basedir = os.path.abspath(os.path.dirname(__file__))
+import glob
+
 ROOT_DIR = os.path.dirname(__file__)
 
 class BaseConfig(object):
@@ -23,6 +24,7 @@ class BaseConfig(object):
     QUEUES = ['default']
     MODEL_OUTPUT_DIR = os.path.join(ROOT_DIR, 'model', 'output')
     RAW_IMG_DIR = os.path.join(ROOT_DIR, 'raw_imgs')
+    OUTPUT_DIR = max(glob.iglob(os.path.join(MODEL_OUTPUT_DIR, 'ae*')), key=os.path.getctime)
     
 class DevelopmentConfig(BaseConfig):
     """Development configuration."""
