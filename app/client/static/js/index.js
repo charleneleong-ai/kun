@@ -24,10 +24,13 @@ $(document).ready(() => {
     // socket.on('after connect', function (msg) {
     //   console.log('After connect', msg);
     // });
+
+    if ($('.grd-item').length == 0){
+        $('#instruct').html('Please upload your dataset')
+    }
 });
 
 $('#upload').bind('click', function() {
-    console.log($('#instruct').attr('class'))
     hide($('#instruct'))
     $('#instruct').html('')
     $.ajax({
@@ -102,11 +105,11 @@ function getStatus(taskType, taskID, taskData) {
         })
         .done((res) => {
             //For task table
-            document.getElementById('task_type').innerHTML = res.task.task_type
-            document.getElementById('task_id').innerHTML =  res.task.task_id
-            document.getElementById('task_status').innerHTML =  res.task.task_status
-            document.getElementById('task_data').innerHTML =  JSON.stringify(res.task.task_data)
-            document.getElementById('task_result').innerHTML =  res.task.task_result
+            $('#task_type').html(res.task.task_type)
+            $('#task_id').html(res.task.task_id)
+            $('#task_status').html(res.task.task_status)
+            $('#task_result').html(res.task.task_result)
+            $('#task_data').html(JSON.stringify(res.task.task_data))
             
             updateProgress(res)
             
@@ -134,12 +137,34 @@ function refreshImgGrd(NUM_SEEN, NUM_FILTERED, NUM_REFRESH) {
             console.log('Reloading image grid...')
             
             $('#img-grd').fadeOut();
-            $('#cluster-filter').fadeOut();
+            $('#cluster-filter')
             $('#img-grd ').toggleClass('shade') // Need to reset toggle class before reloading
             $('#som-status').toggleClass('shade')
             $('#cluster-filter').toggleClass('shade')
-            $('#img-grd').load(location.href + ' #img-grd>*', ''); //Reload img-grd div
-            $('#cluster-filter').load(location.href + ' #cluster-filter>*', ''); //Reload img-grd div
+
+            $('#img-grd').load(location.href + ' #img-grd>*', 
+                function(responseTxt, statusTxt, xhr){
+                    if(statusTxt == "success"){ 
+                        ShuffleInstance.refreshShuffle($('#img-grd')[0])
+                        console.log('Reloaded image grid')
+                    }
+                    if(statusTxt == "error"){ 
+                        console.log("Error: " + xhr.status + ": " + xhr.statusText);
+                    }
+                }); 
+                
+            $('#cluster-filter').load(location.href + ' #cluster-filter>*',
+                function(responseTxt, statusTxt, xhr){
+                    if(statusTxt == "success"){ 
+                        show($('#cluster-filter'))
+                        ShuffleInstance.addFilterButtons()
+                        console.log("Reloaded filter options");
+                    }
+                    if(statusTxt == "error"){ 
+                        console.log("Error: " + xhr.status + ": " + xhr.statusText);
+                    }
+            })
+            
             
             $('#num-seen').html('Images <b>[ ' + NUM_SEEN +' ]</b>')
             $('#num-filtered').html('Images <b>[ ' + NUM_FILTERED +' ]</b>')
@@ -207,24 +232,42 @@ function updateProgress(res){
         $('#progress-bar').css('width', 100 + '%')
         hide($('.epoch-progress-bar-wrap'))
 
+        progress_msg = 'Clustering with hdbscan ... <br/>'
+        
         NUM_CLUSTERS = res.task.task_data.NUM_CLUSTERS
-        $('#progress').html('Clustering with hdbscan ... <br/> \
-                        <b>[ '+LABEL+' ]</b> <b>[ '+NUM_CLUSTERS+' ]</b> clusters ')
+        if  (typeof(NUM_CLUSTERS) != 'undefined'){
+            progress_msg  = progress_msg+ '<b>[ '+NUM_CLUSTERS+' ]</b> clusters'
+        }
+       
+        $('#progress').html(progress_msg)
+                        
     } else if (task_type === 'som') {
-        MAX_ITER  = res.task.task_data.MAX_ITER
-        NUM_ITER = res.task.task_data.NUM_ITER
-        DIMS = res.task.task_data.DIMS
-        $('#progress').html('Loading image grid with self organising map ... <br/> \
-                        <b>[ '+LABEL+' ]</b> <b>[ '+DIMS+' ]</b> <br/> \
-                        <b>[ '+NUM_ITER+' ]</b> iterations')
+        progress_msg = 'Loading image grid with self organising map ... <br/>'
 
-        percent = Math.round((NUM_ITER/MAX_ITER)*100)
-        $('#progress-bar').css('width', percent + '%')
+        MAX_ITER  = res.task.task_data.MAX_ITER
+        DIMS = res.task.task_data.DIMS   
+        if  (typeof(DIMS) != 'undefined'){
+            progress_msg = progress_msg + '<b>[ '+DIMS+' ]</b>  <b>[ '+MAX_ITER+' ]</b> iterations <br/>'
+        }
+        
+        NUM_ITER = res.task.task_data.NUM_ITER
+        if (typeof(NUM_ITER) != 'undefined'){
+            percent = Math.round((NUM_ITER/MAX_ITER)*100)
+            $('#progress-bar').css('width', percent + '%')
+            animateProgressBar()
+        }
+
+        $('#progress').html(progress_msg)
+
+        
     }
 
     task_status = res.task.task_status
     if (task_type === 'som' && task_status === 'finished') {
         $('#progress-bar').css('width', 100 + '%')
+        show($('#instruct'))
+        $('#instruct').html('Please remove the incorrect characters')
+        
         // Reload page if SOM is reset
         NUM_SEEN = res.task.task_data.NUM_SEEN
         NUM_FILTERED = res.task.task_data.NUM_FILTERED
@@ -239,6 +282,6 @@ function updateProgress(res){
 
 function animateProgressBar(numIteration,index=1) {
     width = (index/numIteration)*100;
-    htmlElement.style.width = width + '%'; 
+    $('#progress-bar').css('width', width + '%'); 
     if(index<numIteration) setTimeout(animateProgressBar,100,numIteration,index+1);
 } 

@@ -17,9 +17,7 @@ Last Modified: Thu Oct 03 2019
 <div class='container'>
     <h1 id='label'><b>{{LABEL}}</b></h1>
     <div id='cluster-filter' class='row hide'>
-            <div class="filters-group">
-                <!-- <label for='search-input' id='num-clusters' class='filter-label'>Clusters: {{c_labels}}</label>
-            <input id='search-input' class='textfield filter__search shuffle-search' type='search' /> -->
+            <div class="container">
                 <div class="btn-group filter-options">
                     {%for c_label in img_grd_c_labels%}
                     <button class="btn btn--primary" data-group="{{c_label}}">{{c_label}}</button> 
@@ -45,8 +43,6 @@ Last Modified: Thu Oct 03 2019
                 $('#som-status').addClass('show')
                 $('#cluster-filter').removeClass('hide')
                 $('#cluster-filter').addClass('show')
-                $('#search-input').removeClass('hide')
-                $('#search-input').addClass('show')
             }
         </script>
         <p id='num-seen'>Images <b>[ {{NUM_SEEN}} ]</b></p>

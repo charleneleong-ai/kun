@@ -12,7 +12,6 @@
  * Javascript will save your soul!
  */
 
-
 $(document).ready(() => {
     console.log('ShuffleGrd');
 });
@@ -38,6 +37,11 @@ class ShuffleGrd {
 
     }
 
+    refreshFilter(){
+        this._activeFilters = [];
+        this.addFilterButtons();
+    }
+
     refreshShuffle(element) {
         this.shuffle = new Shuffle(element, {
             itemSelector: '.grd-item',
@@ -45,9 +49,6 @@ class ShuffleGrd {
             speed: 300,
             staggerAmount: 30
         });
-        this.addShuffleEventListeners();
-        this._activeFilters = [];
-        this.addFilterButtons();
     }
 
     /**
@@ -80,7 +81,6 @@ class ShuffleGrd {
         const btn = evt.currentTarget;
         const isActive = btn.classList.contains('active');
         const btnGroup = btn.getAttribute('data-group');
-
         this._removeActiveClassFromChildren(btn.parentNode);
 
         let filterGroup;
@@ -161,19 +161,6 @@ class ShuffleGrd {
      */
     _handleSearchKeyup(evt) {
         const searchText = evt.target.value.toLowerCase();
-        
-        // var filter
-        
-       
-        // this.shuffle.filter(searchText)
-
-        // var shuffleItems = this.shuffle.items
-
-        
-        // for (i = 0; i < shuffleItems.length; i++) {
-        //     console.log(shuffleItems[i].element.getAttribute('data-groups'))
-            
-        // }
         this.shuffle.filter((element, shuffle) => {
             // If there is a current filter applied, ignore elements that don't match it.
             // const groups = JSON.parse(element.getAttribute('data-groups'));
@@ -205,12 +192,6 @@ class ShuffleGrd {
             
             return c_label.indexOf(searchText) !== -1;
     
-    
-            // if (c_label.indexOf(searchText) !== -1) {
-            //     console.log(c_label.indexOf(searchText) !== -1)
-            // }
-            
-            // return c_label.indexOf(searchText) !== -1;
         });
     }
 }
@@ -245,7 +226,6 @@ class ShuffleGrd {
 
 
 ShuffleGrd.prototype.selectedImgs = function(evt) {
-    this.refreshShuffle($('#img-grd')[0])
     var shuffleItems = this.shuffle.items
     var selectedItems = $('.selected')
 
@@ -294,7 +274,9 @@ function sendSelectedImgIdx(selectedImgIdx, imgGridIdx, imgIdx) {
         });
 }
 
+var ShuffleInstance = window.shuffle;
 
 document.addEventListener('DOMContentLoaded', () => {
-    window.shuffle = new ShuffleGrd($('#img-grd')[0]);
+    ShuffleInstance = new ShuffleGrd($('#img-grd')[0]);
 });
+

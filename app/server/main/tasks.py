@@ -137,7 +137,7 @@ def som(args):
     
     job.meta['MAX_ITER'] = iter
     job.meta['LR'] = lr
-    job.meta['dims'] = dims
+    job.meta['DIMS'] = dims
     job.save_meta()
 
     print('Ordering image grid with Self Organising Map...')
