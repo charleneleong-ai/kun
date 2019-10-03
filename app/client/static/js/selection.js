@@ -15,9 +15,11 @@
 console.log('SelectionJS')
 
 const selection = Selection.create({
-
+    
     // Class for the selection-area
     class: 'selection',
+    // px, how many pixels the point should move before starting the selection
+    startThreshold: 10,
 
     // All elements in this container can be selected
     selectables: ['.shuffle-grd > figure'],
@@ -54,7 +56,22 @@ const selection = Selection.create({
 }).on('stop', ({ inst }) => {
     inst.keepSelection();
 
-   
+    // Fixing selection bug on shuffle filter
+    if ($('.active').length != 0){
+        // console.log($('.active').attr('data-group'))
+        // console.log($('.selected').length)
+        activeGroup = $('.active').attr('data-group')
+        $('.grd-item').each(function(idx){
+            if (!this.getAttribute('data-groups').includes(activeGroup)){
+                if (this.className.includes('selected')){
+                    // console.log(this.getAttribute('data-groups'))
+                    this.classList.remove('selected')
+                }
+            }
+        })
+        
+    }
+    
     showProgress()
 });
 
