@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 4:44:15 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Sep 30 2019
+# Last Modified: Thu Oct 03 2019
 ###
 
 import os
@@ -13,7 +13,6 @@ import os
 # eventlet.monkey_patch() 
 
 from flask import Flask, url_for
-from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 # from flask_uploads import UploadSet, IMAGES, configure_uploads
@@ -28,7 +27,6 @@ from server.config import DevelopmentConfig
 ROOT_DIR = os.path.dirname(__file__)
 
 # instantiate the extensions
-bootstrap = Bootstrap()
 db = SQLAlchemy()
 migrate = Migrate()
 # images = UploadSet('images', IMAGES)
@@ -51,7 +49,6 @@ def create_app(script_info=None):
     app.config['IMG_DIR'] = os.path.join(app.static_folder, 'imgs')
     
     # set up extensions
-    bootstrap.init_app(app)
     db.init_app(app)
     migrate.init_app(app, db)
     app.redis = Redis.from_url(app.config['REDIS_URL'])

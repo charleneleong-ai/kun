@@ -4,7 +4,7 @@
  * Created Date: Monday, September 23rd 2019, 5:10:29 pm
  * Author: Charlene Leong
  * -----
- * Last Modified: Wed Oct 02 2019
+ * Last Modified: Thu Oct 03 2019
  * Modified By: Charlene Leong
  * -----
  * Copyright (c) 2019 Victoria University of Wellington ECS
@@ -60,8 +60,8 @@ const selection = Selection.create({
 
 // Remove selected when clicking outside img-grd
 window.addEventListener('click', function(e) {
-    if (document.getElementsByClassName('grd-item').length != 0 &&
-        !document.getElementById('img-grd').contains(e.target)) {
+    if ($('.grd-item').length != 0 &&
+        !$('#img-grd')[0].contains(e.target)) {
         $('#img-grd figure.selected').toggleClass('selected')
         showProgress()
     }
@@ -70,15 +70,15 @@ window.addEventListener('click', function(e) {
 
 function showProgress() {
     // Show Remove if at least one item is selected, else hide
-    numSelected = document.getElementsByClassName('selected').length 
-    if (numSelected == 0 || document.getElementsByClassName('grd-item').length == 0) {
+    numSelected = $('.selected').length 
+    if (numSelected == 0 || $('.grd-item').length == 0) {
         hide($('#progress'))
         hide($('#num-selected'))
-        document.getElementById('num-selected').innerHTML = ''
+        $('#num-selected').html('')
     } else {
         show($('#progress'))
         show($('#num-selected'))
-        document.getElementById('num-selected').innerHTML = numSelected
+        $('#num-selected').html(numSelected) 
     }
 }
 

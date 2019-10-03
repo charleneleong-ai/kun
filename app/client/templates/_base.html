@@ -1,7 +1,7 @@
 <!--
 Created Date: Monday, September 16th 2019, 6:56:22 pm
 Author: Charlene Leong leongchar@myvuw.ac.nz
-Last Modified: Wed Oct 02 2019
+Last Modified: Thu Oct 03 2019
 -->
 
 
@@ -20,6 +20,8 @@ Last Modified: Wed Oct 02 2019
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link id='theme' rel="stylesheet" href="https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-dark.min.css">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"> <!-- For progress bar  -->
+    <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-colors-win8.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/switch.css') }}">
     <link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}" media="screen"> {% block css %}{% endblock %}
 </head>
@@ -29,7 +31,6 @@ Last Modified: Wed Oct 02 2019
 <script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.js"></script>
 <script>
     $(window).load(function() {
-        // Animate loader off screen
         $(".page-loader").fadeOut("slow");
     });
 </script>
@@ -58,8 +59,8 @@ Last Modified: Wed Oct 02 2019
                     </label>
                 </div>
                 <script>
-                    var darkTheme = "https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-dark.min.css"
-                    var lightTheme = "https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-nord.min.css"
+                    let darkTheme = "https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-dark.min.css"
+                    let lightTheme = "https://gitcdn.link/repo/Chalarangelo/mini.css/master/dist/mini-nord.min.css"
                     $('#toggle_theme').click(function() {
                         if ($("link[id='theme']").attr('href') == darkTheme) {
                             $("link[id='theme']").attr('href', lightTheme);
@@ -69,14 +70,19 @@ Last Modified: Wed Oct 02 2019
                     });
                 </script>
             </header>
-
+            <div class="progress-bar-wrap w3-light-grey">
+                    <div id='progress-bar' class="w3-win8-red" style="height:4px;width:100%"></div>
+            </div>
+            <div class="epoch-progress-bar-wrap w3-light-grey hide">
+                    <div id='epoch-progress-bar' class="w3-red" style="height:4px;width:0%"></div>
+            </div>
             <div id='content-wrap'>
                 <div class="row">
                     <div class="col-sm-12 col-md-10 col-md-offset-1">
                         <br />
                         <h1>Kun<small></small></h1>
                         <!-- <p id='instruct'>Please identify the <b>incorrect</b> characters<p> -->
-                        <p id='instruct'>Please upload your dataset<p>
+                        <p id='instruct' class='show'>Please upload your dataset<p>
                                 </br>
                     </div>
                 </div>
@@ -97,7 +103,7 @@ Last Modified: Wed Oct 02 2019
     </div>
   </div> -->
                 </br>
-                <script src="//ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+                <!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> -->
                 <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script> -->
                 <script src="{{ url_for('static', filename='js/index.js') }}"></script>
                 {% block js %}{% endblock %}

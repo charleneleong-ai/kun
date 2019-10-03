@@ -63,7 +63,7 @@ p {
   overflow: hidden;
 }
 
-.my-sizer-element {
+.sizer-element{
   position: absolute;
   opacity: 0;
   visibility: hidden;

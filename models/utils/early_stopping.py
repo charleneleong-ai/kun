@@ -3,7 +3,7 @@
 ###
 # Created Date: Wednesday, August 28th 2019, 3:25:31 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Thu Sep 05 2019
+# Last Modified: Thu Oct 03 2019
 ###
 
 import numpy as np
@@ -15,7 +15,7 @@ class EarlyStopping(object):
         self.tol = tol
         self.patience = patience
         self.best = None
-        self.num_bad_epochs = 0
+        self.NUM_BAD_EPOCHS = 0
         self.is_better = None
         self._init_is_better(mode, tol, percentage)
 
@@ -32,13 +32,13 @@ class EarlyStopping(object):
             return True
 
         if self.is_better(metrics, self.best):
-            self.num_bad_epochs = 0
+            self.NUM_BAD_EPOCHS = 0
             self.best = metrics
         else:
-            self.num_bad_epochs += 1
-            print('Loss did not improve from {:.6f} for {} epochs\n'.format(metrics, self.num_bad_epochs))
+            self.NUM_BAD_EPOCHS += 1
+            print('Loss did not improve from {:.6f} for {} epochs\n'.format(metrics, self.NUM_BAD_EPOCHS))
 
-        if self.num_bad_epochs >= self.patience:
+        if self.NUM_BAD_EPOCHS >= self.patience:
             return True
 
         return False

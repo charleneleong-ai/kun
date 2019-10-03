@@ -4,7 +4,7 @@
  * Created Date: Monday, September 16th 2019, 3:42:24 pm
  * Author: Charlene Leong
  * -----
- * Last Modified: Wed Oct 02 2019
+ * Last Modified: Thu Oct 03 2019
  * Modified By: Charlene Leong
  * -----
  * Copyright (c) 2019 Victoria University of Wellington ECS
@@ -16,8 +16,6 @@
 $(document).ready(() => {
     console.log('ShuffleGrd');
 });
-
-
 
 class ShuffleGrd {
     constructor(element) {
@@ -47,6 +45,9 @@ class ShuffleGrd {
             speed: 300,
             staggerAmount: 30
         });
+        this.addShuffleEventListeners();
+        this._activeFilters = [];
+        this.addFilterButtons();
     }
 
     /**
@@ -244,9 +245,9 @@ class ShuffleGrd {
 
 
 ShuffleGrd.prototype.selectedImgs = function(evt) {
-    this.refreshShuffle(document.getElementById('img-grd'))
+    this.refreshShuffle($('#img-grd')[0])
     var shuffleItems = this.shuffle.items
-    var selectedItems = document.getElementsByClassName('selected')
+    var selectedItems = $('.selected')
 
     if (evt.keyCode === 13 && selectedItems.length != 0) { // if space pressed
         var selectedImgIdx = []
@@ -272,6 +273,7 @@ ShuffleGrd.prototype.selectedImgs = function(evt) {
         $('#img-grd figure.selected').toggleClass('fadeout')
         $('#img-grd').toggleClass('shade')
         $('#som-status').toggleClass('shade')
+        $('#cluster-filter').toggleClass('shade')
 
         sendSelectedImgIdx(selectedImgIdx, imgGrdIdx, imgIdx)
     }
@@ -284,7 +286,7 @@ function sendSelectedImgIdx(selectedImgIdx, imgGridIdx, imgIdx) {
             method: 'POST'
         })
         .done((res) => {
-            console.log('SEEN img_idx: ' + res.img.selected_img_idx + ' img_grd_idx: ' + res.img.img_grd_idx + ' ' + res.img.seen + ' ' + res.img.num_seen)
+            console.log('SEEN img_idx: ' + res.img.selected_img_idx + ' img_grd_idx: ' + res.img.img_grd_idx + ' ' + res.img.seen + ' ' + res.img.NUM_SEEN)
             getStatus(res.task.task_type, res.task.task_id, res.task.task_data)
         })
         .fail((err) => {
@@ -294,5 +296,5 @@ function sendSelectedImgIdx(selectedImgIdx, imgGridIdx, imgIdx) {
 
 
 document.addEventListener('DOMContentLoaded', () => {
-    window.shuffle = new ShuffleGrd(document.getElementById('img-grd'));
+    window.shuffle = new ShuffleGrd($('#img-grd')[0]);
 });

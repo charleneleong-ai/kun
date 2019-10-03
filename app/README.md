@@ -1,8 +1,14 @@
-```bash
-yarn install
-```
+
+
+## Run task worker and app
 
 ```bash
-python app.py
+$ redis-server
+$ rq worker 
+$ python app.py
 ```
 
+## Run tensorboard to explore model output data
+```bash
+$ tensorboard --logdir server/model/output/tb_runs
+```

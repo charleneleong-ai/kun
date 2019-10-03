@@ -7,9 +7,8 @@
 .column {
     position: relative;
     float: left;
-    /* min-height: 1px; */
+    min-height: 1px;
     width: 5%;
-    /* height: 5%; */
     padding-left: 4px;
     padding-right: 4px;
     /* Space between tiles */
@@ -42,7 +41,7 @@
     width: 50%;
 }
 
-.my-sizer-element {
+.sizer-element{
     width: 8.33333%;
 }
 
@@ -107,6 +106,10 @@ figure {
 }
 
 .hide .shade {
+    opacity: 0.2
+}
+
+.show .shade {
     opacity: 0.2
 }
 

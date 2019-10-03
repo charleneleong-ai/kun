@@ -3,7 +3,7 @@
 ###
 # Created Date: Thursday, September 12th 2019, 9:53:52 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Sep 23 2019
+# Last Modified: Thu Oct 03 2019
 ###
 
 import numpy as np
@@ -12,7 +12,7 @@ SEED = 489
 np.random.seed(SEED)
 
 class SOM(object):
-    def __init__(self, data, dims, n_iter, lr_init, net_path=None):
+    def __init__(self, data, dims, n_iter, lr_init, net_path=None, job=None):
         self.DIMS = np.array(dims)
         self.N_ITER = n_iter
         self.LR_INIT = lr_init
@@ -40,6 +40,9 @@ class SOM(object):
         # radius decay parameter
         self.RAD_DECAY = self.N_ITER / np.log(self.RADIUS_INIT)
         # self.LR_DECAY = self.N_ITER / np.log(self.LR_INIT/self.LR_FINAL)
+
+        # rq worker job
+        self.job = job
 
     def __repr__(self):
         return '<SOM: {} N_ITER: {} LR_INIT: {}>'.format(self.DIMS, self.N_ITER, self.LR_INIT)
@@ -69,7 +72,11 @@ class SOM(object):
 
     def train(self):
         for i in range(self.N_ITER):
-            if i % self.update_interval == 0: print('Iteration %d' % i)
+            if i % self.update_interval == 0: 
+                print('Num iterations {}'.format(i))
+                if self.job!=None:
+                    self.job.meta['NUM_ITER'] = i
+                    self.job.save_meta()
             
             # select a training example at random
             t = self.data[np.random.randint(0, self.N), :].reshape(np.array([self.M, 1]))

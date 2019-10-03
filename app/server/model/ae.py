@@ -4,7 +4,7 @@
 ###
 # Created Date: Thursday, August 22nd 2019, 11:50:30 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Tue Oct 01 2019
+# Last Modified: Thu Oct 03 2019
 ###
 
 import os
@@ -25,12 +25,11 @@ from .utils.early_stopping import EarlyStopping
 
 MODEL = os.path.basename(__file__).split('.')[0]
 SEED = 489
-torch.manual_seed(SEED)
+
 
 class AutoEncoder(nn.Module):
-    def __init__(self, tb=''):
-        super(AutoEncoder, self).__init__()
-        self.EPOCH = 0
+    def __init__(self, tb=None, job=None):
+        super(AutoEncoder, self).__init__() 
         self.encoder = nn.Sequential(
             nn.Linear(28*28, 500),
             nn.ReLU(inplace=True),  # modify input directly     
@@ -61,6 +60,9 @@ class AutoEncoder(nn.Module):
         # Tensorboard SummaryWriter event log
         self.tb = tb
 
+        # RQ Job
+        self.job = job
+
     def __repr__(self):
         return '<{}> \n{} \n{} \n\n{}'.format(__class__.__name__, self.encoder, self.decoder, self.device)
         
@@ -76,13 +78,14 @@ class AutoEncoder(nn.Module):
         log_dir_name = os.path.join(base_output_dir, 'tb_runs', comment)
         return SummaryWriter(log_dir=log_dir_name)    # Tensorboard
         
-    def fit(self, dataset, batch_size, epochs, lr, opt='Adam', loss='BCE', patience=0,  
+    def fit(self, dataset, batch_size, max_epochs, lr, opt='Adam', loss='BCE', patience=0,  
                 eval=True, plt_imgs=None, scatter_plt=None, pltshow=False, output_dir='', save_model=False):
 
+        self.EPOCH = 1
         self.BATCH_SIZE = batch_size
         self.LR = lr
         self.OUTPUT_DIR = output_dir
-        if self.tb=='':  
+        if self.tb==None:  
             self.tb = self.gen_tb(output_dir, lr, batch_size)
 
         # Data Loader for easy mini-batch return in training, the image batch shape will be (BATCH_SIZE, 1, 28, 28)
@@ -109,12 +112,12 @@ class AutoEncoder(nn.Module):
         # =================== TRAIN ===================== #
         es = EarlyStopping(tol = 0.001, patience=patience)
         self.train()        # Set to train mode
-        start_epoch = self.EPOCH
-        for epoch in range(start_epoch, start_epoch+epochs+1):
+        start_epoch = self.EPOCH    # To continue training 
+        for epoch in range(start_epoch, start_epoch+max_epochs+1):
             train_feat = []
             train_labels = []
             train_imgs = []
-            epoch_loss = 0      # printing intermediary loss
+            train_loss = 0      # printing intermediary loss
             self.EPOCH = epoch
             for batch_idx, (batch_train, batch_train_label) in enumerate(train_loader):
                 n_iter = (self.EPOCH * len(train_loader)) + batch_idx
@@ -132,25 +135,42 @@ class AutoEncoder(nn.Module):
                 self.loss.backward()                     # backpropagation, compute gradients
                 self.optimizer.step()                    # apply gradients
 
-                epoch_loss += self.loss.item()*batch_train.size(0)
+                train_loss += self.loss.item()*batch_train.size(0)
                 
                 train_feat.append(encoded.data.cpu().view(batch_train.size(0), -1))
                 train_labels.append(batch_train_label)
                 train_imgs.append(batch_train.cpu())
+
+                 # =================== Report progress ==================== #
                 if batch_idx % 10 == 0:
-                    print('Train Epoch: {} [{}/{} ({:.0f}%)] \t Loss:{:.6f} \t MSE Loss:{:.6f} '.format(
+                    print('Train Epoch: {} [{}/{} ({:.0f}%)] \t Batch Loss:{:.6f} \t MSE Loss:{:.6f} '.format(
                         self.EPOCH, batch_idx * len(batch_train), len(train_loader.dataset),
                             100.0 * batch_idx / len(train_loader),
                             self.loss.item() / len(batch_train),
                             MSE_loss.data / len(batch_train)
                     ))
+                    # Report for rq worker
 
-            epoch_loss /= len(train_loader.dataset)
-            print('\n====> Epoch: {} Average loss: {:.4f}'.format(self.EPOCH, epoch_loss))
+                    if self.job != None:
+                        self.job.meta['epoch'] = self.EPOCH
+                        self.job.meta['epoch_progress'] = '{}/{}'.format(batch_idx * len(batch_train), len(train_loader.dataset))
+                        self.job.meta['progress'] ='{:.0f}'.format(100.0 * batch_idx / len(train_loader))
+                        self.job.save_meta()
+
+            train_loss /= len(train_loader.dataset)
+            print('\n====> Epoch: {} Average loss: {:.4f}'.format(self.EPOCH, train_loss))
+
+            # Report for rq worker
+            if self.job != None:
+                self.job.meta['EPOCH'] = self.EPOCH
+                self.job.meta['epoch_progress'] = '{}/{}'.format(len(train_loader.dataset), len(train_loader.dataset))
+                self.job.meta['progress'] = 100
+                self.job.meta['train_loss'] = '{:.4f}'.format(train_loss)
+                self.job.meta['NUM_BAD_EPOCHS'] = es.num_bad_epochs+1
+                self.job.save_meta()
            
             # =================== TENSORBOARD ===================== #
-            self.tb.add_scalar('Train Loss', epoch_loss, self.EPOCH)
-            
+            self.tb.add_scalar('Train Loss', train_loss, self.EPOCH)
             for name, weight in self.named_parameters():
                 self.tb.add_histogram(name, weight, self.EPOCH)
                 self.tb.add_histogram(f'{name}.grad', weight.grad, self.EPOCH)
@@ -166,24 +186,27 @@ class AutoEncoder(nn.Module):
             if eval:
                 test_loss, _, _, _ = self.eval_model(dataset, plt_imgs, scatter_plt, pltshow, self.OUTPUT_DIR)
                 if es.step(test_loss):  # Early Stopping
-                    if plt_imgs != None and self.EPOCH % plt_imgs[1] !=0:  # Check if self.EPOCH == plt_interval
+                    # Check whether to plt last epoch
+                    if (plt_imgs != None and self.EPOCH % plt_imgs[1] !=0): 
                         plt_imgs = (plt_imgs[0], self.EPOCH)        # (N_TEST_IMGS, plt_interval)
-                    if scatter_plt != None and self.EPOCH % scatter_plt[1] !=0:
+                    elif (scatter_plt != None and self.EPOCH % scatter_plt[1] !=0):
                         scatter_plt = (scatter_plt[0], self.EPOCH)  # ('method', plt_interval)
+                    else:
+                        break
                     self.eval_model(dataset,           # Plot last epoch
                                     plt_imgs=plt_imgs,         
                                     scatter_plt=scatter_plt,   
                                     pltshow=pltshow, output_dir=self.OUTPUT_DIR)
                     break
-
+                
         train_feat = torch.cat(train_feat, dim=0)
         train_labels = torch.cat(train_labels, dim=0)
         train_imgs = torch.cat(train_imgs, dim=0)
+
+        # =================== SAVE MODEL AND DATA ==================== #
         self.tb.add_embedding(train_feat, metadata=train_labels, label_img=train_imgs, global_step=n_iter)
         if plt_imgs!=None:
             self.tb.add_images('decoded_row_{}_epochs_{}'.format(row, plt_imgs[1]), decoded_plt, self.EPOCH)   
-        
-        # =================== SAVE MODEL AND DATA ==================== #
         if save_model: 
             self.save_model(dataset, self.OUTPUT_DIR)
 
@@ -211,6 +234,10 @@ class AutoEncoder(nn.Module):
 
                 test_loss /= len(test_loader.dataset)
                 print('====> Test set loss: {:.4f}\n'.format(test_loss))
+
+                if self.job != None:
+                    self.job.meta['test_loss'] = '{:.4f}'.format(test_loss)
+                    self.job.save_meta()
 
                 self.tb.add_scalar('Test Loss', test_loss, self.EPOCH)
                 
@@ -242,7 +269,7 @@ class AutoEncoder(nn.Module):
                     if scatter_plt[0]=='tsne':
                         tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=1000, random_state=SEED)
                         feat = tsne.fit_transform(feat)
-
+                        
                 feat = MinMaxScaler().fit_transform(feat) 
                 plt_name = 'tsne_{}.png'.format(self.EPOCH)
                 img_plt = plt_scatter(feat=feat, labels=labels, output_dir=output_dir, 
@@ -286,8 +313,7 @@ class AutoEncoder(nn.Module):
             'loss_fn': self.loss_fn.__class__.__name__,
             'tb_log_dir': self.tb.log_dir
             }
-        # print(config)
-
+ 
         with open(output_dir+'/config.json', 'w') as f:
             json.dump(config, f)
 
@@ -298,7 +324,6 @@ class AutoEncoder(nn.Module):
     def load_model(self, output_dir):
         model_name = '{}.pth'.format(os.path.basename(os.path.normpath(output_dir)))
         model_path = os.path.join(output_dir, model_name)
-        # map the parameters from storage to location
         model_checkpt = torch.load(model_path, map_location=lambda storage, loc: storage)
         self.model_name = model_checkpt['model_name'],
         self.LR = model_checkpt['lr'],
@@ -317,7 +342,7 @@ class AutoEncoder(nn.Module):
         self.BATCH_SIZE = int(self.BATCH_SIZE[0])
         self.loss = float(self.loss)
         self.tb = SummaryWriter(log_dir=str(''.join(tb_log_dir)))
-        # print(self.tb.log_dir)
+   
         print('Loading model...\n{}\n'.format(self))
         print('Loaded model\t{}\n'.format(self.model_name))
         print('Batch size: {} LR: {} Optimiser: {}\n'

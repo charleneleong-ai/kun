@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 4:18:39 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Wed Oct 02 2019
+# Last Modified: Thu Oct 03 2019
 ###
 import os
 import shutil
@@ -45,30 +45,37 @@ def upload(args):
 
 
 def train(dataset):
+    job = get_current_job()
     if len(dataset.train) < 500:
         BATCH_SIZE = 32
     elif len(dataset.train) < 2000:
         BATCH_SIZE = 64
     else:
         BATCH_SIZE = 128
-        
-    EPOCHS = 100
+    
+    MAX_EPOCHS = 50
     LR = 1e-3       
     N_TEST_IMGS = 8
-
-    ae = AutoEncoder()
+    PATIENCE = 10
     
+    job.meta['BS'] = BATCH_SIZE
+    job.meta['MAX_EPOCHS'] = MAX_EPOCHS
+    job.meta['LR'] = LR
+    job.meta['PATIENCE'] = PATIENCE
+    job.save_meta()
+
+    ae = AutoEncoder(job=job)
     timestamp = datetime.now().strftime('%Y.%m.%d-%H%M%S')
     MODEL_OUTPUT_DIR = app.config['MODEL_OUTPUT_DIR']
     OUTPUT_DIR = os.path.join(MODEL_OUTPUT_DIR, '{}_{}_{}'.format('ae', dataset.LABEL, timestamp))
     print(OUTPUT_DIR)
     ae.fit(dataset, 
             batch_size=BATCH_SIZE, 
-            epochs=EPOCHS, 
+            max_epochs=MAX_EPOCHS, 
             lr=LR, 
             opt='Adam',         # Adam
             loss='BCE',         # BCE or MSE
-            patience=10,        # Num epochs for early stopping
+            patience=PATIENCE,        # Num epochs for early stopping
             eval=True,          # Eval training process with test data
             # plt_imgs=(N_TEST_IMGS, 10),         # (N_TEST_IMGS, plt_interval)
             scatter_plt=('tsne', 10),           # ('method', plt_interval)
@@ -93,7 +100,7 @@ def cluster(label):
                     img_tensor=img_plt, 
                     global_step = ae.EPOCH, dataformats='HWC')
 
-    print('Saving images to img_dir...')
+    print('Saving images to client/static/imgs...')
     shutil.rmtree(app.config['IMG_DIR'])    # Clear img dir
     os.makedirs(app.config['IMG_DIR'])
     for i, img in enumerate(imgs):
@@ -107,6 +114,7 @@ def cluster(label):
 def som(args):
     img_idx = np.array(args[0])
     c_labels = np.array(args[1])
+    job = get_current_job()
 
     # returns the  OUTPUT DIR of the latest model by default
     OUTPUT_DIR = app.config['OUTPUT_DIR']
@@ -121,12 +129,17 @@ def som(args):
     if os.path.exists(som_path):  # Declare new SOM else update net
         iter = 50
         lr = 0.0001 
-        som = SOM(data=data, dims=dims, n_iter = iter, lr_init=lr, net_path=som_path)
+        som = SOM(data=data, dims=dims, n_iter = iter, lr_init=lr, net_path=som_path, job=job)
     else:
         iter = 3000
         lr = 0.2  
-        som = SOM(data=data, dims=dims, n_iter = iter, lr_init=lr)
+        som = SOM(data=data, dims=dims, n_iter = iter, lr_init=lr, job=job)
     
+    job.meta['MAX_ITER'] = iter
+    job.meta['LR'] = lr
+    job.meta['dims'] = dims
+    job.save_meta()
+
     print('Ordering image grid with Self Organising Map...')
     print('iter: {} lr: {}\n'.format(iter, lr))
     net = som.train()
