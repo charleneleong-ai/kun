@@ -3,7 +3,7 @@
 ###
 # Created Date: Thursday, September 12th 2019, 9:53:52 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Thu Oct 03 2019
+# Last Modified: Sun Oct 06 2019
 ###
 
 import numpy as np
@@ -16,7 +16,7 @@ class SOM(object):
         self.DIMS = np.array(dims)
         self.N_ITER = n_iter
         self.LR_INIT = lr_init
-        self.LR_FINAL = 0.0001
+        # self.LR_FINAL = 0.0001
 
         # establish size variables based on data
         self.data = data
@@ -29,7 +29,7 @@ class SOM(object):
         self.net = np.random.normal(0, 0.1, size=(dims[0], dims[1], self.M))
         self.update_interval = 100
         if net_path != None: # Load net from file
-            print('Loading SOM weights... '+net_path)
+            print('Loading SOM weights ... '+net_path)
             self.net = json_np(net_path)
             self.update_interval = 10
 
@@ -38,6 +38,7 @@ class SOM(object):
         self.RADIUS_FINAL = 1
         
         # radius decay parameter
+        #  decays to 1 as radius_init*exp(-ln(radius_init)) = radius_init*(1/(radius_init)) = 1
         self.RAD_DECAY = self.N_ITER / np.log(self.RADIUS_INIT)
         # self.LR_DECAY = self.N_ITER / np.log(self.LR_INIT/self.LR_FINAL)
 

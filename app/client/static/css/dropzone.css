@@ -1,7 +1,7 @@
 /*
  * Created Date: Saturday, October 5th 2019, 5:41:43 pm
  * Author: Charlene Leong leongchar@myvuw.ac.nz
- * Last Modified: Sat Oct 05 2019
+ * Last Modified: Sun Oct 06 2019
  */
 
 
@@ -259,6 +259,7 @@
     .dropzone .dz-preview.dz-file-preview .dz-image {
       border-radius: 5px;
       border-color:#C83741;
+      border-width:2px;
       
     }
     .dropzone .dz-preview.dz-file-preview .dz-details {
@@ -266,6 +267,7 @@
     .dropzone .dz-preview.dz-image-preview {
       background: white; 
       border-color:#C83741;
+      border-width:2px;
     }
       .dropzone .dz-preview.dz-image-preview .dz-details {
         -webkit-transition: opacity 0.2s linear;

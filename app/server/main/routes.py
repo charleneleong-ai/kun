@@ -11,18 +11,14 @@
 import os
 import glob
 import shutil
-from zipfile import ZipFile, BadZipfile
-import chardet
-from copy import copy
 
 from flask import render_template, Blueprint
 from flask import jsonify, url_for, request, redirect, flash
 from flask import current_app, session
 
 from server.main import bp
-from server.main.tasks import train, load_data, load_MNIST, cluster, som
+from server.main.tasks import extract_zip, load_data, load_MNIST, train, cluster, som
 from server.main.models import Image, ImageGrid, clear_tables
-from server.utils.load import zh_detect
 
 import pprint
 
@@ -73,49 +69,33 @@ def upload():
         #         f.save(os.path.join(current_app.config['UPLOAD_DIR'], f.filename))
         z_file = request.files['file']
         if z_file and is_zipfile(z_file.filename):
-            zfname = z_file.filename
-            zpath = os.path.join(current_app.config['UPLOAD_DIR'], zfname)
-            char = zfname.split('.')[0]
-            z_file.save(zpath)
-            zf = test_zipfile(zpath)
-            
-            print(char)
-            # img_dir = os.path.join(current_app.config['UPLOAD_DIR'], zfname.split('.')[0])
-            # if os.path.exists(os.path.join(current_app.config['DATASET_DIR'], zfname.split('.')[0])):
-            #     flash('This label has already been uploaded') 
-            #     redirect(request.url)
-
-            ## ZIP files are encoded as in CP437, if they cannot decide the original encoding.
-            ## So must decode for zh chars
-            # https://leeifrankjaw.github.io/articles/fix_filename_encoding_for_zip_archive_with_python.html
-            if zh_detect(char):
-                zfname = char+'_decoded.zip'
-                with ZipFile(os.path.join(current_app.config['UPLOAD_DIR'], zfname), mode='w') as ztf:
-                    ztf.comment = zf.comment
-                    for zinfo in zf.infolist():
-                        zinfo.CRC = None
-                        ztinfo = copy(zinfo)
-                        ztinfo.filename = zinfo.filename.encode('cp437').decode('utf8')
-                        ztf.writestr(ztinfo, zf.read(zinfo))
-                zf.close()
-                print( ztf.namelist())
-
-            print(os.path.join(current_app.config['UPLOAD_DIR'], zfname))
+            if not os.path.exists(current_app.config['UPLOAD_DIR']):
+                os.makedirs(current_app.config['UPLOAD_DIR'])
                 
-            with ZipFile(os.path.join(current_app.config['UPLOAD_DIR'], zfname),"r") as z_ref:
-                print('Extracting')
-                z_ref.extractall(current_app.config['UPLOAD_DIR'])
-            z_ref.close()
-            
-            session['LABEL'] = char
-            
+            if request.method == 'POST':
+                z_file = request.files['file']
+                if z_file and is_zipfile(z_file.filename):
+                    zfname = z_file.filename
+                    zpath = os.path.join(current_app.config['UPLOAD_DIR'], zfname)
+                    z_file.save(zpath)
+                    session['zpath'] = zpath
+
     return redirect('/')
 
     
 @bp.route('/tasks/<task_type>', methods=['POST'])
 def run_task(task_type):
-    task_data = {'LABEL':  session['LABEL'] }
+    task_data = {}
     
+    if task_type=='extract_zip':  
+        task = current_app.task_queue.enqueue(extract_zip, session['zpath'], job_timeout=180)  
+                
+            ## for multi file upload
+            # for key, f in request.files.items():  
+            #     if key.startswith('file') and allowed_file(f.filename):
+            #         f = secure_filename(f.filename)
+            #         f.save(os.path.join(current_app.config['UPLOAD_DIR'], f.filename))
+
     if task_type=='load_data':
         upload_dir = os.path.join(current_app.config['UPLOAD_DIR'], session['LABEL'])
         task = current_app.task_queue.enqueue(load_data, (session['LABEL'], upload_dir))  
@@ -158,8 +138,20 @@ def get_status(task_type, task_id):
         task_data = req['task_data']
         
     #TODO: create separate routes instead
-    if task_type=='load_data' and task.get_status()=='finished':
-        clear_upload_folder()
+    if task_type=='extract_zip' and task.get_status()=='finished':
+        label = task.result
+        session['LABEL'] = label
+        task_data['LABEL'] = label
+        
+        upload_dir = os.path.join(current_app.config['UPLOAD_DIR'], session['LABEL'])
+        task = current_app.task_queue.enqueue(load_data, (session['LABEL'], upload_dir))
+        task_type = 'load_data'
+        
+    elif task_type=='extract_zip':    # Report job progress
+        task_data.update(task.meta)
+        task.refresh()
+
+    elif task_type=='load_data' and task.get_status()=='finished':
         dataset = task.result   # Uploaded dataset 
         task_data['NUM_IMGS'] = len(dataset)
         task_data['NUM_TRAIN'] = len(dataset.train)
@@ -192,7 +184,7 @@ def get_status(task_type, task_id):
         session['NUM_CLUSTERS'] = len(set(c_labels))   
         print(len(c_labels), len(feat))
         
-        # print('Saving images to client/static/imgs...')
+        # print('Saving images to client/static/imgs ...')
         # if os.path.exists(current_app.config['IMG_DIR']): # Clearing img dir
         #     shutil.rmtree(current_app.config['IMG_DIR'])    
         # os.makedirs(current_app.config['IMG_DIR'])
@@ -207,7 +199,11 @@ def get_status(task_type, task_id):
                 
         task = run_new_som()
         task_type = 'som'
-        
+
+    elif task_type=='cluster':
+        task_data.update(task.meta)
+        task.refresh()
+            
     elif task_type=='som' and task.get_status()=='finished':
         img_grd_idx = task.result
         print(img_grd_idx)
@@ -314,24 +310,6 @@ def run_new_som():
 
     return task
 
-def test_zipfile(zfname):
-    try:
-        zf = ZipFile(zfname)
-    except BadZipfile as e:
-        raise IOError(e)
-    except RuntimeError as e:
-        if "encrypted" in e.args[0] or "Bad password" in e.args[0]:
-            raise PasswordError(e)
-        else:
-            raise CRCError(e)
-    except Exception as e:
-        raise IOError(e)
-    return zf
-
-
-def clear_upload_folder():
-    if os.path.exists(os.path.join(current_app.config['DATASET_DIR'], session['LABEL'])):
-        shutil.rmtree(current_app.config['UPLOAD_DIR'])
 
 
 # TODO: Should be done as tasks but yet to work out how to declare db instance in tasks.py ><

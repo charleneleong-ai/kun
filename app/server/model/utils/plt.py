@@ -3,7 +3,7 @@
 ###
 # Created Date: Thursday, August 22nd 2019, 9:25:01 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Sat Sep 21 2019
+# Last Modified: Sun Oct 06 2019
 ###
 
 import numpy as np
@@ -84,7 +84,6 @@ def plt_scatter_3D(feat=[], labels=[], colors=[], output_dir='.', plt_name='', p
         
 def plt_confusion_matrix(y_pred, y_target, output_dir, pltshow=False):
     confusion_matrix = sklearn.metrics.confusion_matrix(y_target, y_pred)
-
     plt.figure(figsize=(16, 14))
     sns.heatmap(confusion_matrix, annot=True, fmt='d', annot_kws={'size': 20})
     # plt.title('Confusion matrix', fontsize=10)

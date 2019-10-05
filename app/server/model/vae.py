@@ -1,11 +1,11 @@
-
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 ###
-# Created Date: Thursday, August 22nd 2019, 11:50:30 am
+# Created Date: Sunday, October 6th 2019, 6:52:06 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
 # Last Modified: Sun Oct 06 2019
 ###
+
 
 import os
 from datetime import datetime
@@ -19,7 +19,6 @@ from torch.utils.tensorboard import SummaryWriter
 
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.manifold import TSNE
-from umap import UMAP
 
 from .utils.plt import plt_scatter
 from .utils.early_stopping import EarlyStopping
@@ -28,7 +27,7 @@ MODEL = os.path.basename(__file__).split('.')[0]
 SEED = 489
 
 
-class AutoEncoder(nn.Module):
+class VariationalAutoEncoder(nn.Module):
     def __init__(self, tb=None, job=None):
         super(AutoEncoder, self).__init__() 
         self.encoder = nn.Sequential(
@@ -114,7 +113,7 @@ class AutoEncoder(nn.Module):
         es = EarlyStopping(tol = 0.001, patience=patience)
         self.train()        # Set to train mode
         start_epoch = self.EPOCH    # To continue training 
-        for epoch in range(start_epoch, start_epoch+max_epochs):  # start epoch is 1
+        for epoch in range(start_epoch, start_epoch+max_epochs+1):
             train_feat = []
             train_labels = []
             train_imgs = []
@@ -150,8 +149,8 @@ class AutoEncoder(nn.Module):
                             self.loss.item() / len(batch_train),
                             MSE_loss.data / len(batch_train)
                     ))
-                    
                     # Report for rq worker
+
                     if self.job != None:
                         self.job.meta['epoch'] = self.EPOCH
                         self.job.meta['epoch_progress'] = '{}/{}'.format(batch_idx * len(batch_train), len(train_loader.dataset))
@@ -270,16 +269,9 @@ class AutoEncoder(nn.Module):
                     if scatter_plt[0]=='tsne':
                         tsne = TSNE(perplexity=30, n_components=2, init='pca', n_iter=1000, random_state=SEED)
                         feat = tsne.fit_transform(feat)
-                    elif scatter_plt[0]=='umap':
-                        MIN_CLUSTER_SIZE = 10
-                        if len(feat) > 3000:
-                            MIN_CLUSTER_SIZE = 15
-                        umap = UMAP(n_components=2, n_neighbors = MIN_CLUSTER_SIZE, min_dist=0.1,
-                                        random_state=SEED, transform_seed=SEED)
-                        feat = umap.fit_transform(feat) 
-                                            
+                        
                 feat = MinMaxScaler().fit_transform(feat) 
-                plt_name = '{}_{}.png'.format(scatter_plt[0], self.EPOCH)
+                plt_name = 'tsne_{}.png'.format(self.EPOCH)
                 img_plt = plt_scatter(feat=feat, labels=labels, output_dir=output_dir, 
                                                 plt_name=plt_name, pltshow=pltshow)
                 self.tb.add_image(plt_name, img_plt, self.EPOCH, dataformats='HWC')

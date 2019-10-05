@@ -1,7 +1,7 @@
 /**
  * Created Date: Saturday, October 5th 2019, 12:46:04 pm
  * Author: Charlene Leong leongchar@myvuw.ac.nz
- * Last Modified: Sat Oct 05 2019
+ * Last Modified: Sun Oct 06 2019
  */
 
 
@@ -42,8 +42,10 @@ DropzoneUpload.on('addedfile', function(file) {
 });
 
 DropzoneUpload.on('queuecomplete', function(file) {
-  loadData()
-  $('.dropzone').hide();
+  $('#dropzone-upload').toggleClass('shade');
+  $('#dropzone-upload').fadeOut();
+  extract_zip()
+  
 });
 
 DropzoneUpload.on('uploadprogress', (file, progress, bytesSent) => {

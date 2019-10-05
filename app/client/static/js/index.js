@@ -1,28 +1,20 @@
 /**
- * File: /Users/chaleong/Google Drive/engr489-2019/kun/app/client/static/js/index.js
- * Project: /Users/chaleong/Google Drive/engr489-2019/kun/app/client
- * Created Date: Saturday, September 14th 2019, 4:24:23 pm
- * Author: Charlene Leong
- * -----
+ * Created Date: Friday, October 4th 2019, 2:28:44 pm
+ * Author: Charlene Leong leongchar@myvuw.ac.nz
  * Last Modified: Sun Oct 06 2019
- * Modified By: Charlene Leong
- * -----
- * Copyright (c) 2019 Victoria University of Wellington ECS
- * ------------------------------------
- * Javascript will save your soul!
  */
+
 
 $(document).ready(() => {
     console.log('Sanity Check!!')
 });
 
 
-function loadData(){
+function extract_zip(){
     hide($('#instruct'))
     $('#instruct').html('')
-    console.log('Loading Data')
     $.ajax({
-            url: 'tasks/load_data',
+            url: 'tasks/extract_zip',
             method: 'POST',
         })
         .done((res) => {
@@ -107,7 +99,6 @@ function getStatus(taskType, taskID, taskData) {
 
             task_status = res.task.task_status
             if (task_status === 'finished' || task_status === 'failed') {
-                $('#progress').html('Press <b>[ ENTER ]</b> to remove')
                 return false;
             }
             setTimeout(function() { // Poll every second
@@ -126,8 +117,7 @@ function refreshImgGrd(NUM_SEEN, NUM_FILTERED, NUM_REFRESH) {
             method: 'GET'
         })
         .done(function() {
-            console.log('Reloading image grid...')
-
+            console.log('Reloading image grid ...')
             $('#img-grd').fadeOut();
             $('#cluster-filter').fadeOut();
             $('#img-grd ').toggleClass('shade') // Need to reset toggle class before reloading
@@ -173,15 +163,16 @@ function refreshImgGrd(NUM_SEEN, NUM_FILTERED, NUM_REFRESH) {
 function updateProgress(res) {
     task_type = res.task.task_type
     LABEL = res.task.task_data.LABEL
-
-    $('#img-grd figure.selected').toggleClass('selected')
-    show($('#progress'))
-    if (task_type === 'load_data') {
-        hide($('#instruct'))
-        $('#instruct').html('')
+    
+    if (task_type === 'extract_zip') {
+        
+        progress_msg = res.task.task_data.progress_msg
+        if (typeof(progress_msg) != 'undefined') $('#progress').html(progress_msg)
+        
+    } else if (task_type === 'load_data') {
 
         $('#label').html(LABEL)
-        $('#progress').html('Loading image bucket... <br/><b>[ ' + LABEL + ' ]</b>')
+        $('#progress').html('Loading image bucket ... <br/><b>[ ' + LABEL + ' ]</b>')
 
     } else if (task_type === 'train') {
         NUM_IMGS = res.task.task_data.NUM_IMGS
@@ -219,7 +210,7 @@ function updateProgress(res) {
             $('#progress-bar').css('width', percent + '%')
 
             show($('.epoch-progress-bar-wrap'))
-            animateProgressBar($('.epoch-progress-bar'), progress)
+            animateProgressBar($('#epoch-progress-bar'), progress)
         }
 
     } else if (task_type === 'cluster') {
@@ -227,17 +218,27 @@ function updateProgress(res) {
         hide($('.epoch-progress-bar-wrap'))
 
         progress_msg = 'Clustering with hdbscan ... <br/>'
-
+        MIN_CLUSTER_SIZE = res.task.task_data.MIN_CLUSTER_SIZE
+        if (typeof(MIN_CLUSTER_SIZE) != 'undefined') {
+            progress_msg = progress_msg + 'Minimum cluster size <b>[ ' + MIN_CLUSTER_SIZE + ' ]</b> <br/>'
+        }
+        
         NUM_CLUSTERS = res.task.task_data.NUM_CLUSTERS
         if (typeof(NUM_CLUSTERS) != 'undefined') {
-            progress_msg = progress_msg + '<b>[ ' + NUM_CLUSTERS + ' ]</b> clusters'
+            progress_msg = progress_msg + '<b>[ ' + NUM_CLUSTERS + ' ]</b> clusters found <br/>'
+        }
+
+        _progress_msg = res.task.task_data.progress_msg
+        if (typeof(_progress_msg) != 'undefined') {
+            progress_msg = progress_msg + _progress_msg
         }
 
         $('#progress').html(progress_msg)
 
     } else if (task_type === 'som') {
+        $('#img-grd figure.selected').toggleClass('selected')
+        
         progress_msg = 'Loading image grid with self organising map ... <br/>'
-
         MAX_ITER = res.task.task_data.MAX_ITER
         DIMS = res.task.task_data.DIMS
         if (typeof(DIMS) != 'undefined') {
@@ -251,8 +252,6 @@ function updateProgress(res) {
         }
 
         $('#progress').html(progress_msg)
-
-
     }
 
     task_status = res.task.task_status
@@ -260,7 +259,8 @@ function updateProgress(res) {
         $('#progress-bar').css('width', 100 + '%')
         show($('#instruct'))
         $('#instruct').html('Please remove the incorrect characters')
-
+        $('#progress').html('Press <b>[ ENTER ]</b> to remove')
+        
         // Reload page if SOM is reset
         NUM_SEEN = res.task.task_data.NUM_SEEN
         NUM_FILTERED = res.task.task_data.NUM_FILTERED
@@ -268,13 +268,14 @@ function updateProgress(res) {
 
         if (NUM_REFRESH == 0) location.reload()
         refreshImgGrd(NUM_SEEN, NUM_FILTERED, NUM_REFRESH)
-        showProgress()
-
+        showRemove()
     }
+
+    show($('#progress'))
 }
 
 function animateProgressBar(progressBar, numIteration, index = 1) {
     width = (index / numIteration) * 100;
     progressBar.css('width', width + '%');
-    if (index < numIteration) setTimeout(animateProgressBar, 100, progressBar, numIteration, index + 1);
+    if (index < numIteration) setTimeout(animateProgressBar, 50, progressBar, numIteration, index + 1);
 }

@@ -1,18 +1,13 @@
 /**
- * File: /Users/chaleong/Google Drive/engr489-2019/kun/app/client/static/js/selection.js
- * Project: /Users/chaleong/Google Drive/engr489-2019/kun/app/client/static/js
- * Created Date: Monday, September 23rd 2019, 5:10:29 pm
- * Author: Charlene Leong
- * -----
- * Last Modified: Fri Oct 04 2019
- * Modified By: Charlene Leong
- * -----
- * Copyright (c) 2019 Victoria University of Wellington ECS
- * ------------------------------------
- * Javascript will save your soul!
+ * Created Date: Friday, October 4th 2019, 2:28:44 pm
+ * Author: Charlene Leong leongchar@myvuw.ac.nz
+ * Last Modified: Sun Oct 06 2019
  */
 
-console.log('SelectionJS')
+$(document).ready(() => {
+    console.log('SelectionJS')
+});
+
 
 const selection = Selection.create({
     
@@ -46,7 +41,6 @@ const selection = Selection.create({
     for (const el of added) {
         el.classList.add('selected');
     }
-
     // Remove the class from elements that where removed
     // since the last selection
     for (const el of removed) {
@@ -55,7 +49,7 @@ const selection = Selection.create({
 
 }).on('stop', ({ inst }) => {
     inst.keepSelection();
-
+    
     // Fixing selection bug on shuffle filter
     if ($('.active').length != 0){
         // console.log($('.active').attr('data-group'))
@@ -70,8 +64,7 @@ const selection = Selection.create({
             }
         })
     }
-    
-    showProgress()
+    showRemove()
 });
 
 // Remove selected when clicking outside img-grd
@@ -79,12 +72,13 @@ window.addEventListener('click', function(e) {
     if ($('.grd-item').length != 0 &&
         !$('#img-grd')[0].contains(e.target)) {
         $('#img-grd figure.selected').toggleClass('selected')
-        showProgress()
+        
+        showRemove()
     }
 });
 
 
-function showProgress() {
+function showRemove() {
     // Show Remove if at least one item is selected, else hide
     numSelected = $('.selected').length 
     if (numSelected == 0 || $('.grd-item').length == 0) {

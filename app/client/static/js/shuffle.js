@@ -1,15 +1,7 @@
 /**
- * File: /Users/chaleong/Google Drive/engr489-2019/kun/app/client/static/js/shuffle.js
- * Project: /Users/chaleong/Google Drive/engr489-2019/kun/app/client
- * Created Date: Monday, September 16th 2019, 3:42:24 pm
- * Author: Charlene Leong
- * -----
- * Last Modified: Sat Oct 05 2019
- * Modified By: Charlene Leong
- * -----
- * Copyright (c) 2019 Victoria University of Wellington ECS
- * ------------------------------------
- * Javascript will save your soul!
+ * Created Date: Friday, October 4th 2019, 2:28:44 pm
+ * Author: Charlene Leong leongchar@myvuw.ac.nz
+ * Last Modified: Sun Oct 06 2019
  */
 
 $(document).ready(() => {
@@ -221,7 +213,7 @@ class ShuffleGrd {
 //   }
 //   console.log(imgGrdIdx)
 //   selectedImgs(selectedImgIdx, imgGrdIdx)
-//   showProgress()
+//   showRemove()
 // };
 
 
@@ -229,7 +221,10 @@ ShuffleGrd.prototype.selectedImgs = function(evt) {
     var shuffleItems = this.shuffle.items
     var selectedItems = $('.selected')
 
-    if (evt.keyCode === 13 && selectedItems.length != 0) { // if space pressed
+    if (!($('#img-grd').attr('class').includes('shade')) // if SOM not reloading
+        && selectedItems.length != 0    // if selected items not empty
+        && evt.keyCode === 13           // if space pressed
+        ) { 
         var selectedImgIdx = []
         for (i = 0; i < selectedItems.length; i++) {
             selectedImgIdx.push(selectedItems[i].getAttribute('img_idx'))
