@@ -4,7 +4,7 @@
  * Created Date: Monday, September 23rd 2019, 5:10:29 pm
  * Author: Charlene Leong
  * -----
- * Last Modified: Thu Oct 03 2019
+ * Last Modified: Fri Oct 04 2019
  * Modified By: Charlene Leong
  * -----
  * Copyright (c) 2019 Victoria University of Wellington ECS
@@ -69,7 +69,6 @@ const selection = Selection.create({
                 }
             }
         })
-        
     }
     
     showProgress()

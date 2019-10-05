@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 4:18:39 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Thu Oct 03 2019
+# Last Modified: Sun Oct 06 2019
 ###
 import os
 import shutil
@@ -35,13 +35,13 @@ app.app_context().push()
 
 SEED = 489
 
-def upload_MNIST(label):
-    return FilteredMNIST(label=label, split=0.8, n_noise_clusters=3, download_dir=app.config['RAW_IMG_DIR'])
+def load_MNIST(label):
+    return FilteredMNIST(label=label, split=0.8, n_noise_clusters=3, download_dir=app.config['DATASET_DIR'])
     
-def upload(args):
+def load_data(args):
     label = args[0]
     img_dir = args[1]
-    return ImageBucket(label=str(label), split=0.8, img_dir=img_dir, download_raw=False, download_dir=app.config['RAW_IMG_DIR'])
+    return ImageBucket(label=str(label), split=0.8, img_dir=img_dir, download_raw=False, download_dir=app.config['DATASET_DIR'])
 
 
 def train(dataset):
@@ -88,11 +88,18 @@ def cluster(label):
     # Returns the  OUTPUT DIR of the latest model by default
     OUTPUT_DIR = app.config['OUTPUT_DIR']
     ae, feat_ae, labels, imgs = load_model(OUTPUT_DIR)
-    clear_cluster_output(OUTPUT_DIR)   # Clearing old output
+    print(feat_ae.shape)
+    print(imgs.shape)
+    clear_output(OUTPUT_DIR)   # Clearing old output
     
+    dim_reduction = 2
+    print('Dim reduction to ' , dim_reduction, 'dims with TSNE...\n')
+    feat = tsne(feat_ae, dim_reduction)     # HDBSCAN suffers from curse of dimensionality 
+    print(feat.shape)
+    
+
     print('Clustering' , label, 'with HDBSCAN...\n')
-    feat = tsne(feat_ae, 2)     # HDBSCAN works best with 2dim w/ small dataset 
-    c_labels = hdbscan(feat, min_cluster_size=10)   
+    c_labels = hdbscan(feat, min_cluster_size=10)      
     c_labels = sort_c_labels(c_labels)
     
     img_plt = plt_scatter(feat, c_labels, output_dir=OUTPUT_DIR, plt_name='_{}.png'.format('hdbscan'), pltshow=False)
@@ -101,31 +108,35 @@ def cluster(label):
                     global_step = ae.EPOCH, dataformats='HWC')
 
     print('Saving images to client/static/imgs...')
-    shutil.rmtree(app.config['IMG_DIR'])    # Clear img dir
+    if os.path.exists(app.config['IMG_DIR']): # Clearing img dir
+        shutil.rmtree(app.config['IMG_DIR'])    
     os.makedirs(app.config['IMG_DIR'])
     for i, img in enumerate(imgs):
         save_image(img.view(-1, 1, 28, 28), app.config['IMG_DIR']+'/{}.png'.format(i))
-
+ 
     print('Saving processed ae feat...')      # Saving feat to json bcz tsne slow
     np_json(feat, os.path.join(OUTPUT_DIR, '_feat.json'))
 
-    return feat, c_labels
+    print('Saving c_labels...')      # Saving feat to json bcz tsne slow
+    np_json(c_labels, os.path.join(OUTPUT_DIR, '_c_labels.json'))
 
-def som(args):
-    img_idx = np.array(args[0])
-    c_labels = np.array(args[1])
-    job = get_current_job()
+    return feat, c_labels, imgs
 
-    # returns the  OUTPUT DIR of the latest model by default
-    OUTPUT_DIR = app.config['OUTPUT_DIR']
+def som(img_idx):
+    
+    OUTPUT_DIR = app.config['OUTPUT_DIR'] # returns the  OUTPUT DIR of the latest model by default
     ae, feat_ae, labels, imgs = load_model(OUTPUT_DIR)  
     feat = json_np(os.path.join(OUTPUT_DIR, '_feat.json'))
+    c_labels = json_np(os.path.join(OUTPUT_DIR, '_c_labels.json'))
+    
+    img_idx = np.array(img_idx)
     lut = dict(enumerate(list(img_idx)))
 
     data = feat[img_idx]
 
     dims= [10, 20]  # dims[row, col]
     som_path = os.path.join(OUTPUT_DIR, '_som.json')
+    job = get_current_job()
     if os.path.exists(som_path):  # Declare new SOM else update net
         iter = 50
         lr = 0.0001 
@@ -202,7 +213,7 @@ def sort_c_labels(c_labels):
     c_labels[c_labels!=-1] = lut[c_labels[c_labels!=-1]]    # Keep noise c_labels
     return c_labels
 
-def clear_cluster_output(output_dir):
+def clear_output(output_dir):
     files = glob.glob(output_dir+'_*')
     for f in files:
         os.remove(f)

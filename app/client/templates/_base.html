@@ -1,7 +1,7 @@
 <!--
 Created Date: Monday, September 16th 2019, 6:56:22 pm
 Author: Charlene Leong leongchar@myvuw.ac.nz
-Last Modified: Thu Oct 03 2019
+Last Modified: Sat Oct 05 2019
 -->
 
 
@@ -23,7 +23,10 @@ Last Modified: Thu Oct 03 2019
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"> <!-- For progress bar  -->
     <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-colors-win8.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/switch.css') }}">
-    <link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}" media="screen"> {% block css %}{% endblock %}
+    <link rel="stylesheet" href="{{url_for('static', filename='css/style.css')}}" media="screen"> 
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dropzone.css') }}">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+    {% block css %}{% endblock %}
 </head>
 
 <!-- Pre-loading  -->
@@ -45,7 +48,7 @@ Last Modified: Thu Oct 03 2019
                     <a href="https://gitlab.ecs.vuw.ac.nz/leongchar/kun" class="button">Gitlab</a>
                     <a href="https://gitlab.ecs.vuw.ac.nz/leongchar/kun/wikis/home" class="button" target="_blank">Wiki</a>
                     <a href="https://www.overleaf.com/read/bckkvcbpbxbr" class="button" target="_blank">Project Proposal</a>
-                    <button id="upload" type="button" class="btn btn-primary">Upload</a></button>
+                    <button id="load" type="button" class="btn btn-primary">Load</a></button>
                     <button id="train" type="button" class="btn btn-primary">Train</a></button>
                     <button id="cluster" type="button" class="btn btn-primary">Cluster</a></button>
                     <button id="som" type="button" class="btn btn-primary">SOM</a></button>
@@ -83,7 +86,33 @@ Last Modified: Thu Oct 03 2019
                         <h1>Kun<small></small></h1>
                         <!-- <p id='instruct'>Please identify the <b>incorrect</b> characters<p> -->
                         <p id='instruct' class='show'><p><br/>
+
+                        <form id ='dropzone-upload' class="dropzone"  method="POST" action="/upload"  enctype="multipart/form-data">
+                            <div class="dz-message">
+                                <i class="fa fa-picture-o fa-5x" aria-hidden="true"></i>
+                            </div>
+                        </form>
+                        {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            <ul class=flashes>
+                            {% for message in messages %}
+                            {{ message }}
+                            {% endfor %}
+                            </ul>
+                        {% endif %}
+                        {% endwith %}
+                        <!-- <button id="upload-btn" type="button" class="btn btn-primary">Upload</a></button> -->
                     </div>
+
+                    <script>
+                        if ('{{LABEL}}'===''){
+                        $('#instruct').html('Please upload a zip file with the label as filename. <br/> \
+                                        Accepted filetypes <b> [ .png ]<b> ')
+                        }else{
+                            $('.dropzone').hide();
+                        }
+                    </script>
+                     
                 </div>
                 <div class="container">{% block content %}{% endblock %}</div>
 
@@ -105,6 +134,8 @@ Last Modified: Thu Oct 03 2019
                 <!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script> -->
                 <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script> -->
                 <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+                <script src="{{ url_for('static', filename='js/dropzone.js') }}"></script>
+                <script src="{{ url_for('static', filename='js/dropzone-config.js') }}"></script>
                 {% block js %}{% endblock %}
             </div>
             <footer id='footer'>

@@ -3,7 +3,7 @@
 ###
 # Created Date: Thursday, September 26th 2019, 10:17:11 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Sep 30 2019
+# Last Modified: Sat Oct 05 2019
 ###
 
 import sys
@@ -43,17 +43,11 @@ class FeatureType(Enum):
 #                       bound.vertices[3].x-10, bound.vertices[3].y+10], None, color)
 #     return image
 
-def cjk_detect(texts):
-    # korean
-    if re.search("[\uac00-\ud7a3]", texts):
-        return "ko"
-    # japanese
-    if re.search("[\u3040-\u30ff]", texts):
-        return "ja"
+def zh_detect(texts):
     # chinese
     if re.search("[\u4e00-\u9FFF]", texts):
-        return "zh"
-    return None
+        return True
+    return False
 
 def get_document_bounds(document, feature):
     """Returns document bounds given an image."""
@@ -132,7 +126,7 @@ def crop_symbols(file, symbols, img):
                 s.text='backslash'
             elif s.text==':':
                 s.text='colon'
-        elif cjk_detect(s.text) == 'zh':
+        elif zh_detect(s.text):
             char_type = 'zh'
         else:
             print('Not valid character')

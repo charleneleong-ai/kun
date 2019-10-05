@@ -1,7 +1,7 @@
 /*
  * Created Date: Wednesday, October 2nd 2019, 7:44:07 pm
  * Author: Charlene Leong leongchar@myvuw.ac.nz
- * Last Modified: Wed Oct 02 2019
+ * Last Modified: Sat Oct 05 2019
  */
  
  .filter-label {
@@ -55,10 +55,9 @@
     display: inline-block;
     text-align: center;
     border-radius: 3px;
-    border: 1px solid #5e3434;
+    border: 1px solid #C83741;
     color:  #C83741;
     font-size: 1rem;
-    background-color: rgb(107, 51, 51);
     transition: .2s ease-out;
     cursor: pointer;
     -webkit-appearance: none

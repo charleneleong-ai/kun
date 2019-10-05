@@ -17,4 +17,5 @@ node_modules
 *.gif
 *.mov
 
-
+# ====== Uploads ====== #
+*.zip

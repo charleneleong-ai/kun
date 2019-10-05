@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 4:44:15 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Thu Oct 03 2019
+# Last Modified: Sat Oct 05 2019
 ###
 
 import os
@@ -15,7 +15,7 @@ import os
 from flask import Flask, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-# from flask_uploads import UploadSet, IMAGES, configure_uploads
+from flask_uploads import UploadSet, IMAGES, configure_uploads
  
 # from flask_socketio import SocketIO
 

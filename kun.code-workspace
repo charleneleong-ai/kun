@@ -84,22 +84,6 @@
 				]
 			},
 			{
-				"language": "javascript",
-				"template": [
-					"File: <<filepath>>",
-					"Project: <<projectpath>>",
-					"Created Date: <<filecreated('dddd, MMMM Do YYYY, h:mm:ss a')>>",
-					"Author: <<author>>",
-					"-----",
-					"Last Modified: ",
-					"Modified By: ",
-					"-----",
-					"Copyright (c) <<year>> <<company>>",
-					"------------------------------------",
-					"Javascript will save your soul!"
-				]
-			},
-			{
 				"language": "typescript",
 				"mapTo": "javascript"
 			}

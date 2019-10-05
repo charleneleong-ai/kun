@@ -3,7 +3,7 @@
 ###
 # Created Date: Thursday, September 5th 2019, 9:14:26 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Sep 23 2019
+# Last Modified: Fri Oct 04 2019
 ###
 
 # from server import create_app, socketio
@@ -32,8 +32,8 @@ app = create_app()
 
 if __name__ == '__main__':
     # run_worker()
-    app.jinja_env.auto_reload = True
-    app.config['TEMPLATES_AUTO_RELOAD'] = True
+#     app.jinja_env.auto_reload = True
+#     app.config['TEMPLATES_AUTO_RELOAD'] = True
     app.run(host=HOST,
             debug=True,  # automatic reloading enabled
             port=PORT,

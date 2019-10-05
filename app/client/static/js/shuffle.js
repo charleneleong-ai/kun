@@ -4,7 +4,7 @@
  * Created Date: Monday, September 16th 2019, 3:42:24 pm
  * Author: Charlene Leong
  * -----
- * Last Modified: Thu Oct 03 2019
+ * Last Modified: Sat Oct 05 2019
  * Modified By: Charlene Leong
  * -----
  * Copyright (c) 2019 Victoria University of Wellington ECS
@@ -250,7 +250,8 @@ ShuffleGrd.prototype.selectedImgs = function(evt) {
         }
         // console.log(imgIdx)
 
-        $('#img-grd figure.selected').toggleClass('fadeout')
+        // $('#img-grd figure.selected').toggleClass('fadeout')
+        $('#img-grd figure.selected').fadeTo(0, 0.2)
         $('#img-grd').toggleClass('shade')
         $('#som-status').toggleClass('shade')
         $('#cluster-filter').toggleClass('shade')
