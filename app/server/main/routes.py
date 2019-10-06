@@ -19,19 +19,12 @@ from flask import current_app, session
 from server.main import bp
 from server.main.tasks import extract_zip, load_data, load_MNIST, train, cluster, som
 from server.main.models import Image, ImageGrid, clear_tables
+from server.utils.datasets.imgbucket import ImageBucket
 
-import pprint
-
-ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
-
+ 
 def is_zipfile(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in set(['zip'])
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
 
 @bp.route('/', methods=['GET']) 
 def home():
@@ -60,13 +53,8 @@ def home():
 def upload():
     if not os.path.exists(current_app.config['UPLOAD_DIR']):
         os.makedirs(current_app.config['UPLOAD_DIR'])
-        
+
     if request.method == 'POST':
-        ## for multi file upload
-        # for key, f in request.files.items():  
-        #     if key.startswith('file') and allowed_file(f.filename):
-        #         f = secure_filename(f.filename)
-        #         f.save(os.path.join(current_app.config['UPLOAD_DIR'], f.filename))
         z_file = request.files['file']
         if z_file and is_zipfile(z_file.filename):
             if not os.path.exists(current_app.config['UPLOAD_DIR']):
@@ -80,6 +68,12 @@ def upload():
                     z_file.save(zpath)
                     session['zpath'] = zpath
 
+        ## for multi file img upload
+        # for key, f in request.files.items():  
+        #     if key.startswith('file') and allowed_file(f.filename):
+        #         f = secure_filename(f.filename)
+        #         f.save(os.path.join(current_app.config['UPLOAD_DIR'], f.filename))
+
     return redirect('/')
 
     
@@ -88,18 +82,30 @@ def run_task(task_type):
     task_data = {}
     
     if task_type=='extract_zip':  
+        zfname = os.path.basename(os.path.normpath(session['zpath']))
+        task_data['progress_msg'] = 'Uploading <b>[ {} ]</b> ...'.format(zfname)
         task = current_app.task_queue.enqueue(extract_zip, session['zpath'], job_timeout=180)  
-                
-            ## for multi file upload
-            # for key, f in request.files.items():  
-            #     if key.startswith('file') and allowed_file(f.filename):
-            #         f = secure_filename(f.filename)
-            #         f.save(os.path.join(current_app.config['UPLOAD_DIR'], f.filename))
 
     if task_type=='load_data':
         upload_dir = os.path.join(current_app.config['UPLOAD_DIR'], session['LABEL'])
         task = current_app.task_queue.enqueue(load_data, (session['LABEL'], upload_dir))  
+
+    if task_type=='train':
+        print(type(current_app.config['OUTPUT_DIR']))
+        dataset = ImageBucket(output_dir=current_app.config['OUTPUT_DIR'])
         
+        task_data['NUM_IMGS'] = len(dataset)
+        task_data['NUM_TRAIN'] = len(dataset.train)
+        task_data['NUM_TEST'] = len(dataset.test)
+
+        session['NUM_IMGS'] = len(dataset)
+        session['NUM_TRAIN'] = len(dataset.train)
+        session['NUM_TEST'] = len(dataset.test)
+        
+        print(dataset)
+        task = current_app.task_queue.enqueue(train, dataset, job_timeout=600)  # 10 min training
+        task_type = 'train'
+
     if task_type=='cluster': # Rerunning HDBSCAN
         task = current_app.task_queue.enqueue(cluster, session['LABEL'], job_timeout=180)
         session['NUM_CLUSTERS'] = 0
@@ -109,12 +115,7 @@ def run_task(task_type):
         # Resetting processed in db
         for img in Image.query.filter_by(label=session['LABEL']).filter_by(processed=True):
             img.reset()   
-        # Reloading som weights
-        if 'output_dir' not in session: 
-            session['output_dir'] = current_app.config['OUTPUT_DIR']
-        if os.path.exists(os.path.join(session['output_dir'], '_som.json')): # Clearing som weights
-            os.remove(os.path.join(session['output_dir'], '_som.json'))  
-        
+
         task = run_new_som()
         
     response_object = {
@@ -160,6 +161,7 @@ def get_status(task_type, task_id):
         session['NUM_IMGS'] = len(dataset)
         session['NUM_TRAIN'] = len(dataset.train)
         session['NUM_TEST'] = len(dataset.test)
+        
         print(dataset)
         task = current_app.task_queue.enqueue(train, dataset, job_timeout=600)  # 10 min training
         task_type = 'train'
@@ -168,6 +170,7 @@ def get_status(task_type, task_id):
         batch_size, lr, epoch, output_dir = task.result    
         session['ae'] = {'bs': batch_size, 'lr': lr, 'epoch': epoch}
         session['OUTPUT_DIR'] = output_dir
+        print(session['LABEL'])
         task = current_app.task_queue.enqueue(cluster, session['LABEL'], job_timeout=300)
         
         session['NUM_CLUSTERS'] = 0
@@ -183,17 +186,6 @@ def get_status(task_type, task_id):
         task_data['NUM_CLUSTERS'] = len(set(c_labels))
         session['NUM_CLUSTERS'] = len(set(c_labels))   
         print(len(c_labels), len(feat))
-        
-        # print('Saving images to client/static/imgs ...')
-        # if os.path.exists(current_app.config['IMG_DIR']): # Clearing img dir
-        #     shutil.rmtree(current_app.config['IMG_DIR'])    
-        # os.makedirs(current_app.config['IMG_DIR'])
-        # clear_tables()
-        # for idx, (c_label, img) in zip(c_labels, imgs):
-        #     img_path = current_app.config['IMG_DIR']+'/{}.png'.format(idx)
-        #     save_image(img.view(-1, 1, 28, 28), img_path)
-        #     img = Image(idx=idx, label=session['LABEL'], c_label=int(c_label), 
-        #                 img_path=img_path, processed=False).add()
 
         save_img_db(c_labels)
                 
@@ -247,23 +239,23 @@ def selected_imgs(selected_img_idx, img_grd_idx, img_idx):
     img_idx = img_idx.split(',')
     
     # Setting all imgs in grd to processed
-    # seen = [Image.query.filter_by(label=session['LABEL'])
-    #             .filter_by(idx=int(idx)).first().seen() for idx in img_idx]
-    # selected = [Image.query.filter_by(label=session['LABEL'])
-    #             .filter_by(idx=int(idx)).first() for idx in selected_img_idx]
+    seen = [Image.query.filter_by(label=session['LABEL'])
+                .filter_by(idx=int(idx)).first().seen() for idx in img_idx]
+    selected = [Image.query.filter_by(label=session['LABEL'])
+                .filter_by(idx=int(idx)).first() for idx in selected_img_idx]
     
-    # # Get new unprocessed imgs to replace img_grd_idx 
-    # imgs = Image.query.filter_by(label=session['LABEL']) \
-    #                     .filter_by(processed=False).order_by(Image.c_label.desc()).all()
-    # img_idx = [img.idx for img in imgs]
-    # c_labels = [img.c_label for img in Image.query.filter_by(label=session['LABEL']).all()]
-
-    seen = [Image.query.filter_by(idx=int(idx)).first().seen() for idx in img_idx]
-    selected = [Image.query.filter_by(idx=int(idx)).first() for idx in selected_img_idx]
-    
-    # Get new imgs to replace seen img_grd_idx
-    imgs = Image.query.filter_by(processed=False).order_by(Image.c_label.desc()).all()
+    # Get new unprocessed imgs to replace img_grd_idx 
+    imgs = Image.query.filter_by(label=session['LABEL']) \
+                        .filter_by(processed=False).order_by(Image.c_label.desc()).all()
     img_idx = [img.idx for img in imgs]
+    c_labels = [img.c_label for img in Image.query.filter_by(label=session['LABEL']).all()]
+
+    # seen = [Image.query.filter_by(idx=int(idx)).first().seen() for idx in img_idx]
+    # selected = [Image.query.filter_by(idx=int(idx)).first() for idx in selected_img_idx]
+    
+    # # Get new imgs to replace seen img_grd_idx
+    # imgs = Image.query.filter_by(processed=False).order_by(Image.c_label.desc()).all()
+    # img_idx = [img.idx for img in imgs]
 
     task = current_app.task_queue.enqueue(som, img_idx, job_timeout=300)
 
@@ -298,6 +290,12 @@ def selected_imgs(selected_img_idx, img_grd_idx, img_idx):
     return jsonify(response_object), 202
 
 def run_new_som():
+    if 'output_dir' not in session: 
+        session['output_dir'] = current_app.config['OUTPUT_DIR']
+        
+    if os.path.exists(os.path.join(session['output_dir'], '_som.json')): # Clearing som weights
+        os.remove(os.path.join(session['output_dir'], '_som.json'))  
+        
     img_idx = [img.idx for img in Image.query.filter_by(label=session['LABEL'])
                                         .order_by(Image.c_label.desc()).all()]
 

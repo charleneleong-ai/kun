@@ -3,7 +3,7 @@
 ###
 # Created Date: Monday, September 30th 2019, 11:40:06 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Sat Oct 05 2019
+# Last Modified: Sun Oct 06 2019
 ###
 
 import os
@@ -126,8 +126,10 @@ class ImageBucket(Dataset):
         torch.save({
             'label': self.LABEL,
             'split': self.SPLIT,
+            'transform': self.transform,
             'train': self.train,
-            'test': self.test
+            'test': self.test,
+            'download_dir': self.DOWNLOAD_DIR
             },
             save_path
             )
@@ -137,7 +139,9 @@ class ImageBucket(Dataset):
         dataset = torch.load(path, map_location=lambda storage, loc: storage)
         self.LABEL = dataset['label']
         self.SPLIT = dataset['split']
+        self.transform  = dataset['transform']
         self.train = dataset['train']
         self.test = dataset['test']
+        self.DOWNLOAD_DIR = dataset['download_dir']
 
-        print('\nLoaded img_bucket.pt from {}\n'.format(output_dir.split('/')[1]))
+        print('\nLoaded img_bucket.pt from {}\n'.format(output_dir))

@@ -43,10 +43,10 @@ app.app_context().push()
 
 
 SEED = 489
+ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
 
 def extract_zip(zpath):
     job = get_current_job()
-
     zf = test_zipfile(zpath)
     zfname = os.path.basename(os.path.normpath(zpath))
     label = zfname.split('.')[0]
@@ -71,9 +71,9 @@ def extract_zip(zpath):
     print(os.path.join(app.config['UPLOAD_DIR'], zfname))
         
     with ZipFile(os.path.join(app.config['UPLOAD_DIR'], zfname),"r") as z_ref:
-        job.meta['progress_msg'] = 'Extracting {} ...'.format(zfname)
+        job.meta['progress_msg'] = 'Extracting <b>[ {} ]</b> ...'.format(zfname)
         job.save_meta()
-        print('Extracting zip ...')
+        print('Extracting {} ...'.format(zfname))
         z_ref.extractall(app.config['UPLOAD_DIR'])
     z_ref.close()
     
@@ -126,7 +126,7 @@ def train(dataset):
             patience=PATIENCE,        # Num epochs for early stopping
             eval=True,          # Eval training process with test data
             # plt_imgs=(N_TEST_IMGS, 10),         # (N_TEST_IMGS, plt_interval)
-            scatter_plt=('umap', 10),           # ('method', plt_interval)
+            scatter_plt=('tsne', 10),           # ('method', plt_interval)
             output_dir=OUTPUT_DIR, 
             save_model=True)        # Also saves dataset
     
@@ -145,10 +145,10 @@ def cluster(label):
     if len(feat_ae) > 3000:
         MIN_CLUSTER_SIZE = 15
     reduce_dims = 2
-    reduce_dim_method = 'umap'  ## HDBSCAN suffers from curse of dimensionality 
+    reduce_dim_method = 'tsne'  ## HDBSCAN suffers from curse of dimensionality 
 
     job.meta['MIN_CLUSTER_SIZE'] = MIN_CLUSTER_SIZE
-    job.meta['progress_msg'] = 'Reducing dims from {} to {} dims with {} ...'\
+    job.meta['progress_msg'] = 'Reducing features from {} to {} dims with {} ...'\
                                 .format(feat_ae.shape[1], reduce_dims, reduce_dim_method.upper())
     job.save_meta()
    
@@ -170,7 +170,7 @@ def cluster(label):
                     img_tensor=img_plt, 
                     global_step = ae.EPOCH, dataformats='HWC')
 
-    job.meta['progress_msg'] = 'Saving images  ...'
+    job.meta['progress_msg'] = 'Saving <b>[ {} ]</b> images ...'.format(imgs.shape[0])
     job.save_meta()
     print('Saving images to client/static/imgs...')
     if os.path.exists(app.config['IMG_DIR']): # Clearing img dir
@@ -199,7 +199,7 @@ def som(img_idx):
 
     data = feat[img_idx]
 
-    dims= [10, 20]  # dims[row, col]
+    dims= [10, 25]  # dims[row, col]
     som_path = os.path.join(OUTPUT_DIR, '_som.json')
     if os.path.exists(som_path):  # Declare new SOM else update net
         iter = 50
@@ -307,3 +307,8 @@ def test_zipfile(zfname):
     except Exception as e:
         raise IOError(e)
     return zf
+
+# TODO: Test for allowed file ext 
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS

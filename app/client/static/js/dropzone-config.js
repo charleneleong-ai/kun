@@ -27,19 +27,6 @@ var DropzoneUpload = new Dropzone('#dropzone-upload', {
   }
 });
 
-// Excluding duplicate
-DropzoneUpload.on('addedfile', function(file) {
-  if (this.files.length) {
-      var _i, _len;
-      for (_i = 0, _len = this.files.length; _i < _len - 1; _i++) // -1 to exclude current file
-      {
-          if(this.files[_i].name === file.name && this.files[_i].size === file.size && this.files[_i].lastModifiedDate.toString() === file.lastModifiedDate.toString())
-          {
-              this.removeFile(file);
-          }
-      }
-  }
-});
 
 DropzoneUpload.on('queuecomplete', function(file) {
   $('#dropzone-upload').toggleClass('shade');
@@ -54,6 +41,23 @@ DropzoneUpload.on('uploadprogress', (file, progress, bytesSent) => {
     ) return
   $('#progress-bar').css('width' , progress + '%');
 })
+
+
+/// Functions for multi file img upload
+
+// Excluding duplicate
+// DropzoneUpload.on('addedfile', function(file) {
+//   if (this.files.length) {
+//       var _i, _len;
+//       for (_i = 0, _len = this.files.length; _i < _len - 1; _i++) // -1 to exclude current file
+//       {
+//           if(this.files[_i].name === file.name && this.files[_i].size === file.size && this.files[_i].lastModifiedDate.toString() === file.lastModifiedDate.toString())
+//           {
+//               this.removeFile(file);
+//           }
+//       }
+//   }
+// });
 
 
 // DropzoneUpload.on('totaluploadprogress', function(progress) {

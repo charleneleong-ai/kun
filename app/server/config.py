@@ -16,7 +16,7 @@ ROOT_DIR = os.path.dirname(__file__)
 class BaseConfig(object):
     """Base configuration."""
     WTF_CSRF_ENABLED = True
-    SECRET_KEY = b'_5#y2L"F4Q8z\n\xeasdf]'   # for session vars
+    SECRET_KEY = b'_5#y2L"F4Q8z\n\xeafasdfsadf]'   # for session vars
     DB_FILE = os.path.join(ROOT_DIR, 'imgs.db')
     SQLALCHEMY_DATABASE_URI = 'sqlite:///{}'.format(DB_FILE)
     SQLALCHEMY_TRACK_MODIFICATIONS = False

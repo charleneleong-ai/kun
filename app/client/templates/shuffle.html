@@ -10,52 +10,56 @@ Last Modified: Sun Oct 06 2019
 {% block css %}
 <link href="{{url_for('static', filename='css/shuffle.css')}}" rel='stylesheet' media='screen'>
 <link href="{{url_for('static', filename='css/shuffle_filter.css')}}" rel='stylesheet' media='screen'> 
+
 {% endblock %} 
 
 {% block content %}
+
 <!-- Shuffle JS Grid -->
 <div class='container'>
     <h1 id='label'><b>{{LABEL}}</b></h1>
-    <div id='cluster-filter' class='row hide'>
+    <div id='img-grd-wrapper' class=''>
+        <div id='cluster-filter' class='row hide'>
             <div class="container">
                 <div class="btn-group filter-options">
                     {%for c_label in img_grd_c_labels%}
-                    <button class="btn btn--primary" data-group="{{c_label}}">{{c_label}}</button> 
-                    {%- endfor %}
-                </div>
-        </div>
-    </div>
-    <div id='img-grd' class='shuffle-grd'>
-        {%- for img, idx, c_label in imgs %}
-        <figure class='grd-item column loading' data-groups='["{{c_label}}"]' img_idx='{{idx}}'>
-            <div class='aspect'>
-                <div class='aspect__inner '>
-                    <img class='top' src='{{img}}' alt='{{img}}'>
+                    <button class="btn btn--primary" data-group="{{c_label}}">{{c_label}}</button> {%- endfor %}
                 </div>
             </div>
-        </figure>
-        {%- endfor %}
-    </div>
-    <div id='som-status' class='row hide'>
-        <script>
-            if ($('.grd-item').length != 0) {
-                $('#som-status').removeClass('hide')
-                $('#som-status').addClass('show')
-                $('#cluster-filter').removeClass('hide')
-                $('#cluster-filter').addClass('show')
-            }
-        </script>
-        <p id='num-seen'>Images <b>[ {{NUM_SEEN}} ]</b></p>
-        <p id='num-clusters'>Clusters <b>[ {{NUM_CLUSTERS}} ]</b></p>
-        <p id='num-filtered'>Filtered <b>[ {{NUM_FILTERED}} ]</b></p>
-        <p id='num-refresh'>Refresh <b>[ {{NUM_REFRESH}} ]</b></p>
-        <p id='num-selected' class='hide'></p>
-    </div>
+        </div>
+        <div id='img-grd' class='shuffle-grd'>
+            {%- for img, idx, c_label in imgs %}
+            <figure class='grd-item column loading' data-groups='["{{c_label}}"]' img_idx='{{idx}}'>
+                <div class='aspect'>
+                    <div class='aspect__inner '>
+                        <img class='top' src='{{img}}' alt='{{img}}'>
+                    </div>
+                </div>
+            </figure>
+            {%- endfor %}
+        </div>
+        <div id='som-status' class='row hide'>
+            <script>
+                if ($('.grd-item').length != 0) {
+                    $('#som-status').removeClass('hide')
+                    $('#som-status').addClass('show')
+                    $('#cluster-filter').removeClass('hide')
+                    $('#cluster-filter').addClass('show')
 
+                    $('#instruct').html('Please remove the incorrect characters')
+                }
+            </script>
+            <p id='num-seen'>Images <b>[ {{NUM_SEEN}} ]</b></p>
+            <p id='num-clusters'>Clusters <b>[ {{NUM_CLUSTERS}} ]</b></p>
+            <p id='num-filtered'>Filtered <b>[ {{NUM_FILTERED}} ]</b></p>
+            <p id='num-refresh'>Refresh <b>[ {{NUM_REFRESH}} ]</b></p>
+            <p id='num-selected' class='hide'></p>
+        </div>
+    </div>
     <div class='row'>
         <div class='container'>
             <div class='col-sm-12 col-md-10 col-md-offset-1'>
-                
+
                 <p id='progress' class='hide'></p>
             </div>
         </div>

@@ -87,7 +87,8 @@
 				"language": "typescript",
 				"mapTo": "javascript"
 			}
-		]
+		],
+		"git.ignoreLimitWarning": true
 	}
 }
 

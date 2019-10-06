@@ -4,13 +4,14 @@
  * Last Modified: Sun Oct 06 2019
  */
 
+// https://simonwep.github.io/selection/
+ 
 $(document).ready(() => {
     console.log('SelectionJS')
 });
 
 
 const selection = Selection.create({
-    
     // Class for the selection-area
     class: 'selection',
     // px, how many pixels the point should move before starting the selection
@@ -21,8 +22,10 @@ const selection = Selection.create({
 
     // The container is also the boundary in this case
     boundaries: ['.shuffle-grd']
+    
 }).on('start', ({ inst, selected, oe }) => {
     // Remove class if the user isn't pressing the control key or ⌘ key
+
     if (!oe.ctrlKey && !oe.metaKey) {
 
         // Unselect all elements
@@ -34,7 +37,6 @@ const selection = Selection.create({
         // Clear previous selection
         inst.clearSelection();
     }
-
 
 }).on('move', ({ changed: { removed, added } }) => {
     // Add a custom class to the elements that where selected.
@@ -48,29 +50,31 @@ const selection = Selection.create({
     }
 
 }).on('stop', ({ inst }) => {
-    inst.keepSelection();
-    
-    // Fixing selection bug on shuffle filter
-    if ($('.active').length != 0){
-        // console.log($('.active').attr('data-group'))
-        // console.log($('.selected').length)
-        activeGroup = $('.active').attr('data-group')
-        $('.grd-item').each(function(idx){
-            if (!this.getAttribute('data-groups').includes(activeGroup)){
-                if (this.className.includes('selected')){
-                    // console.log(this.getAttribute('data-groups'))
-                    this.classList.remove('selected')
+    if (!($('#img-grd-wrapper').attr('class').includes('shade'))) {// SOM not reloading
+        inst.keepSelection();
+        // Fixing selection bug on shuffle filter
+        if ($('.active').length != 0){
+            // console.log($('.active').attr('data-group'))
+            // console.log($('.selected').length)
+            activeGroup = $('.active').attr('data-group')
+            $('.grd-item').each(function(idx){
+                if (!this.getAttribute('data-groups').includes(activeGroup)){
+                    if (this.className.includes('selected')){
+                        // console.log(this.getAttribute('data-groups'))
+                        this.classList.remove('selected')
+                    }
                 }
-            }
-        })
+            })
+        }
+        showRemove()
     }
-    showRemove()
 });
 
 // Remove selected when clicking outside img-grd
 window.addEventListener('click', function(e) {
-    if ($('.grd-item').length != 0 &&
-        !$('#img-grd')[0].contains(e.target)) {
+    if (!($('#img-grd-wrapper').attr('class').includes('shade')) // SOM not reloading
+        && $('.grd-item').length != 0   // Grid not empty
+        && !$('#img-grd')[0].contains(e.target)) {  // Clicked outside img-grd
         $('#img-grd figure.selected').toggleClass('selected')
         
         showRemove()
@@ -80,15 +84,21 @@ window.addEventListener('click', function(e) {
 
 function showRemove() {
     // Show Remove if at least one item is selected, else hide
-    numSelected = $('.selected').length 
-    if (numSelected == 0 || $('.grd-item').length == 0) {
-        hide($('#progress'))
-        hide($('#num-selected'))
-        $('#num-selected').html('')
-    } else {
-        show($('#progress'))
-        show($('#num-selected'))
-        $('#num-selected').html(numSelected) 
+
+    if (!($('#img-grd-wrapper').attr('class').includes('shade'))){
+        numSelected = $('.selected').length 
+        if (numSelected == 0 || $('.grd-item').length == 0) {
+
+            hide($('#progress'))
+            hide($('#num-selected'))
+            $('#num-selected').html('')
+        } else {
+            
+            $('#progress').html('Press <b>[ ENTER ]</b> to remove')
+            show($('#progress'))
+            show($('#num-selected'))
+            $('#num-selected').html(numSelected) 
+        }
     }
 }
 

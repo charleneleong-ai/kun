@@ -4,6 +4,9 @@
  * Last Modified: Sun Oct 06 2019
  */
 
+// https://vestride.github.io/Shuffle/
+
+
 $(document).ready(() => {
     console.log('ShuffleGrd');
 });
@@ -247,9 +250,7 @@ ShuffleGrd.prototype.selectedImgs = function(evt) {
 
         // $('#img-grd figure.selected').toggleClass('fadeout')
         $('#img-grd figure.selected').fadeTo(0, 0.2)
-        $('#img-grd').toggleClass('shade')
-        $('#som-status').toggleClass('shade')
-        $('#cluster-filter').toggleClass('shade')
+        $('#img-grd-wrapper').toggleClass('shade')
 
         sendSelectedImgIdx(selectedImgIdx, imgGrdIdx, imgIdx)
     }
