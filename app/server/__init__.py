@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 4:44:15 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Sat Oct 05 2019
+# Last Modified: Mon Oct 07 2019
 ###
 
 import os
@@ -15,8 +15,7 @@ import os
 from flask import Flask, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_uploads import UploadSet, IMAGES, configure_uploads
- 
+
 # from flask_socketio import SocketIO
 
 from redis import Redis
@@ -29,9 +28,7 @@ ROOT_DIR = os.path.dirname(__file__)
 # instantiate the extensions
 db = SQLAlchemy()
 migrate = Migrate()
-# images = UploadSet('images', IMAGES)
-# configure_uploads(app, images)
-# socketio = SocketIO()
+
 
 
 def create_app(script_info=None):

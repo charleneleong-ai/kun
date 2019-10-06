@@ -1,7 +1,7 @@
 /**
  * Created Date: Friday, October 4th 2019, 2:28:44 pm
  * Author: Charlene Leong leongchar@myvuw.ac.nz
- * Last Modified: Sun Oct 06 2019
+ * Last Modified: Mon Oct 07 2019
  */
 
 // https://vestride.github.io/Shuffle/
@@ -23,10 +23,10 @@ class ShuffleGrd {
 
         // Log events.
         this.addShuffleEventListeners();
-        this._activeFilters = [];
-        this.addFilterButtons();
-        this.addSorting();
-        this.addSearchFilter();
+        // this._activeFilters = [];
+        // this.addFilterButtons();
+        // this.addSorting();
+        // this.addSearchFilter();
 
         document.addEventListener('keyup', this.selectedImgs.bind(this), false);
 
@@ -105,90 +105,86 @@ class ShuffleGrd {
         buttonGroup.addEventListener('change', this._handleSortChange.bind(this));
     }
 
-    _handleSortChange(evt) {
-        // Add and remove `active` class from buttons.
-        const buttons = Array.from(evt.currentTarget.children);
-        buttons.forEach((button) => {
-            if (button.querySelector('input').value === evt.target.value) {
-                button.classList.add('active');
-            } else {
-                button.classList.remove('active');
-            }
-        });
+    // _handleSortChange(evt) {
+    //     // Add and remove `active` class from buttons.
+    //     const buttons = Array.from(evt.currentTarget.children);
+    //     buttons.forEach((button) => {
+    //         if (button.querySelector('input').value === evt.target.value) {
+    //             button.classList.add('active');
+    //         } else {
+    //             button.classList.remove('active');
+    //         }
+    //     });
 
-        // Create the sort options to give to Shuffle.
-        const { value } = evt.target;
-        let options = {};
+    //     // Create the sort options to give to Shuffle.
+    //     const { value } = evt.target;
+    //     let options = {};
 
-        function sortByDate(element) {
-            return element.getAttribute('data-created');
-        }
+    //     function sortByDate(element) {
+    //         return element.getAttribute('data-created');
+    //     }
 
-        function sortByTitle(element) {
-            return element.getAttribute('data-title').toLowerCase();
-        }
+    //     function sortByTitle(element) {
+    //         return element.getAttribute('data-title').toLowerCase();
+    //     }
 
-        if (value === 'date-created') {
-            options = {
-                reverse: true,
-                by: sortByDate,
-            };
-        } else if (value === 'title') {
-            options = {
-                by: sortByTitle,
-            };
-        }
-        this.shuffle.sort(options);
-    }
+    //     if (value === 'date-created') {
+    //         options = {
+    //             reverse: true,
+    //             by: sortByDate,
+    //         };
+    //     } else if (value === 'title') {
+    //         options = {
+    //             by: sortByTitle,
+    //         };
+    //     }
+    //     this.shuffle.sort(options);
+    // }
 
-    // Advanced filtering
-    addSearchFilter() {
-        const searchInput = document.querySelector('.shuffle-search');
-        if (!searchInput) {
-            return;
-        }
-        searchInput.addEventListener('keyup', this._handleSearchKeyup.bind(this));
-    }
+    // // Advanced filtering
+    // addSearchFilter() {
+    //     const searchInput = document.querySelector('.shuffle-search');
+    //     if (!searchInput) {
+    //         return;
+    //     }
+    //     searchInput.addEventListener('keyup', this._handleSearchKeyup.bind(this));
+    // }
 
-    /**
-     * Filter the shuffle instance by by cluster label
-     * @param {Event} evt Event object.
-     */
-    _handleSearchKeyup(evt) {
-        const searchText = evt.target.value.toLowerCase();
-        this.shuffle.filter((element, shuffle) => {
-            // If there is a current filter applied, ignore elements that don't match it.
-            // const groups = JSON.parse(element.getAttribute('data-groups'));
-            // console.log(groups)
-            // const isElementInCurrentGroup = groups.indexOf(shuffle.group) !== -1;
-            //     // Only search elements in the current group
-            // if (!isElementInCurrentGroup) {
-            //     return false;
-            // }
+    // /**
+    //  * Filter the shuffle instance by by cluster label
+    //  * @param {Event} evt Event object.
+    //  */
+    // _handleSearchKeyup(evt) {
+    //     const searchText = evt.target.value.toLowerCase();
+    //     this.shuffle.filter((element, shuffle) => {
+    //         // If there is a current filter applied, ignore elements that don't match it.
+    //         // const groups = JSON.parse(element.getAttribute('data-groups'));
+    //         // console.log(groups)
+    //         // const isElementInCurrentGroup = groups.indexOf(shuffle.group) !== -1;
+    //         //     // Only search elements in the current group
+    //         // if (!isElementInCurrentGroup) {
+    //         //     return false;
+    //         // }
 
-            
-            if (shuffle.group !== Shuffle.ALL_ITEMS) {
-                // Get the item's groups.
-                const groups = JSON.parse(element.getAttribute('data-groups'));
-                const isElementInCurrentGroup = groups.indexOf(shuffle.group) !== -1;
-                // Only search elements in the current group
-                if (!isElementInCurrentGroup) {
-                    return false;
-                }
-            }
-            
-            
-            const c_label = element.getAttribute('data-groups')
-            console.log(typeof(c_label), c_label)
+    //         if (shuffle.group !== Shuffle.ALL_ITEMS) {
+    //             // Get the item's groups.
+    //             const groups = JSON.parse(element.getAttribute('data-groups'));
+    //             const isElementInCurrentGroup = groups.indexOf(shuffle.group) !== -1;
+    //             // Only search elements in the current group
+    //             if (!isElementInCurrentGroup) {
+    //                 return false;
+    //             }
+    //         }
+    //         const c_label = element.getAttribute('data-groups')
+    //         console.log(typeof(c_label), c_label)
 
-            if (c_label.indexOf(searchText) !== -1) {
-                console.log(c_label.indexOf(searchText) !== -1)
-            }
-            
-            return c_label.indexOf(searchText) !== -1;
+    //         if (c_label.indexOf(searchText) !== -1) {
+    //             console.log(c_label.indexOf(searchText) !== -1)
+    //         }
+    //         return c_label.indexOf(searchText) !== -1;
     
-        });
-    }
+    //     });
+    // }
 }
 
 // ShuffleGrd.prototype.onRemoveClick = function () {
@@ -247,8 +243,6 @@ ShuffleGrd.prototype.selectedImgs = function(evt) {
             imgIdx.push(shuffleItems[i].element.getAttribute('img_idx'))
         }
         // console.log(imgIdx)
-
-        // $('#img-grd figure.selected').toggleClass('fadeout')
         $('#img-grd figure.selected').fadeTo(0, 0.2)
         $('#img-grd-wrapper').toggleClass('shade')
 
@@ -258,12 +252,17 @@ ShuffleGrd.prototype.selectedImgs = function(evt) {
 
 
 function sendSelectedImgIdx(selectedImgIdx, imgGridIdx, imgIdx) {
+    taskData = { 'task_data': {'SOM_MODE': 'update'}}
     $.ajax({
             url: `/selected/${selectedImgIdx}/${imgGridIdx}/${imgIdx}`,
-            method: 'POST'
+            method: 'POST',
+            contentType: 'application/json; charset=UTF-8',
+            data: JSON.stringify(taskData),
+            dataType: 'json',
+            success: console.log(JSON.stringify(taskData))
         })
         .done((res) => {
-            console.log('SEEN img_idx: ' + res.img.selected_img_idx + ' img_grd_idx: ' + res.img.img_grd_idx + ' ' + res.img.seen + ' ' + res.img.NUM_SEEN)
+            console.log('SEEN img_idx: ' + res.img.selected_img_idx + ' img_grd_idx: ' + res.img.img_grd_idx + ' ' + res.img.seen + ' ' + res.img.NUM_IMGS)
             getStatus(res.task.task_type, res.task.task_id, res.task.task_data)
         })
         .fail((err) => {
@@ -271,9 +270,11 @@ function sendSelectedImgIdx(selectedImgIdx, imgGridIdx, imgIdx) {
         });
 }
 
+
 var ShuffleInstance = window.shuffle;
 
 document.addEventListener('DOMContentLoaded', () => {
     ShuffleInstance = new ShuffleGrd($('#img-grd')[0]);
 });
+
 

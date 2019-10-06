@@ -1,7 +1,7 @@
 <!--
 Created Date: Monday, September 16th 2019, 7:03:49 pm
 Author: Charlene Leong leongchar@myvuw.ac.nz
-Last Modified: Sun Oct 06 2019
+Last Modified: Mon Oct 07 2019
 -->
 
 
@@ -22,8 +22,15 @@ Last Modified: Sun Oct 06 2019
         <div id='cluster-filter' class='row hide'>
             <div class="container">
                 <div class="btn-group filter-options">
-                    {%for c_label in img_grd_c_labels%}
-                    <button class="btn btn--primary" data-group="{{c_label}}">{{c_label}}</button> {%- endfor %}
+                    {%for c_label in C_LABELS%}
+                    <!-- <button class="btn btn--primary" data-group="{{c_label}}">{{c_label}}</button>  -->
+                    <button id='btn-{{c_label}}' class="btn btn--primary">{{c_label}}</button> 
+                    <script>
+                        if ('{{c_label}}' == '{{C_LABEL}}'){
+                            $('#btn-{{c_label}}').addClass('active')
+                        }
+                    </script>
+                    {%- endfor %}
                 </div>
             </div>
         </div>
@@ -45,12 +52,10 @@ Last Modified: Sun Oct 06 2019
                     $('#som-status').addClass('show')
                     $('#cluster-filter').removeClass('hide')
                     $('#cluster-filter').addClass('show')
-
                     $('#instruct').html('Please remove the incorrect characters')
                 }
             </script>
-            <p id='num-seen'>Images <b>[ {{NUM_SEEN}} ]</b></p>
-            <p id='num-clusters'>Clusters <b>[ {{NUM_CLUSTERS}} ]</b></p>
+            <p id='num-seen'>Images <b>[ {{NUM_IMGS}} ]</b></p>
             <p id='num-filtered'>Filtered <b>[ {{NUM_FILTERED}} ]</b></p>
             <p id='num-refresh'>Refresh <b>[ {{NUM_REFRESH}} ]</b></p>
             <p id='num-selected' class='hide'></p>
@@ -71,6 +76,8 @@ Last Modified: Sun Oct 06 2019
 {% block js %}
 <script src='https://cdnjs.cloudflare.com/ajax/libs/Shuffle/5.2.3/shuffle.min.js'></script>
 <script src='https://cdn.jsdelivr.net/npm/@simonwep/selection-js/dist/selection.min.js'></script>
+<script src="{{ url_for('static', filename='js/img-grd.js') }}"></script>
 <script src="{{ url_for('static', filename='js/shuffle.js') }}"></script>
+
 <script src="{{ url_for('static', filename='js/selection.js') }}"></script>
 {% endblock %}

@@ -3,11 +3,12 @@
 ###
 # Created Date: Thursday, September 12th 2019, 9:53:52 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Sun Oct 06 2019
+# Last Modified: Mon Oct 07 2019
 ###
 
 import numpy as np
-from server.utils.load import json_np
+
+
 SEED = 489
 np.random.seed(SEED)
 
@@ -30,7 +31,7 @@ class SOM(object):
         self.update_interval = 100
         if net_path != None: # Load net from file
             print('Loading SOM weights ... '+net_path)
-            self.net = json_np(net_path)
+            self.net = np.load(net_path).item()['net']
             self.update_interval = 10
 
         # initial neighbourhood radius

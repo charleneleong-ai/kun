@@ -1,7 +1,7 @@
 /**
  * Created Date: Friday, October 4th 2019, 2:28:44 pm
  * Author: Charlene Leong leongchar@myvuw.ac.nz
- * Last Modified: Sun Oct 06 2019
+ * Last Modified: Mon Oct 07 2019
  */
 
 // https://simonwep.github.io/selection/
@@ -53,28 +53,28 @@ const selection = Selection.create({
     if (!($('#img-grd-wrapper').attr('class').includes('shade'))) {// SOM not reloading
         inst.keepSelection();
         // Fixing selection bug on shuffle filter
-        if ($('.active').length != 0){
-            // console.log($('.active').attr('data-group'))
-            // console.log($('.selected').length)
-            activeGroup = $('.active').attr('data-group')
-            $('.grd-item').each(function(idx){
-                if (!this.getAttribute('data-groups').includes(activeGroup)){
-                    if (this.className.includes('selected')){
-                        // console.log(this.getAttribute('data-groups'))
-                        this.classList.remove('selected')
-                    }
-                }
-            })
-        }
+        // if ($('.active').length != 0){
+        //     // console.log($('.active').attr('data-group'))
+        //     // console.log($('.selected').length)
+        //     activeGroup = $('.active').attr('data-group')
+        //     $('.grd-item').each(function(idx){
+        //         if (!this.getAttribute('data-groups').includes(activeGroup)){
+        //             if (this.className.includes('selected')){
+        //                 // console.log(this.getAttribute('data-groups'))
+        //                 this.classList.remove('selected')
+        //             }
+        //         }
+        //     })
+        // }
         showRemove()
     }
 });
 
 // Remove selected when clicking outside img-grd
-window.addEventListener('click', function(e) {
+window.addEventListener('click', function(evt) {
     if (!($('#img-grd-wrapper').attr('class').includes('shade')) // SOM not reloading
         && $('.grd-item').length != 0   // Grid not empty
-        && !$('#img-grd')[0].contains(e.target)) {  // Clicked outside img-grd
+        && !$('#img-grd')[0].contains(evt.target)) {  // Clicked outside img-grd
         $('#img-grd figure.selected').toggleClass('selected')
         
         showRemove()

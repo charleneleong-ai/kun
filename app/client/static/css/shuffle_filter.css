@@ -1,10 +1,13 @@
 /*
  * Created Date: Wednesday, October 2nd 2019, 7:44:07 pm
  * Author: Charlene Leong leongchar@myvuw.ac.nz
- * Last Modified: Sat Oct 05 2019
+ * Last Modified: Mon Oct 07 2019
  */
- 
- .filter-label {
+
+
+/* Adapted from ShuffleJS demo https://codepen.io/Vestride/pen/ZVWmMX */
+
+.filter-label {
     display: block;
     padding: 0;
     margin-top: 0;
@@ -20,7 +23,7 @@
 .btn-group:after,
 .btn-group:before {
     content: " ";
-    display:flex;
+    display: flex;
     flex-direction: row;
     align-items: center;
 }
@@ -31,11 +34,11 @@
 
 .btn-group .btn {
     border-radius: 0
-} 
+}
 
 .btn-group .btn:first-child {
     border-radius: 3px 0 0 3px
-} 
+}
 
 .btn-group .btn:not(:first-child) {
     margin-left: -1px
@@ -43,7 +46,7 @@
 
 .btn-group .btn:last-child {
     border-radius: 0 3px 3px 0
-}  
+}
 
 .btn-group label.btn input[type=radio] {
     position: absolute;
@@ -56,7 +59,7 @@
     text-align: center;
     border-radius: 3px;
     border: 1px solid #C83741;
-    color:  #C83741;
+    color: #C83741;
     font-size: 1rem;
     transition: .2s ease-out;
     cursor: pointer;
@@ -91,7 +94,7 @@
 .btn:disabled {
     cursor: not-allowed;
     opacity: .7;
-    color:  #C83741;
+    color: #C83741;
     background-color: rgb(87, 33, 33)
 }
 
@@ -126,9 +129,9 @@
     background-color: rgba(219, 52, 52, 0)
 }
 
+
 /* @media screen and (max-width: 767px) {
     .btn {
         font-size: .875rem
     }
 } */
-

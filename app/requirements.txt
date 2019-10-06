@@ -1,0 +1,16 @@
+torch==1.2.0
+Flask==1.1.1
+redis==3.3.8
+rq==1.1.0
+seaborn==0.9.0
+torchvision==0.4.0
+umap_learn==0.3.10
+hdbscan==0.8.22
+Flask_Migrate==2.5.2
+Flask_SQLAlchemy==2.4.0
+numpy==1.17.0
+matplotlib==3.1.1
+Pillow==6.2.0
+flask_socketio==4.2.1
+scikit_learn==0.21.3
+umap==0.1.1
