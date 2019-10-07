@@ -130,12 +130,6 @@ def run_task(task_type):    # TODO: split into different routes
         session['img_idx'] =[]
         session['img_grd_c_labels']=[]
 
-        # if 'C_LABEL' not in task_data: ## Running first time
-        #     task_data['C_LABEL'] = session['C_LABELS'][0]   # 0
-        #     session['C_LABEL'] = task_data['C_LABEL']
-
-        #     task = run_new_som(task_data['C_LABEL'])
-
         print(task_data['C_LABEL'], session['C_LABEL'])
         ## Switching between different SOMS depending on task_data['C_LABEL']
         som_path = os.path.join(current_app.config['OUTPUT_DIR'], '_som_{}.npy'.format(task_data['C_LABEL']))
@@ -211,13 +205,14 @@ def get_status(task_type, task_id):
         print(dataset)
         task = current_app.task_queue.enqueue(train, dataset, job_timeout=600)  # 10 min training
         task_type = 'train'
-        
+        task_data['progress_msg'] = ''
+
     elif task_type=='train' and task.get_status()=='finished':
         batch_size, lr, epoch, output_dir = task.result    
         session['ae'] = {'bs': batch_size, 'lr': lr, 'epoch': epoch}
         session['OUTPUT_DIR'] = output_dir
         print(session['LABEL'])
-        task = current_app.task_queue.enqueue(cluster, session['LABEL'], job_timeout=300)
+        task = current_app.task_queue.enqueue(cluster, session['LABEL'], job_timeout=300)   # 5 min in case TSNE
         
         session['NUM_CLUSTERS'] = 0
         session['C_LABELS'] = []
@@ -273,7 +268,7 @@ def get_status(task_type, task_id):
                 session['NUM_FILTERED'] = som_net['NUM_FILTERED']
                 session['NUM_REFRESH'] = som_net['NUM_REFRESH']
 
-        ##  Trying to load all img grid paths at once
+        ##  Trying to load all img grid paths at once and using shuffle filter
         # session['img_grd_paths'].append(img_grd.img_paths)
         # session['img_idx'].append(img_grd.img_idx)
         # session['img_grd_c_labels'].append(img_grd.c_labels)
@@ -310,12 +305,12 @@ def get_status(task_type, task_id):
 
 
 
-@bp.route('/selected/<selected_img_idx>/<img_grd_idx>/<img_idx>', methods=['POST'])
-def selected_imgs(selected_img_idx, img_grd_idx, img_idx):
+@bp.route('/update_som/<img_idx>/<selected_img_idx>/<img_grd_idx>', methods=['POST'])
+def updateSOM(img_idx, selected_img_idx, img_grd_idx):
+    img_idx = img_idx.split(',')
     selected_img_idx = selected_img_idx.split(',')
     img_grd_idx = img_grd_idx.split(',')
-    img_idx = img_idx.split(',')
-
+    
     if request.is_json:
         req = request.get_json()
         pprint.pprint(req)
@@ -323,10 +318,14 @@ def selected_imgs(selected_img_idx, img_grd_idx, img_idx):
     
     # Setting all imgs in grd to processed
     seen = [Image.query.filter_by(label=session['LABEL'])
-                .filter_by(idx=int(idx)).first().seen() for idx in img_idx]
-    selected = [Image.query.filter_by(label=session['LABEL'])
-                .filter_by(idx=int(idx)).first() for idx in selected_img_idx]
+                .filter_by(idx=int(idx)).first().process() for idx in img_idx]
     
+    if '' not in selected_img_idx:
+        selected = [Image.query.filter_by(label=session['LABEL'])
+                    .filter_by(idx=int(idx)).first().filter() for idx in selected_img_idx]
+    else:
+        selected = []
+        
     # Get new unprocessed imgs to replace img_grd_idx 
     imgs = Image.query.filter_by(label=session['LABEL']) \
                         .filter_by(processed=False).filter_by(c_label=int(session['C_LABEL'])).all()
@@ -395,5 +394,5 @@ def save_img_db(c_labels):
     for img_path in img_paths:
         idx = int(os.path.basename(os.path.normpath(img_path)).split('.')[0])
         img = Image(idx=idx, label=session['LABEL'], c_label=int(c_labels[idx]), 
-                img_path=img_path, processed=False).add()
+                img_path=img_path, processed=False, filtered=False).add()
         print(idx, img_path, c_labels[idx])

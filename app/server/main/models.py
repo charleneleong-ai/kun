@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 10:41:07 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Sun Oct 06 2019
+# Last Modified: Mon Oct 07 2019
 ###
 
 import os
@@ -16,6 +16,7 @@ class Image(db.Model):
     label = db.Column(db.String, index=True, nullable=False)
     img_path = db.Column(db.String, nullable=False)
     processed = db.Column(db.Boolean, nullable=False)
+    filtered = db.Column(db.Boolean, nullable=False)
 
     def __repr__(self):
         return '<Image {} {} {} {}>\n'.format(self.idx, self.c_label, self.img_path, self.processed)
@@ -24,16 +25,24 @@ class Image(db.Model):
         db.session.add(self)
         db.session.commit()
 
-    def seen(self):
+    def process(self):
         if self.processed:
             return True
         self.processed = True
         db.session.commit()
         return False
     
+    def filter(self):
+        if self.filtered:
+            return True
+        self.filtered = True
+        db.session.commit()
+        return False
+    
     def reset(self):
         if self.processed:
             self.processed = False
+            self.filtered = False
         db.session.commit()
         return True
 

@@ -86,7 +86,6 @@ def load_data(args):
     label = args[0]
     img_dir = args[1]
     clear_upload_folder(label)
-    
     return ImageBucket(label=str(label), split=0.8, img_dir=img_dir, 
                         download_raw=False, download_dir=app.config['DATASET_DIR'])
 

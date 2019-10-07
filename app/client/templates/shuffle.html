@@ -18,6 +18,11 @@ Last Modified: Mon Oct 07 2019
 <!-- Shuffle JS Grid -->
 <div class='container'>
     <h1 id='label'><b>{{LABEL}}</b></h1>
+    <script>
+            if ('{{LABEL}}'==''){
+                $('#label').addClass('hide')
+            }
+    </script>
     <div id='img-grd-wrapper' class=''>
         <div id='cluster-filter' class='row hide'>
             <div class="container">

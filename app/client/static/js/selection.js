@@ -88,13 +88,14 @@ function showRemove() {
     if (!($('#img-grd-wrapper').attr('class').includes('shade'))){
         numSelected = $('.selected').length 
         if (numSelected == 0 || $('.grd-item').length == 0) {
-
-            hide($('#progress'))
+            $('#progress').html('Press <b>[ SHIFT + ENTER ]</b> to refresh all')
+            show($('#progress'))
+            // hide($('#progress'))
             hide($('#num-selected'))
             $('#num-selected').html('')
         } else {
             
-            $('#progress').html('Press <b>[ ENTER ]</b> to remove')
+            $('#progress').html('Press <b>[ ENTER ]</b> to remove selected')
             show($('#progress'))
             show($('#num-selected'))
             $('#num-selected').html(numSelected) 

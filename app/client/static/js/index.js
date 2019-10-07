@@ -131,7 +131,8 @@ function updateProgress(res) {
         
     } else if (task_type === 'load_data') {
 
-        $('#label').html( LABEL)
+        $('#label').html(LABEL)
+        show($('#label'))
         $('#progress').html('Loading image bucket ... <br/><b>[ ' + LABEL + ' ]</b>')
 
     } else if (task_type === 'train') {
@@ -203,7 +204,7 @@ function updateProgress(res) {
 
         NUM_IMGS = res.task.task_data.NUM_IMGS
         if (typeof(NUM_IMGS) != 'undefined') {
-            progress_msg = progress_msg + ' <b>[ ' + NUM_IMGS + ' ]</b> images <br/>'
+            progress_msg = progress_msg + ' <b>[ ' + NUM_IMGS + ' ]</b> <br/>'
         }
 
         MAX_ITER = res.task.task_data.MAX_ITER
@@ -211,7 +212,7 @@ function updateProgress(res) {
         DIMS = res.task.task_data.DIMS
         if (typeof(DIMS) != 'undefined') {
             progress_msg = progress_msg + 'Dimensions <b>[ ' + DIMS + ' ]</b>   Learning rate <b>[ ' + LR + ' ]</b> <br/>'
-                            + 'Iterations <b>[ ' + MAX_ITER + ' ]</b> iterations'
+                            + 'Iterations <b>[ ' + MAX_ITER + ' ]</b>'
         }
 
         NUM_ITER = res.task.task_data.NUM_ITER

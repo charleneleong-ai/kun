@@ -220,41 +220,53 @@ ShuffleGrd.prototype.selectedImgs = function(evt) {
     var shuffleItems = this.shuffle.items
     var selectedItems = $('.selected')
 
-    if (!($('#img-grd').attr('class').includes('shade')) // if SOM not reloading
-        && selectedItems.length != 0    // if selected items not empty
-        && evt.keyCode === 13           // if space pressed
-        ) { 
-        var selectedImgIdx = []
-        for (i = 0; i < selectedItems.length; i++) {
-            selectedImgIdx.push(selectedItems[i].getAttribute('img_idx'))
-        }
-        console.log(selectedImgIdx)
-
-        var imgGrdIdx = []
-        for (i = 0; i < shuffleItems.length; i++) {
-            if (selectedImgIdx.includes(shuffleItems[i].element.getAttribute('img_idx'))) {
-                imgGrdIdx.push(i)
-            }
-        }
-        console.log(imgGrdIdx)
+    if (!($('#img-grd').attr('class').includes('shade'))){  //SOM not reloading
 
         var imgIdx = []
         for (i = 0; i < shuffleItems.length; i++) {
             imgIdx.push(shuffleItems[i].element.getAttribute('img_idx'))
         }
-        // console.log(imgIdx)
-        $('#img-grd figure.selected').fadeTo(0, 0.2)
-        $('#img-grd-wrapper').toggleClass('shade')
 
-        sendSelectedImgIdx(selectedImgIdx, imgGrdIdx, imgIdx)
+        if (selectedItems.length == 0                  // if selected items empty
+            && evt.keyCode == 13 && evt.shiftKey){   // if SHIFT+ENTER pressed
+                
+                $('#img-grd figure.selected').fadeTo(0, 0.2)
+                $('#img-grd-wrapper').toggleClass('shade')
+
+                updateSOM(imgIdx, ',', ',')
+            }
+
+        if (selectedItems.length != 0    // if selected items not empty
+            && evt.keyCode === 13 ){     // if ENTER pressed
+            var selectedImgIdx = []
+            for (i = 0; i < selectedItems.length; i++) {
+                selectedImgIdx.push(selectedItems[i].getAttribute('img_idx'))
+            }
+            console.log(selectedImgIdx)
+
+            // If we want to grow the selected idx neighbourhood
+            // var imgGrdIdx = []
+            // for (i = 0; i < shuffleItems.length; i++) {
+            //     if (selectedImgIdx.includes(shuffleItems[i].element.getAttribute('img_idx'))) {
+            //         imgGrdIdx.push(i)
+            //     }
+            // }
+            // console.log(imgGrdIdx)
+
+            $('#img-grd figure.selected').fadeTo(0, 0.2)
+            $('#img-grd-wrapper').toggleClass('shade')
+
+            updateSOM(imgIdx, selectedImgIdx, ',')
+
+        }
     }
 }
 
 
-function sendSelectedImgIdx(selectedImgIdx, imgGridIdx, imgIdx) {
+function updateSOM(imgIdx, selectedImgIdx, imgGridIdx) {
     taskData = { 'task_data': {'SOM_MODE': 'update'}}
     $.ajax({
-            url: `/selected/${selectedImgIdx}/${imgGridIdx}/${imgIdx}`,
+            url: `/update_som/${imgIdx}/${selectedImgIdx}/${imgGridIdx}`,
             method: 'POST',
             contentType: 'application/json; charset=UTF-8',
             data: JSON.stringify(taskData),
