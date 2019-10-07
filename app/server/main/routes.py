@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 6:35:09 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Oct 07 2019
+# Last Modified: Tue Oct 08 2019
 ###
 
 # app/server/main/routes.py
@@ -92,7 +92,7 @@ def run_task(task_type):    # TODO: split into different routes
 
     if task_type=='load_data':
         upload_dir = os.path.join(current_app.config['UPLOAD_DIR'], session['LABEL'])
-        task = current_app.task_queue.enqueue(load_data, (session['LABEL'], upload_dir))  
+        task = current_app.task_queue.enqueue(load_data, args=(session['LABEL'], upload_dir))  
 
     if task_type=='train':
         print(type(current_app.config['OUTPUT_DIR']))
@@ -126,10 +126,13 @@ def run_task(task_type):    # TODO: split into different routes
             session['C_LABELS'] = c_labels
         session['C_LABELS'] = [int(x)  for x in set(session['C_LABELS'])]
         task_data['C_LABELS'] = session['C_LABELS']
+        session['DIMS'] = [10, 25]
+        task_data['DIMS'] = [10, 25]
+        
         session['img_grd_paths'] =[]
         session['img_idx'] =[]
         session['img_grd_c_labels']=[]
-
+        
         print(task_data['C_LABEL'], session['C_LABEL'])
         ## Switching between different SOMS depending on task_data['C_LABEL']
         som_path = os.path.join(current_app.config['OUTPUT_DIR'], '_som_{}.npy'.format(task_data['C_LABEL']))
@@ -139,7 +142,8 @@ def run_task(task_type):    # TODO: split into different routes
                                 .filter_by(processed=False).filter_by(c_label=int(task_data['C_LABEL'])).all()
                 img_idx = [img.idx for img in imgs]
                 
-                task = current_app.task_queue.enqueue(som, (img_idx, task_data['C_LABEL'], 'switch'))
+                # args = (img_idx, c_label, dims, SOM_MODE'='udpate', NUM_REFRESH=session['NUM_REFRESH'])
+                task = current_app.task_queue.enqueue(som, args=(img_idx, session['C_LABEL'], session['DIMS'], 'switch', session['NUM_REFRESH']))
                 session['C_LABEL'] = task_data['C_LABEL'] 
                 session['NUM_IMGS']  = len(img_idx)
 
@@ -148,15 +152,15 @@ def run_task(task_type):    # TODO: split into different routes
                 som_net['NUM_IMGS'] = session['NUM_IMGS']
                 som_net['NUM_FILTERED'] = session['NUM_FILTERED']
                 som_net['NUM_REFRESH'] = session['NUM_REFRESH']
+                som_net['DIMS'] = session['DIMS']
                 np.save(som_path, som_net)
             else:     # Load new SOM
-                task = run_new_som(task_data['C_LABEL'])
-                session['C_LABEL'] = task_data['C_LABEL']
+                task_data['SOM_MODE'] = 'new'
 
         if task_data['SOM_MODE'] == 'new':   # If SOM button clicked
             ## Refreshing SOM with current task_data['C_LABEL']
-            task_data['C_LABEL'] = session['C_LABEL']
-            task = run_new_som(task_data['C_LABEL'])
+            session['C_LABEL'] = task_data['C_LABEL']
+            task = run_new_som(task_data['C_LABEL'], session['DIMS'])
 
     response_object = {
         'status': 'success',
@@ -185,7 +189,7 @@ def get_status(task_type, task_id):
         task_data['LABEL'] = label
         
         upload_dir = os.path.join(current_app.config['UPLOAD_DIR'], session['LABEL'])
-        task = current_app.task_queue.enqueue(load_data, (session['LABEL'], upload_dir))
+        task = current_app.task_queue.enqueue(load_data, args=(session['LABEL'], upload_dir))
         task_type = 'load_data'
         
     elif task_type=='extract_zip':    # Report job progress
@@ -194,6 +198,7 @@ def get_status(task_type, task_id):
 
     elif task_type=='load_data' and task.get_status()=='finished':
         dataset = task.result   # Uploaded dataset 
+        print(dataset)
         task_data['NUM_IMGS'] = len(dataset)
         task_data['NUM_TRAIN'] = len(dataset.train)
         task_data['NUM_TEST'] = len(dataset.test)
@@ -202,7 +207,6 @@ def get_status(task_type, task_id):
         session['NUM_TRAIN'] = len(dataset.train)
         session['NUM_TEST'] = len(dataset.test)
         
-        print(dataset)
         task = current_app.task_queue.enqueue(train, dataset, job_timeout=600)  # 10 min training
         task_type = 'train'
         task_data['progress_msg'] = ''
@@ -212,7 +216,7 @@ def get_status(task_type, task_id):
         session['ae'] = {'bs': batch_size, 'lr': lr, 'epoch': epoch}
         session['OUTPUT_DIR'] = output_dir
         print(session['LABEL'])
-        task = current_app.task_queue.enqueue(cluster, session['LABEL'], job_timeout=300)   # 5 min in case TSNE
+        task = current_app.task_queue.enqueue(cluster, session['LABEL'], job_timeout=300)   # 5 min in case dim_reduce_method='tsne' which is slow
         
         session['NUM_CLUSTERS'] = 0
         session['C_LABELS'] = []
@@ -234,12 +238,14 @@ def get_status(task_type, task_id):
         session['img_grd_c_labels']=[]
         session['C_LABELS'] = [int(x)  for x in set(c_labels)]
         session['C_LABEL'] = session['C_LABELS'][0]
-        
-        task = run_new_som(session['C_LABEL'])
+        session['DIMS'] = [10, 25]
+
+        task = run_new_som(session['C_LABEL'], session['DIMS'])
 
         task_data['C_LABEL'] = session['C_LABEL']
         task_data['C_LABELS'] = session['C_LABELS'] 
         task_data['SOM_MODE'] = 'new'
+        task_data['DIMS'] = session['DIMS']
         task_type = 'som'
 
     elif task_type=='cluster':
@@ -281,7 +287,6 @@ def get_status(task_type, task_id):
         #     session['img_grd_paths'] = task_data['img_grd_paths']
         #     session['img_idx'] =  task_data['img_idx']
         #     session['img_grd_c_labels'] = task_data['img_grd_c_labels']
-
         #     print(session['img_grd_paths'], len(session['img_grd_paths']))
 
     elif task_type=='som':
@@ -331,8 +336,8 @@ def updateSOM(img_idx, selected_img_idx, img_grd_idx):
                         .filter_by(processed=False).filter_by(c_label=int(session['C_LABEL'])).all()
     img_idx = [img.idx for img in imgs]
 
-    # Update SOM
-    task = current_app.task_queue.enqueue(som, (img_idx, session['C_LABEL'], 'update'))
+    # args = (img_idx, c_label, dims, SOM_MODE'='udpate', NUM_REFRESH=session['NUM_REFRESH'])
+    task = current_app.task_queue.enqueue(som, args=(img_idx, session['C_LABEL'], session['DIMS'], 'update', session['NUM_REFRESH']))
 
     # Updating num imgs seen
     session['NUM_IMGS'] = len(imgs)
@@ -343,7 +348,8 @@ def updateSOM(img_idx, selected_img_idx, img_grd_idx):
                     'C_LABEL': session['C_LABEL'],
                     'NUM_REFRESH': session['NUM_REFRESH'], 
                     'NUM_FILTERED': session['NUM_FILTERED'],
-                    'NUM_IMGS': session['NUM_IMGS']
+                    'NUM_IMGS': session['NUM_IMGS'],
+                    'DIMS': session['DIMS']
                     })
         
     response_object = {
@@ -365,7 +371,7 @@ def updateSOM(img_idx, selected_img_idx, img_grd_idx):
     }
     return jsonify(response_object), 202
 
-def run_new_som(c_label):
+def run_new_som(c_label, dims):
     if 'output_dir' not in session: 
         session['output_dir'] = current_app.config['OUTPUT_DIR']
         
@@ -375,12 +381,15 @@ def run_new_som(c_label):
     img_idx = [img.idx for img in Image.query.filter_by(label=session['LABEL'])
                                         .filter_by(c_label=int(c_label)).all()]
 
-    task = current_app.task_queue.enqueue(som, (img_idx, c_label, 'new'), job_timeout=180)
 
     # Resetting session vars
     session['NUM_REFRESH'] = 0
     session['NUM_FILTERED'] = 0 
     session['NUM_IMGS'] = len(img_idx)
+
+    # args = (img_idx, c_label, dims, SOM_MODE'='new', NUM_REFRESH=0)
+    task = current_app.task_queue.enqueue(som, args=(img_idx, c_label, dims, 'new', 0), job_timeout=180)
+
 
     return task
 

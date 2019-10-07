@@ -28,7 +28,7 @@ class ShuffleGrd {
         // this.addSorting();
         // this.addSearchFilter();
 
-        document.addEventListener('keyup', this.selectedImgs.bind(this), false);
+        // document.addEventListener('keyup', this.selectedImgs.bind(this), false);
 
     }
 
@@ -190,23 +190,23 @@ class ShuffleGrd {
 // ShuffleGrd.prototype.onRemoveClick = function () {
 
 //   this.refreshShuffle(document.getElementById('img-grd'))
-//   var shuffleItems = this.shuffle.items
-//   var selectedItems = document.getElementsByClassName('selected')
+//   var imgs = this.shuffle.items
+//   var selectedImgs = document.getElementsByClassName('selected')
 //   var selectedImgIdx = [] 
-//   for (i=0; i<selectedItems.length; i++){
-//     selectedImgIdx.push(selectedItems[i].getAttribute('img_idx'))
+//   for (i=0; i<selectedImgs.length; i++){
+//     selectedImgIdx.push(selectedImgs[i].getAttribute('img_idx'))
 //   }
 //   console.log(selectedImgIdx)
 
 //   var imgIdx = [] 
-//   for (i = 0; i < shuffleItems.length; i++) {
-//     imgIdx.push(shuffleItems[i].element.getAttribute('img_idx'))
+//   for (i = 0; i < imgs.length; i++) {
+//     imgIdx.push(imgs[i].element.getAttribute('img_idx'))
 //   }
 //   // console.log(imgIdx)
 
 //   var imgGrdIdx = []
-//   for (i = 0; i < shuffleItems.length; i++) {
-//     if (selectedImgIdx.includes(shuffleItems[i].element.getAttribute('img_idx'))) {
+//   for (i = 0; i < imgs.length; i++) {
+//     if (selectedImgIdx.includes(imgs[i].element.getAttribute('img_idx'))) {
 //       imgGrdIdx.push(i)
 //     }
 //   }
@@ -214,73 +214,6 @@ class ShuffleGrd {
 //   selectedImgs(selectedImgIdx, imgGrdIdx)
 //   showRemove()
 // };
-
-
-ShuffleGrd.prototype.selectedImgs = function(evt) {
-    var shuffleItems = this.shuffle.items
-    var selectedItems = $('.selected')
-
-    if (!($('#img-grd').attr('class').includes('shade'))){  //SOM not reloading
-
-        var imgIdx = []
-        for (i = 0; i < shuffleItems.length; i++) {
-            imgIdx.push(shuffleItems[i].element.getAttribute('img_idx'))
-        }
-
-        if (selectedItems.length == 0                  // if selected items empty
-            && evt.keyCode == 13 && evt.shiftKey){   // if SHIFT+ENTER pressed
-                
-                $('#img-grd figure.selected').fadeTo(0, 0.2)
-                $('#img-grd-wrapper').toggleClass('shade')
-
-                updateSOM(imgIdx, ',', ',')
-            }
-
-        if (selectedItems.length != 0    // if selected items not empty
-            && evt.keyCode === 13 ){     // if ENTER pressed
-            var selectedImgIdx = []
-            for (i = 0; i < selectedItems.length; i++) {
-                selectedImgIdx.push(selectedItems[i].getAttribute('img_idx'))
-            }
-            console.log(selectedImgIdx)
-
-            // If we want to grow the selected idx neighbourhood
-            // var imgGrdIdx = []
-            // for (i = 0; i < shuffleItems.length; i++) {
-            //     if (selectedImgIdx.includes(shuffleItems[i].element.getAttribute('img_idx'))) {
-            //         imgGrdIdx.push(i)
-            //     }
-            // }
-            // console.log(imgGrdIdx)
-
-            $('#img-grd figure.selected').fadeTo(0, 0.2)
-            $('#img-grd-wrapper').toggleClass('shade')
-
-            updateSOM(imgIdx, selectedImgIdx, ',')
-
-        }
-    }
-}
-
-
-function updateSOM(imgIdx, selectedImgIdx, imgGridIdx) {
-    taskData = { 'task_data': {'SOM_MODE': 'update'}}
-    $.ajax({
-            url: `/update_som/${imgIdx}/${selectedImgIdx}/${imgGridIdx}`,
-            method: 'POST',
-            contentType: 'application/json; charset=UTF-8',
-            data: JSON.stringify(taskData),
-            dataType: 'json',
-            success: console.log(JSON.stringify(taskData))
-        })
-        .done((res) => {
-            console.log('SEEN img_idx: ' + res.img.selected_img_idx + ' img_grd_idx: ' + res.img.img_grd_idx + ' ' + res.img.seen + ' ' + res.img.NUM_IMGS)
-            getStatus(res.task.task_type, res.task.task_id, res.task.task_data)
-        })
-        .fail((err) => {
-            console.log(err)
-        });
-}
 
 
 var ShuffleInstance = window.shuffle;

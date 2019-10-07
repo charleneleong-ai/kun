@@ -13,6 +13,7 @@
     padding-right: 4px;
     /* Space between tiles */
     margin-top: 8px;
+    
 }
 
 .row {
@@ -50,6 +51,9 @@
     overflow: hidden;
 }
 
+.shuffle-grd {
+    margin-bottom: 8px;
+}
 .shuffle-grd figure.selected {
     filter: brightness(20%);
 }
@@ -132,7 +136,10 @@ figure {
     background: transparent url('loading.gif') center no-repeat;
 }
 
-.fadeout {
+
+/* Switched to jQuery fadeIn and fadeOut*/
+
+/* .fadeout {
     -webkit-animation: fadeout 4s linear forwards;
     -moz-animation: fadeout 4s linear forwards;
     -o-animation: fadeout 4s linear forwards;
@@ -176,4 +183,4 @@ figure {
     100% {
         opacity: 1;
     }
-}
+} */

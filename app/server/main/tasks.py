@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 4:18:39 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Oct 07 2019
+# Last Modified: Tue Oct 08 2019
 ###
 
 import warnings
@@ -57,7 +57,7 @@ def extract_zip(zpath):
         zfname = label+'_utf8.zip'
         job.meta['progress_msg'] = 'Fixing filename encoding ...'
         job.save_meta()
-        with ZipFile(os.path.join(app.config['UPLOAD_DIR'], zfname), mode='w') as ztf:
+        with ZipFile(os.path.join(app.config['UPLOAD_DIR'], zfname), som_mode='w') as ztf:
             ztf.comment = zf.comment
             for zinfo in zf.infolist():
                 zinfo.CRC = None
@@ -82,9 +82,7 @@ def extract_zip(zpath):
 def load_MNIST(label):
     return FilteredMNIST(label=label, split=0.8, n_noise_clusters=3, download_dir=app.config['DATASET_DIR'])
     
-def load_data(args):
-    label = args[0]
-    img_dir = args[1]
+def load_data(label, img_dir):
     clear_upload_folder(label)
     return ImageBucket(label=str(label), split=0.8, img_dir=img_dir, 
                         download_raw=False, download_dir=app.config['DATASET_DIR'])
@@ -142,29 +140,29 @@ def cluster(label):
     MIN_CLUSTER_SIZE = 10
     if len(feat_ae) > 5000:
         MIN_CLUSTER_SIZE = 15
-    reduce_dims = 2
-    reduce_dim_method = 'umap'  ## HDBSCAN suffers from curse of dimensionality 
+    dim_reduce = 2
+    dim_reduce_method = 'umap'  ## HDBSCAN suffers from curse of dimensionality 
 
     job.meta['MIN_CLUSTER_SIZE'] = MIN_CLUSTER_SIZE
     job.meta['progress_msg'] = 'Reducing features from {} to {} dims with {} ...'\
-                                .format(feat_ae.shape[1], reduce_dims, reduce_dim_method.upper())
+                                .format(feat_ae.shape[1], dim_reduce, dim_reduce_method.upper())
     job.save_meta()
    
     print('Reducing feat from {} to {} dims with {} ...'
-            .format(feat_ae.shape[1], reduce_dims, reduce_dim_method.upper()))
+            .format(feat_ae.shape[1], dim_reduce, dim_reduce_method.upper()))
             
-    if reduce_dim_method=='tsne':
-        feat = tsne(feat_ae, reduce_dims)  
-    elif   reduce_dim_method=='umap':
-        feat = umap(feat_ae, reduce_dims, MIN_CLUSTER_SIZE)
+    if dim_reduce_method=='tsne':
+        feat = tsne(feat_ae, dim_reduce)  
+    elif   dim_reduce_method=='umap':
+        feat = umap(feat_ae, dim_reduce, MIN_CLUSTER_SIZE)
         
     print('Clustering' , label, 'with HDBSCAN ...')
     c_labels = hdbscan(feat, min_cluster_size=MIN_CLUSTER_SIZE)      
     c_labels = sort_c_labels(c_labels)
 
     img_plt = plt_scatter(feat, c_labels, output_dir=OUTPUT_DIR, 
-                plt_name='_{}_{}.png'.format('hdbscan', reduce_dim_method), pltshow=False)
-    ae.tb.add_image(tag='_{}_{}'.format('hdbscan', reduce_dim_method), 
+                plt_name='_{}_{}.png'.format('hdbscan', dim_reduce_method), pltshow=False)
+    ae.tb.add_image(tag='_{}_{}'.format('hdbscan', dim_reduce_method), 
                     img_tensor=img_plt, 
                     global_step = ae.EPOCH, dataformats='HWC')
 
@@ -184,13 +182,11 @@ def cluster(label):
     
     return feat, c_labels, imgs
 
-def som(args):
+def som(img_idx, c_label, dims, som_mode, num_refresh):
     job = get_current_job()
-
-    img_idx = np.array(args[0])
-    c_label = args[1]   # int
-    mode = args[2]    # str
-
+    
+    img_idx = np.array(img_idx)
+    
     job.meta['NUM_IMGS'] = len(img_idx)
     job.save_meta()
     
@@ -201,10 +197,9 @@ def som(args):
     img_idx = np.array(img_idx)
     lut = dict(enumerate(list(img_idx)))
     data = feat[img_idx]
-    dims= [10, 25]  # dims[row, col]
     
     som_path = os.path.join(OUTPUT_DIR, '_som_{}.npy'.format(c_label))
-    if mode == 'new':  # Declare new SOM 
+    if som_mode == 'new':  # Declare new SOM 
         if len(img_idx) > 2000:
             iter = 3000
             lr = 0.2  
@@ -219,16 +214,17 @@ def som(args):
             lr = 0.1
             
         som = SOM(data=data, dims=dims, n_iter = iter, lr_init=lr, job=job)
-    elif mode == 'update': # Update net
-        iter = 50
-        lr = 0.0001 
+    elif som_mode == 'update': # Update net
+        iter = 100
+        lr = 0.01 
+        if len(img_idx) <= (dims[0]*dims[1]):   # Get whole grid
+            lr = 0.1
         som = SOM(data=data, dims=dims, n_iter = iter, lr_init=lr, net_path=som_path, job=job)
-    elif mode == 'switch':
+    elif som_mode == 'switch':
         iter = 1
         lr = 0.0001 
         som = SOM(data=data, dims=dims, n_iter = iter, lr_init=lr, net_path=som_path, job=job)
     
-    job.meta['DIMS'] = dims
     job.meta['MAX_ITER'] = iter
     job.meta['LR'] = lr
     job.save_meta()
@@ -240,24 +236,24 @@ def som(args):
     img_grd_idx, _ = pairwise_distances_argmin_min(net_w, data)
     img_grd_idx = np.array([lut[i] for i in img_grd_idx])   # Remapping to img_idx indices
 
-    # Plotting HDBSCAN SOM grid 
-    if not os.path.exists(som_path):    
-        ae, feat_ae, labels, imgs = load_model(OUTPUT_DIR)  
-        img_plt = plt_scatter([feat, feat[img_grd_idx]], c_labels, colors=['blue'], 
-                                output_dir=OUTPUT_DIR, 
-                                plt_name='_{}_som_2D_{}_{}_lr={}.png'.format('hdbscan', c_label, iter, lr), 
-                                pltshow=False, 
-                                plt_grd_dims=dims)
-        ae.tb.add_image(tag='_{}_som_2D_{}_{}_lr={}.png'.format('hdbscan', c_label, iter, lr), 
-                                        img_tensor=img_plt, 
-                                        global_step = ae.EPOCH, dataformats='HWC')                        
-        # Saving image grid
-        img_grd = imgs[img_grd_idx].view(-1, 1, 28, 28)
-        save_image(img_grd, OUTPUT_DIR+'/_img_grd_som_2D_{}_{}_lr={}.png'.format(c_label, iter, lr), nrow=dims[1]) # nrow = num in row
-        ae.tb.add_image(tag='_img_grd_som_2D_{}_{}_lr={}.png'.format(c_label, iter, lr), 
-                                img_tensor=make_grid(img_grd, nrow=dims[1]), 
-                                global_step = ae.EPOCH)
-    
+    # if not os.path.exists(som_path):  
+    # Plotting HDBSCAN SOM grid   
+    ae, feat_ae, labels, imgs = load_model(OUTPUT_DIR)  
+    img_plt = plt_scatter([feat, feat[img_grd_idx]], c_labels, colors=['blue'], 
+                            output_dir=OUTPUT_DIR, 
+                            plt_name='_{}_som_2D_{}_refresh={}_iter={}_lr={}.png'.format('hdbscan', c_label, num_refresh, iter, lr), 
+                            pltshow=False, 
+                            plt_grd_dims=dims)
+    ae.tb.add_image(tag='_{}_som_2D_{}_refresh={}_iter={}_lr={}.png'.format('hdbscan', c_label, num_refresh, iter, lr), 
+                                    img_tensor=img_plt, 
+                                    global_step = ae.EPOCH, dataformats='HWC')                        
+    # Saving image grid
+    img_grd = imgs[img_grd_idx].view(-1, 1, 28, 28)
+    save_image(img_grd, OUTPUT_DIR+'/_img_grd_som_2D_{}_refresh={}_iter={}_lr={}.png'.format(c_label, num_refresh, iter, lr), nrow=dims[1]) # nrow = num in row
+    ae.tb.add_image(tag='_img_grd_som_2D_{}_refresh={}_iter={}_lr={}.png'.format(c_label, num_refresh, iter, lr), 
+                            img_tensor=make_grid(img_grd, nrow=dims[1]), 
+                            global_step = ae.EPOCH)
+
     print('Saving SOM weights ...')
     som = {'net': net}
     np.save(som_path, som)
@@ -275,15 +271,15 @@ def load_model(output_dir):
     _, feat, labels, imgs = ae.eval_model(dataset=dataset, output_dir=output_dir)
     return ae, feat, labels, imgs
 
-def umap(feat_ae, reduce_dims, min_cluster_size):
-    umap = UMAP(n_components=reduce_dims, n_neighbors=min_cluster_size, min_dist=0.1,
+def umap(feat_ae, dim_reduce, min_cluster_size):
+    umap = UMAP(n_components=dim_reduce, n_neighbors=min_cluster_size, min_dist=0.1,
                     random_state=SEED, transform_seed=SEED)
     feat = umap.fit_transform(feat_ae)
     feat = MinMaxScaler().fit_transform(feat) 
     return feat
 
-def tsne(feat_ae, reduce_dims):
-    tsne = TSNE(perplexity=30, n_components=reduce_dims, init='pca', n_iter=1000, random_state=SEED)
+def tsne(feat_ae, dim_reduce):
+    tsne = TSNE(perplexity=30, n_components=dim_reduce, init='pca', n_iter=1000, random_state=SEED)
     feat = tsne.fit_transform(feat_ae)
     feat = MinMaxScaler().fit_transform(feat) 
     return feat

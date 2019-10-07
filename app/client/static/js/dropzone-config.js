@@ -1,7 +1,7 @@
 /**
  * Created Date: Saturday, October 5th 2019, 12:46:04 pm
  * Author: Charlene Leong leongchar@myvuw.ac.nz
- * Last Modified: Sun Oct 06 2019
+ * Last Modified: Mon Oct 07 2019
  */
 
 
@@ -29,7 +29,7 @@ var DropzoneUpload = new Dropzone('#dropzone-upload', {
 
 
 DropzoneUpload.on('queuecomplete', function(file) {
-  $('#dropzone-upload').toggleClass('shade');
+  $('#dropzone-upload').addClass('shade');
   $('#dropzone-upload').fadeOut();
   extract_zip()
   

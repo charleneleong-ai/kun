@@ -75,7 +75,7 @@ window.addEventListener('click', function(evt) {
     if (!($('#img-grd-wrapper').attr('class').includes('shade')) // SOM not reloading
         && $('.grd-item').length != 0   // Grid not empty
         && !$('#img-grd')[0].contains(evt.target)) {  // Clicked outside img-grd
-        $('#img-grd figure.selected').toggleClass('selected')
+        $('#img-grd figure.selected').removeClass('selected')
         
         showRemove()
     }

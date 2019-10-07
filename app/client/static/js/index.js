@@ -1,7 +1,7 @@
 /**
  * Created Date: Friday, October 4th 2019, 2:28:44 pm
  * Author: Charlene Leong leongchar@myvuw.ac.nz
- * Last Modified: Mon Oct 07 2019
+ * Last Modified: Tue Oct 08 2019
  */
 
 
@@ -27,6 +27,7 @@ function extract_zip(){
     }
 
 $('#train').bind('click', function() {
+    $('#img-grd-wrapper').addClass('shade')
     $('#img-grd-wrapper').fadeOut()
     $('#instruct').html('')
     $('#progress').html('Training autoencoder ...')
@@ -46,12 +47,17 @@ $('#train').bind('click', function() {
 });
 
 $('#cluster').bind('click', function() {
-    $('#img-grd-wrapper').toggleClass('shade')
+    $('#img-grd-wrapper').addClass('shade')
+    $('#img-grd-wrapper').fadeOut()
     $('#instruct').html('')
-    
+    taskData = { 'task_data': {'C_LABEL': 0, 'SOM_MODE': 'new' }}
     $.ajax({
             url: 'tasks/cluster',
-            method: 'POST'
+            method: 'POST',
+            contentType: 'application/json; charset=UTF-8',
+            data: JSON.stringify(taskData),
+            dataType: 'json',
+            success: console.log(JSON.stringify(taskData))
         })
         .done((res) => {
             show($('#progress'))
@@ -64,7 +70,7 @@ $('#cluster').bind('click', function() {
 
 $('#som').bind('click', function() {
     //Resetting SOM for window refresh
-    $('#img-grd-wrapper').toggleClass('shade')
+    $('#img-grd-wrapper').addClass('shade')
     taskData = { 'task_data': {'C_LABEL': $('.active').val(), 'SOM_MODE': 'new' } }
     $.ajax({
             url: 'tasks/som',
@@ -197,10 +203,11 @@ function updateProgress(res) {
         $('#progress').html(progress_msg)
 
     } else if (task_type === 'som') {
-        $('#img-grd figure.selected').toggleClass('selected')
+        $('#img-grd figure.selected').removeClass('selected')
         C_LABEL = res.task.task_data.C_LABEL
+        DIMS = res.task.task_data.DIMS
         progress_msg = 'Loading image grid with self organising map ... <br/>'+
-                        '<b>[ ' + C_LABEL + ' ]</b> '
+                        '<b>[ ' + C_LABEL + ' ]</b>  <b>[ ' + DIMS + ' ]</b> '
 
         NUM_IMGS = res.task.task_data.NUM_IMGS
         if (typeof(NUM_IMGS) != 'undefined') {
@@ -209,16 +216,17 @@ function updateProgress(res) {
 
         MAX_ITER = res.task.task_data.MAX_ITER
         LR = res.task.task_data.LR
-        DIMS = res.task.task_data.DIMS
-        if (typeof(DIMS) != 'undefined') {
-            progress_msg = progress_msg + 'Dimensions <b>[ ' + DIMS + ' ]</b>   Learning rate <b>[ ' + LR + ' ]</b> <br/>'
-                            + 'Iterations <b>[ ' + MAX_ITER + ' ]</b>'
+        if (typeof(MAX_ITER) != 'undefined') {
+            progress_msg = progress_msg + '  Learning rate <b>[ ' + LR + ' ]</b> '
+                            + 'Iterations <b>[ ' + MAX_ITER + ' ]</b>  <br/>'
         }
-
+        SOM_MODE = res.task.task_data.SOM_MODE
         NUM_ITER = res.task.task_data.NUM_ITER
-        if (typeof(NUM_ITER) != 'undefined') {
+        if (typeof(NUM_ITER) != 'undefined' && SOM_MODE!='switch') {
             percent = Math.round((NUM_ITER / MAX_ITER) * 100)
-            animateProgressBar($('#progress-bar'), percent)
+            $('#progress-bar').css('width', percent + '%')
+            // animateProgressBar($('#progress-bar'), percent)
+            progress_msg = progress_msg + percent +'%' 
         }
 
         $('#progress').html(progress_msg)
@@ -227,6 +235,10 @@ function updateProgress(res) {
     task_status = res.task.task_status
     if (task_type === 'som' && task_status === 'finished') {
         $('#progress-bar').css('width', 100 + '%')
+        
+        C_LABEL = res.task.task_data.C_LABEL
+        $('.active').removeClass('active')
+        $('#btn-'+C_LABEL).addClass('active')
   
         // Reload page if SOM is reset
         NUM_IMGS = res.task.task_data.NUM_IMGS
