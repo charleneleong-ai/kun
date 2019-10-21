@@ -1,7 +1,7 @@
 /**
  * Created Date: Friday, October 4th 2019, 2:28:44 pm
  * Author: Charlene Leong leongchar@myvuw.ac.nz
- * Last Modified: Tue Oct 08 2019
+ * Last Modified: Thu Oct 17 2019
  */
 
 
@@ -71,7 +71,7 @@ $('#cluster').bind('click', function() {
 $('#som').bind('click', function() {
     //Resetting SOM for window refresh
     $('#img-grd-wrapper').addClass('shade')
-    taskData = { 'task_data': {'C_LABEL': $('.active').val(), 'SOM_MODE': 'new' } }
+    taskData = { 'task_data': {'C_LABEL': $('.active').val(), 'SOM_MODE': 'new', 'FILTERED': false} }
     $.ajax({
             url: 'tasks/som',
             method: 'POST',
@@ -163,7 +163,7 @@ function updateProgress(res) {
 
             progress_msg = progress_msg +
                 'Batch size <b>[ ' + BS + ' ]</b> Learning rate <b>[ ' + LR + ' ]</b>  <br/>\
-                 Epoch <b>[ ' + EPOCH + ' ]</b> ' + epoch_progress + ' ' + progress + '% <br/> \
+                 Epoch <b>[ ' + EPOCH + ' ]</b> <b>[ ' + epoch_progress + ' ]</b> ' + progress + '% <br/> \
                  Train Loss <b>[ ' + train_loss + ' ]</b> Test Loss <b>[ ' + test_loss + ' ]</b><br/>'
 
             if (NUM_BAD_EPOCHS != 0) {
@@ -187,7 +187,7 @@ function updateProgress(res) {
         progress_msg = 'Clustering with hdbscan ... <br/>'
         MIN_CLUSTER_SIZE = res.task.task_data.MIN_CLUSTER_SIZE
         if (typeof(MIN_CLUSTER_SIZE) != 'undefined') {
-            progress_msg = progress_msg + 'Minimum cluster size <b>[ ' + MIN_CLUSTER_SIZE + ' ]</b> <br/>'
+            progress_msg = progress_msg + 'Min cluster size <b>[ ' + MIN_CLUSTER_SIZE + ' ]</b> <br/>'
         }
         
         NUM_CLUSTERS = res.task.task_data.NUM_CLUSTERS
@@ -206,8 +206,8 @@ function updateProgress(res) {
         $('#img-grd figure.selected').removeClass('selected')
         C_LABEL = res.task.task_data.C_LABEL
         DIMS = res.task.task_data.DIMS
-        progress_msg = 'Loading image grid with self organising map ... <br/>'+
-                        '<b>[ ' + C_LABEL + ' ]</b>  <b>[ ' + DIMS + ' ]</b> '
+        progress_msg = 'Loading image grid <b>[ ' + C_LABEL + ' ]</b> with self organising map ... <br/>'
+                        // '<b>[ ' + C_LABEL + ' ]</b>  <b>[ ' + DIMS + ' ]</b> '
 
         NUM_IMGS = res.task.task_data.NUM_IMGS
         if (typeof(NUM_IMGS) != 'undefined') {
@@ -225,9 +225,8 @@ function updateProgress(res) {
         if (typeof(NUM_ITER) != 'undefined' && SOM_MODE!='switch') {
             percent = Math.round((NUM_ITER / MAX_ITER) * 100)
             $('#progress-bar').css('width', percent + '%')
-            // animateProgressBar($('#progress-bar'), percent)
-            progress_msg = progress_msg + percent +'%' 
-        }
+            progress_msg = progress_msg +'</b> [ ' +NUM_ITER+'/'+ MAX_ITER+ ' ]</b> '+ percent +'%' 
+        } 
 
         $('#progress').html(progress_msg)
     }
@@ -236,10 +235,18 @@ function updateProgress(res) {
     if (task_type === 'som' && task_status === 'finished') {
         $('#progress-bar').css('width', 100 + '%')
         
+        // Setting active buttons 
         C_LABEL = res.task.task_data.C_LABEL
-        $('.active').removeClass('active')
+        $('#cluster-filter .active').removeClass('active')
         $('#btn-'+C_LABEL).addClass('active')
-  
+
+        if (res.task.task_data.FILTERED){
+            $('#num-imgs').removeClass('active')
+            $('#num-filtered').addClass('active')
+        }else if(!res.task.task_data.FILTERED) {
+            $('#num-filtered').removeClass('active')
+            $('#num-imgs').addClass('active')
+        }
         // Reload page if SOM is reset
         NUM_IMGS = res.task.task_data.NUM_IMGS
         NUM_FILTERED = res.task.task_data.NUM_FILTERED
@@ -249,7 +256,6 @@ function updateProgress(res) {
         refreshImgGrd(NUM_IMGS, NUM_FILTERED, NUM_REFRESH)
         showRemove()
         hide($('#progress'))
-
         
     }
 }

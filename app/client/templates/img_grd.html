@@ -1,0 +1,82 @@
+<!--
+Created Date: Monday, September 16th 2019, 7:03:49 pm
+Author: Charlene Leong leongchar@myvuw.ac.nz
+Last Modified: Fri Oct 18 2019
+-->
+
+
+{% extends 'home.html' %} {% block css %}
+<link href="{{url_for('static', filename='css/img_grd.css')}}" rel='stylesheet' media='screen'>
+<link href="{{url_for('static', filename='css/cluster_filter.css')}}" rel='stylesheet' media='screen'> {% endblock %} {% block content %}
+
+<!-- Shuffle JS Grid -->
+<div class='container'>
+    <h1 id='label'><b>{{LABEL}}</b></h1>
+    <script>
+        if ('{{LABEL}}' == '') {
+            $('#label').addClass('hide')
+        }
+    </script>
+    <div id='img-grd-wrapper' class=''>
+        <div id='cluster-filter' class='row hide'>
+            <div class="container">
+                <div class="btn-group filter-options">
+                    {%for c_label in C_LABELS%}
+                    <!-- <button class="btn btn--primary" data-group="{{c_label}}">{{c_label}}</button>  -->
+                    <button id='btn-{{c_label}}' value='{{c_label}}' class="btn btn--primary">{{c_label}}</button>
+                    <script>
+                        if ('{{c_label}}' == '{{C_LABEL}}') {
+                            $('#btn-{{c_label}}').addClass('active')
+                        }
+                    </script>
+                    {%- endfor %}
+                </div>
+            </div>
+        </div>
+        <div id='img-grd' class='shuffle-grd'>
+            {%- for img, idx, c_label in imgs %}
+            <figure class='grd-item column loading' data-groups='["{{c_label}}"]' img_idx='{{idx}}'>
+                <div class='aspect'>
+                    <div class='aspect__inner '>
+                        <img class='top' src='{{img}}' alt='{{img}}'>
+                    </div>
+                </div>
+            </figure>
+            {%- endfor %}
+        </div>
+        <div id='som-status' class='row hide'>
+            <script>
+                if ($('.grd-item').length != 0) {
+                    $('#som-status').removeClass('hide')
+                    $('#som-status').addClass('show')
+                    $('#cluster-filter').removeClass('hide')
+                    $('#cluster-filter').addClass('show')
+                    $('#instruct').html('Please identify the incorrect characters')
+                }
+            </script>
+
+            <div class="btn-group" style='margin-left: 4px'>  
+                <button id='num-imgs' class="btn btn--primary active" onClick="filteredSOM(this.id)">Images <b>[ {{NUM_IMGS}} ]</b></button>
+                <button id='num-filtered' class="btn btn--primary" onClick="filteredSOM(this.id)">Filtered <b>[ {{NUM_FILTERED}} ]</b></button>
+            </div>g
+            <p id='num-selected' class='hide' style='margin-left:auto; margin-right:0'></p>
+            <p id='num-refresh' style='margin-right:0'>Refresh <b>[ {{NUM_REFRESH}} ]</b></p>
+            </div>
+    </div>
+    <div class='row'>
+        <div class='container'>
+            <div class='col-sm-12 col-md-10 col-md-offset-1'>
+
+                <p id='progress' class='hide'></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %} {% block js %}
+<script src='https://cdnjs.cloudflare.com/ajax/libs/Shuffle/5.2.3/shuffle.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/@simonwep/selection-js/dist/selection.min.js'></script>
+<script src="{{ url_for('static', filename='js/img_grd.js') }}"></script>
+<script src="{{ url_for('static', filename='js/shuffle.js') }}"></script>
+<script src="{{ url_for('static', filename='js/selection.js') }}"></script>
+{% endblock %}

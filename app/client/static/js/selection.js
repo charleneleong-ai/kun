@@ -1,7 +1,7 @@
 /**
  * Created Date: Friday, October 4th 2019, 2:28:44 pm
  * Author: Charlene Leong leongchar@myvuw.ac.nz
- * Last Modified: Mon Oct 07 2019
+ * Last Modified: Tue Oct 08 2019
  */
 
 // https://simonwep.github.io/selection/
@@ -90,7 +90,6 @@ function showRemove() {
         if (numSelected == 0 || $('.grd-item').length == 0) {
             $('#progress').html('Press <b>[ SHIFT + ENTER ]</b> to refresh all')
             show($('#progress'))
-            // hide($('#progress'))
             hide($('#num-selected'))
             $('#num-selected').html('')
         } else {

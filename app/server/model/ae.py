@@ -4,7 +4,7 @@
 ###
 # Created Date: Thursday, August 22nd 2019, 11:50:30 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Sun Oct 06 2019
+# Last Modified: Tue Oct 15 2019
 ###
 
 import os
@@ -129,7 +129,7 @@ class AutoEncoder(nn.Module):
                 
                 # =================== forward ===================== #
                 encoded, decoded = self.forward(batch_x)
-                self.loss = self.loss_fn(decoded, batch_y)      
+                self.loss = self.loss_fn(decoded, batch_y)     # Loss between Label
                 MSE_loss = nn.MSELoss()(decoded, batch_y)   # mean square error
                 # =================== backward ==================== #
                 self.optimizer.zero_grad()               # clear gradients for this training step

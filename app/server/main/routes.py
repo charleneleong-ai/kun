@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 6:35:09 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Tue Oct 08 2019
+# Last Modified: Fri Oct 18 2019
 ###
 
 # app/server/main/routes.py
@@ -42,7 +42,7 @@ def home():
         session['NUM_FILTERED'] = 0
         session['NUM_REFRESH'] = 0
         
-    return render_template('/shuffle.html', 
+    return render_template('/img_grd.html', 
             LABEL=session['LABEL'], NUM_IMGS=session['NUM_IMGS'], 
             NUM_FILTERED=session['NUM_FILTERED'], NUM_REFRESH=session['NUM_REFRESH'],
             C_LABELS=session['C_LABELS'], C_LABEL = session['C_LABEL'],
@@ -101,7 +101,6 @@ def run_task(task_type):    # TODO: split into different routes
         task_data['NUM_IMGS'] = len(dataset)
         task_data['NUM_TRAIN'] = len(dataset.train)
         task_data['NUM_TEST'] = len(dataset.test)
-
         session['NUM_IMGS'] = len(dataset)
         session['NUM_TRAIN'] = len(dataset.train)
         session['NUM_TEST'] = len(dataset.test)
@@ -116,10 +115,6 @@ def run_task(task_type):    # TODO: split into different routes
         session['C_LABELS'] = []
         
     if task_type=='som':    # Resetting the SOM
-        # Resetting processed in db
-        for img in Image.query.filter_by(label=session['LABEL']).filter_by(processed=True):
-            img.reset()   
-
         ## Init vars
         if session['C_LABELS'] == []:
             c_labels = np.load(os.path.join(current_app.config['OUTPUT_DIR'], '_c_labels.npy'))
@@ -128,40 +123,58 @@ def run_task(task_type):    # TODO: split into different routes
         task_data['C_LABELS'] = session['C_LABELS']
         session['DIMS'] = [10, 25]
         task_data['DIMS'] = [10, 25]
-        
+
         session['img_grd_paths'] =[]
         session['img_idx'] =[]
         session['img_grd_c_labels']=[]
-        
-        print(task_data['C_LABEL'], session['C_LABEL'])
-        ## Switching between different SOMS depending on task_data['C_LABEL']
-        som_path = os.path.join(current_app.config['OUTPUT_DIR'], '_som_{}.npy'.format(task_data['C_LABEL']))
+        print(task_data['C_LABEL'], session['C_LABEL'], task_data['FILTERED'])
+        ## Switch mode is reloading SOM with diff weights
         if task_data['SOM_MODE'] == 'switch':
-            if os.path.exists(som_path):
-                imgs = Image.query.filter_by(label=session['LABEL']) \
-                                .filter_by(processed=False).filter_by(c_label=int(task_data['C_LABEL'])).all()
+            ## Switching between filtered mode, default is false
+            if task_data['FILTERED']:
+                print('Entering filtering mode')
+                imgs = Image.query.filter_by(c_label=int(task_data['C_LABEL'])).filter_by(filtered=True).all()
                 img_idx = [img.idx for img in imgs]
-                
-                # args = (img_idx, c_label, dims, SOM_MODE'='udpate', NUM_REFRESH=session['NUM_REFRESH'])
-                task = current_app.task_queue.enqueue(som, args=(img_idx, session['C_LABEL'], session['DIMS'], 'switch', session['NUM_REFRESH']))
-                session['C_LABEL'] = task_data['C_LABEL'] 
-                session['NUM_IMGS']  = len(img_idx)
+                print(len(imgs))    
+                task = current_app.task_queue.enqueue(som, args=(img_idx, session['C_LABEL'], session['DIMS'], 'switch', ''))
+                session['FILTERED'] = task_data['FILTERED'] 
+                session['NUM_FILTERED'] = len(imgs)
+            elif not task_data['FILTERED']: ## Switching SOMS between different clusters 
+                switch_som_path = os.path.join(current_app.config['OUTPUT_DIR'], '_som_{}.npy'.format(task_data['C_LABEL']))
+                if  os.path.exists(switch_som_path):
+                    print('Saving current session')
+                    print( session['NUM_IMGS'], session['NUM_FILTERED'], session['NUM_REFRESH'])
+                    # Saving NUM_FILTERED, NUM_REFRESH to som_path
+                    session_som_path = os.path.join(current_app.config['OUTPUT_DIR'], '_som_{}.npy'.format(session['C_LABEL']))
+                    som_net = np.load(session_som_path).item()
+                    som_net['NUM_IMGS'] = session['NUM_IMGS']
+                    som_net['NUM_FILTERED'] = session['NUM_FILTERED']
+                    som_net['NUM_REFRESH'] = session['NUM_REFRESH']
+                    som_net['DIMS'] = session['DIMS']
+                    np.save(session_som_path, som_net)
+                    
+                    imgs = Image.query.filter_by(c_label=int(task_data['C_LABEL'])).filter_by(processed=False).filter_by(filtered=False).all()
+                    img_idx = [img.idx for img in imgs]
+                    print(len(set(img_idx)))
+                    # args = (img_idx, c_label, dims, SOM_MODE'='udpate', NUM_REFRESH='') 
+                    task = current_app.task_queue.enqueue(som, args=(img_idx, task_data['C_LABEL'], session['DIMS'], 'switch', ''))
+                    session['NUM_IMGS']  = len(imgs)
+                    
+                    filtered = Image.query.filter_by(c_label=int(task_data['C_LABEL'])).filter_by(filtered=True).all()
+                    session['NUM_FILTERED']  = len(filtered)
+                    session['C_LABEL'] = task_data['C_LABEL']   # Switching current session to new c_label
 
-                # Saving NUM_FILTERED, NUM_REFRESH
-                som_net = np.load(som_path).item()
-                som_net['NUM_IMGS'] = session['NUM_IMGS']
-                som_net['NUM_FILTERED'] = session['NUM_FILTERED']
-                som_net['NUM_REFRESH'] = session['NUM_REFRESH']
-                som_net['DIMS'] = session['DIMS']
-                np.save(som_path, som_net)
-            else:     # Load new SOM
-                task_data['SOM_MODE'] = 'new'
+                else:     # Load new SOM
+                    task_data['SOM_MODE'] = 'new'
 
-        if task_data['SOM_MODE'] == 'new':   # If SOM button clicked
+        if task_data['SOM_MODE'] == 'new':   # If running new SOM
+            for img in Image.query.filter_by(c_label=int(task_data['C_LABEL'])).filter_by(processed=True):
+                img.reset()   
+
             ## Refreshing SOM with current task_data['C_LABEL']
             session['C_LABEL'] = task_data['C_LABEL']
             task = run_new_som(task_data['C_LABEL'], session['DIMS'])
-
+        
     response_object = {
         'status': 'success',
         'task': {
@@ -228,24 +241,26 @@ def get_status(task_type, task_id):
 
     elif task_type=='cluster' and task.get_status()=='finished':
         feat, c_labels, imgs = task.result
-        task_data['NUM_CLUSTERS'] = len(set(c_labels))
-        session['NUM_CLUSTERS'] = len(set(c_labels))   
-        
+        c_labels_set = set(c_labels)
+        if -1 in c_labels_set: c_labels_set.remove(-1) # -1 is noise
+        session['NUM_CLUSTERS'] = len(c_labels_set)  
         save_img_db(c_labels)
-
+        
         session['img_grd_paths'] =[]
         session['img_idx'] =[]
         session['img_grd_c_labels']=[]
         session['C_LABELS'] = [int(x)  for x in set(c_labels)]
         session['C_LABEL'] = session['C_LABELS'][0]
         session['DIMS'] = [10, 25]
-
+        session['FILTERED'] = False
+        
         task = run_new_som(session['C_LABEL'], session['DIMS'])
 
         task_data['C_LABEL'] = session['C_LABEL']
         task_data['C_LABELS'] = session['C_LABELS'] 
         task_data['SOM_MODE'] = 'new'
         task_data['DIMS'] = session['DIMS']
+        task_data['FILTERED'] = session['FILTERED']
         task_type = 'som'
 
     elif task_type=='cluster':
@@ -261,19 +276,21 @@ def get_status(task_type, task_id):
         session['img_idx']= img_grd.img_idx
         session['img_grd_c_labels'] = img_grd.c_labels
 
-        task_data['NUM_IMGS'] = session['NUM_IMGS']
-        task_data['NUM_FILTERED'] =  session['NUM_FILTERED']
-        task_data['NUM_REFRESH'] = session['NUM_REFRESH'] 
-
-        # Loading NUM_IMGS, NUM_FILTERED, NUM_REFRESH from
+        # Loading NUM_IMGS, NUM_FILTERED, NUM_REFRESH from som net
         if task_data['SOM_MODE'] == 'switch':
             som_path = os.path.join(current_app.config['OUTPUT_DIR'], '_som_{}.npy'.format(task_data['C_LABEL']))
             som_net = np.load(som_path).item()
             if 'NUM_IMGS' in som_net:
+                print('Loading ', task_data['C_LABEL'] , som_net['NUM_IMGS'], som_net['NUM_FILTERED'], som_net['NUM_REFRESH'] )
                 session['NUM_IMGS'] = som_net['NUM_IMGS']
                 session['NUM_FILTERED'] = som_net['NUM_FILTERED']
                 session['NUM_REFRESH'] = som_net['NUM_REFRESH']
 
+        task_data['NUM_IMGS'] = session['NUM_IMGS']
+        task_data['NUM_FILTERED'] =  session['NUM_FILTERED']
+        task_data['NUM_REFRESH'] = session['NUM_REFRESH'] 
+
+        
         ##  Trying to load all img grid paths at once and using shuffle filter
         # session['img_grd_paths'].append(img_grd.img_paths)
         # session['img_idx'].append(img_grd.img_idx)
@@ -322,28 +339,27 @@ def updateSOM(img_idx, selected_img_idx, img_grd_idx):
         task_data = req['task_data']
     
     # Setting all imgs in grd to processed
-    seen = [Image.query.filter_by(label=session['LABEL'])
-                .filter_by(idx=int(idx)).first().process() for idx in img_idx]
+    seen = [Image.query.filter_by(idx=int(idx)).first().process() for idx in img_idx]
     
     if '' not in selected_img_idx:
-        selected = [Image.query.filter_by(label=session['LABEL'])
-                    .filter_by(idx=int(idx)).first().filter() for idx in selected_img_idx]
+        selected = [Image.query.filter_by(idx=int(idx)).first().filter() for idx in selected_img_idx]
     else:
         selected = []
-        
-    # Get new unprocessed imgs to replace img_grd_idx 
-    imgs = Image.query.filter_by(label=session['LABEL']) \
-                        .filter_by(processed=False).filter_by(c_label=int(session['C_LABEL'])).all()
-    img_idx = [img.idx for img in imgs]
+        selected_img_idx = []
 
-    # args = (img_idx, c_label, dims, SOM_MODE'='udpate', NUM_REFRESH=session['NUM_REFRESH'])
-    task = current_app.task_queue.enqueue(som, args=(img_idx, session['C_LABEL'], session['DIMS'], 'update', session['NUM_REFRESH']))
+    # Get new unprocessed imgs to replace img_grd_idx 
+    imgs = Image.query.filter_by(c_label=int(session['C_LABEL'])).filter_by(processed=False).all()
+    img_idx = [img.idx for img in imgs]
 
     # Updating num imgs seen
     session['NUM_IMGS'] = len(imgs)
-    session['NUM_FILTERED'] += len(selected)
+    session['NUM_FILTERED'] += len(set(selected_img_idx))
     session['NUM_REFRESH'] += 1
-    
+
+    # args = (img_idx, c_label, dims, SOM_MODE'='udpate', NUM_REFRESH=session['NUM_REFRESH'])
+    task = current_app.task_queue.enqueue(som, 
+                args=(img_idx, session['C_LABEL'], session['DIMS'], 'update', session['NUM_REFRESH']))
+
     task_data.update({'LABEL': session['LABEL'],
                     'C_LABEL': session['C_LABEL'],
                     'NUM_REFRESH': session['NUM_REFRESH'], 
@@ -364,12 +380,13 @@ def updateSOM(img_idx, selected_img_idx, img_grd_idx):
         'img': {
             'selected_img_idx': selected_img_idx,
             'img_grd_idx': img_grd_idx,
-            'seen': seen,
-            'NUM_IMGS': session['NUM_IMGS'],
-            'NUM_REFRESH': session['NUM_REFRESH']
+            'seen': seen
         }
     }
     return jsonify(response_object), 202
+
+
+
 
 def run_new_som(c_label, dims):
     if 'output_dir' not in session: 
@@ -378,19 +395,14 @@ def run_new_som(c_label, dims):
     if os.path.exists(os.path.join(session['output_dir'], '_som_{}.npy'.format(c_label))): # Clearing som weights
         os.remove(os.path.join(session['output_dir'], '_som_{}.npy'.format(c_label)))  
         
-    img_idx = [img.idx for img in Image.query.filter_by(label=session['LABEL'])
-                                        .filter_by(c_label=int(c_label)).all()]
-
-
+    img_idx = [img.idx for img in Image.query.filter_by(c_label=int(c_label)).all()]
     # Resetting session vars
     session['NUM_REFRESH'] = 0
     session['NUM_FILTERED'] = 0 
     session['NUM_IMGS'] = len(img_idx)
-
+    
     # args = (img_idx, c_label, dims, SOM_MODE'='new', NUM_REFRESH=0)
     task = current_app.task_queue.enqueue(som, args=(img_idx, c_label, dims, 'new', 0), job_timeout=180)
-
-
     return task
 
 

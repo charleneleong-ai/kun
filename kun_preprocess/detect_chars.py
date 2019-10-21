@@ -3,7 +3,7 @@
 ###
 # Created Date: Thursday, September 26th 2019, 10:17:11 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Sat Oct 05 2019
+# Last Modified: Sun Oct 13 2019
 ###
 
 import sys
@@ -43,10 +43,26 @@ class FeatureType(Enum):
 #                       bound.vertices[3].x-10, bound.vertices[3].y+10], None, color)
 #     return image
 
-def zh_detect(texts):
+def cjk_detect(texts):
+    # korean
+    if re.search("[\uac00-\ud7a3]", texts):
+        return 'ko'
+    # japanese
+    if re.search("[\u3040-\u30ff]", texts):
+        return False
     # chinese
     if re.search("[\u4e00-\u9FFF]", texts):
-        return True
+        return False
+    # if re.search("[\u3400-\u4dbf]", texts):
+    #         return 'cjk_ext_a'
+    # if re.search("[\u20000-\u2a6df]", texts):
+    #         return 'cjk_ext_b'
+    # if re.search("[\u2a700-\ub73f]", texts):
+    #         return 'cjk_ext_c'
+    # if re.search("[\u2b740-\u2b81f]", texts):
+    #         return 'cjk_ext_d'
+    # if re.search("[\u2b820-\u2ceaf]", texts):
+    #         return 'cjk_ext_e'
     return False
 
 def get_document_bounds(document, feature):
@@ -233,21 +249,22 @@ if __name__ == '__main__':
     if not os.path.exists(bounded_outputdir):
         os.mkdir(bounded_outputdir)
     # files = ['NZCGMJ_processed/NZCGMJv004i002d19520901f0029p002.png']
-    
+    files = ['NZCGMJ_processed/NZCGMJv007i078d19620701f0500p001.png']
     for path in files:
         fname = os.path.basename(os.path.normpath(path))
         fname, ext = os.path.splitext(fname)
         fname = fname+'_bounded.png'
         out_path = os.path.join('NZCGMJ_bounded', fname)
-        if os.path.exists(out_path):
-            continue
+        # if os.path.exists(out_path):
+        #     continue
         
         # To read error o/p
-        try:
-            print('Processing ' + path)
-            render_doc_text(path, out_path)
-        except Exception as e:
-            fname = os.path.basename(os.path.normpath(path))
-            with open(os.path.join('NZCGMJ_bounded', 'error_files.txt'), 'a') as f:
-                f.write('{} {} Error \n'.format(fname, e))
-                print('{} {} Error'.format(fname, e))
+        # try:
+        print('Processing ' + path)
+        render_doc_text(path, out_path)
+        
+        # except Exception as e:
+            # fname = os.path.basename(os.path.normpath(path))
+            # with open(os.path.join('NZCGMJ_bounded', 'error_files.txt'), 'a') as f:
+            #     f.write('{} {} Error \n'.format(fname, e))
+            #     print('{} {} Error'.format(fname, e))

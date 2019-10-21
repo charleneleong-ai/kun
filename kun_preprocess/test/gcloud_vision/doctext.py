@@ -3,7 +3,7 @@
 ###
 # Created Date: Wednesday, September 25th 2019, 12:53:40 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Fri Sep 27 2019
+# Last Modified: Sun Oct 13 2019
 ###
 
 
@@ -48,10 +48,19 @@ def draw_boxes(image, bounds, color):
     draw = ImageDraw.Draw(image)
 
     for bound in bounds:
-        draw.polygon([bound.vertices[0].x-10, bound.vertices[0].y-20,
-                        bound.vertices[1].x+10, bound.vertices[1].y-20,
-                        bound.vertices[2].x+10, bound.vertices[2].y+10,
-                        bound.vertices[3].x-10, bound.vertices[3].y+10], None, color)
+        # print(bound.vertices)
+        # draw.line(bound.vertices, fill=color, width=3)
+        # for point in bound.vertices:
+        #     draw.ellipse((point[0] - 4, point[1] - 4, point[0]  + 4, point[1] + 4), fill=color])
+        x1 = bound.vertices[0].x  # Adding a little padding
+        y1 = bound.vertices[0].y
+        x2 = bound.vertices[2].x
+        y2 = bound.vertices[2].y
+        draw.rectangle([x1, y1, x2, y2], outline=color, width=3)
+        # draw.polygon([bound.vertices[0].x-10, bound.vertices[0].y-20,
+        #                 bound.vertices[1].x+10, bound.vertices[1].y-20,
+        #                 bound.vertices[2].x+10, bound.vertices[2].y+10,
+        #                 bound.vertices[3].x-10, bound.vertices[3].y+10], None, color)
 
     return image
 
@@ -110,14 +119,14 @@ import string
 
 def render_doc_text(filein, fileout):
     image = Image.open(filein)
-    # bounds, _ = get_document_bounds(filein, FeatureType.PAGE)
-    # draw_boxes(image, bounds, 'blue')
-    # bounds, _ = get_document_bounds(filein, FeatureType.PARA)
-    # draw_boxes(image, bounds, 'red')
-    # bounds, _ = get_document_bounds(filein, FeatureType.WORD)
-    # draw_boxes(image, bounds, 'yellow')
+    bounds, _ = get_document_bounds(filein, FeatureType.PAGE)
+    draw_boxes(image, bounds, 'blue')
+    bounds, _ = get_document_bounds(filein, FeatureType.PARA)
+    draw_boxes(image, bounds, 'red')
+    bounds, _ = get_document_bounds(filein, FeatureType.WORD)
+    draw_boxes(image, bounds, 'green')
     bounds, symbols = get_document_bounds(filein, FeatureType.SYMBOL)
-    # draw_boxes(image, bounds, 'green')
+    draw_boxes(image, bounds, 'purple')
 
     # symbol = property {
     #         detected_languages {
@@ -149,49 +158,46 @@ def render_doc_text(filein, fileout):
     #         confidence: 0.9599999785423279}
 
 
-    # Cropping the image and saving the symbol
-    bbox_img = Image.open(filein)   
-    bbox_draw = ImageDraw.Draw(bbox_img)
-    for idx, s in enumerate(symbols):
-        if s.confidence < 0.7:  continue
-        # if s.property.detected_break != None: # First check if break
-        #     char_type = str(s.property.detected_break.type)
-        # elif s.property.detected_languages[0]!=None:    ### Not reliable, sometimes absent
-        #     char_type  = s.property.detected_languages[0].language_code
-        if s.text in string.ascii_letters:
-            char_type = 'en'
-        elif s.text in string.digits:
-            char_type = 'digits'
-        elif s.text in string.punctuation:
-            char_type = 'punctuation'
-        else:
-            char_type = 'zh'
-        print(s.text)
-        bbox = s.bounding_box
-        x1 = bbox.vertices[0].x-10  # Adding a little padding
-        y1 = bbox.vertices[0].y-20
-        x2 = bbox.vertices[2].x+10
-        y2 = bbox.vertices[2].y+10
-        w = (x2-x1)
-        h = (y2-y1)
-        if (w*h) < 784: continue    # If smaller than MNIST ~(28*28)
+    # # Cropping the image and saving the symbol
+    # bbox_img = Image.open(filein).convert('RGB')   
+    # bbox_draw = ImageDraw.Draw(bbox_img)
+    # for idx, s in enumerate(symbols):
+    #     # if s.confidence < 0.7:  continue
+    #     # if s.property.detected_break != None: # First check if break
+    #     #     char_type = str(s.property.detected_break.type)
+    #     # elif s.property.detected_languages[0]!=None:    ### Not reliable, sometimes absent
+    #     #     char_type  = s.property.detected_languages[0].language_code
+    #     if s.text in string.ascii_letters:
+    #         char_type = 'en'
+    #     elif s.text in string.digits:
+    #         char_type = 'digits'
+    #     elif s.text in string.punctuation:
+    #         char_type = 'punctuation'
+    #     else:
+    #         char_type = 'zh'
+    #     print(s.text)
+    #     bbox = s.bounding_box
+    #     x1 = bbox.vertices[0].x  # Adding a little padding
+    #     y1 = bbox.vertices[0].y
+    #     x2 = bbox.vertices[2].x
+    #     y2 = bbox.vertices[2].y
+    #     w = (x2-x1)
+    #     h = (y2-y1)
+    #     # if (w*h) < 784: continue    # If smaller than MNIST ~(28*28)
             
-        if not os.path.exists('char_output/{}/{}'.format(char_type, s.text)):
-            os.makedirs('char_output/{}/{}'.format(char_type, s.text))
+    #     if not os.path.exists('char_output/{}/{}'.format(char_type, s.text)):
+    #         os.makedirs('char_output/{}/{}'.format(char_type, s.text))
 
-        bbox_draw.rectangle([x1, y1, x2, y2], outline='purple', width=5)
-        crop = image.crop([x1, y1, x2, y2])
-        crop.save('char_output/{}/{}/{}_{}_{}_{}.png'.format(char_type, s.text, x1, y1, x2, y2))
+    #     bbox_draw.rectangle([x1, y1, x2, y2], outline='purple', width=5)
+        # crop = image.crop([x1, y1, x2, y2])
+        # crop.save('char_output/{}/{}/{}_{}_{}_{}.png'.format(char_type, s.text, x1, y1, x2, y2))
 
-    bbox_img.show()
-
- 
     # #     crop.save('char_output/')
   
     if fileout is not 0:
-        bbox_img.save(fileout)
+        image.save(fileout)
     else:
-        bbox_img.show()
+        image.show()
 
 
 

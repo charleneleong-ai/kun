@@ -1,7 +1,7 @@
 /**
  * Created Date: Friday, October 4th 2019, 2:28:44 pm
  * Author: Charlene Leong leongchar@myvuw.ac.nz
- * Last Modified: Mon Oct 07 2019
+ * Last Modified: Tue Oct 08 2019
  */
 
 // https://vestride.github.io/Shuffle/
@@ -27,15 +27,8 @@ class ShuffleGrd {
         // this.addFilterButtons();
         // this.addSorting();
         // this.addSearchFilter();
-
-        // document.addEventListener('keyup', this.selectedImgs.bind(this), false);
-
     }
 
-    refreshFilter(){
-        this._activeFilters = [];
-        this.addFilterButtons();
-    }
 
     refreshShuffle(element) {
         this.shuffle = new Shuffle(element, {
@@ -45,6 +38,12 @@ class ShuffleGrd {
             staggerAmount: 30
         });
     }
+
+    // No longer using shuffle filter, loading img grid by clusters
+    // refreshFilter(){
+    //     this._activeFilters = [];
+    //     this.addFilterButtons();
+    // }
 
     /**
      * Shuffle uses the CustomEvent constructor to dispatch events. You can listen
@@ -59,51 +58,51 @@ class ShuffleGrd {
         });
     }
 
-    addFilterButtons() {
-        const options = document.querySelector('.filter-options');
-        if (!options) {
-            return;
-        }
+    // addFilterButtons() {
+    //     const options = document.querySelector('.filter-options');
+    //     if (!options) {
+    //         return;
+    //     }
 
-        const filterButtons = Array.from(options.children);
-        const onClick = this._handleFilterClick.bind(this);
-        filterButtons.forEach((button) => {
-            button.addEventListener('click', onClick, false);
-        });
-    }
+    //     const filterButtons = Array.from(options.children);
+    //     const onClick = this._handleFilterClick.bind(this);
+    //     filterButtons.forEach((button) => {
+    //         button.addEventListener('click', onClick, false);
+    //     });
+    // }
 
-    _handleFilterClick(evt) {
-        const btn = evt.currentTarget;
-        const isActive = btn.classList.contains('active');
-        const btnGroup = btn.getAttribute('data-group');
-        this._removeActiveClassFromChildren(btn.parentNode);
+    // _handleFilterClick(evt) {
+    //     const btn = evt.currentTarget;
+    //     const isActive = btn.classList.contains('active');
+    //     const btnGroup = btn.getAttribute('data-group');
+    //     this._removeActiveClassFromChildren(btn.parentNode);
 
-        let filterGroup;
-        if (isActive) {
-            btn.classList.remove('active');
-            filterGroup = Shuffle.ALL_ITEMS;
-        } else {
-            btn.classList.add('active');
-            filterGroup = btnGroup;
-        }
+    //     let filterGroup;
+    //     if (isActive) {
+    //         btn.classList.remove('active');
+    //         filterGroup = Shuffle.ALL_ITEMS;
+    //     } else {
+    //         btn.classList.add('active');
+    //         filterGroup = btnGroup;
+    //     }
 
-        this.shuffle.filter(filterGroup);
-    }
+    //     this.shuffle.filter(filterGroup);
+    // }
 
-    _removeActiveClassFromChildren(parent) {
-        const { children } = parent;
-        for (let i = children.length - 1; i >= 0; i--) {
-            children[i].classList.remove('active');
-        }
-    }
+    // _removeActiveClassFromChildren(parent) {
+    //     const { children } = parent;
+    //     for (let i = children.length - 1; i >= 0; i--) {
+    //         children[i].classList.remove('active');
+    //     }
+    // }
 
-    addSorting() {
-        const buttonGroup = document.querySelector('.sort-options');
-        if (!buttonGroup) {
-            return;
-        }
-        buttonGroup.addEventListener('change', this._handleSortChange.bind(this));
-    }
+    // addSorting() {
+    //     const buttonGroup = document.querySelector('.sort-options');
+    //     if (!buttonGroup) {
+    //         return;
+    //     }
+    //     buttonGroup.addEventListener('change', this._handleSortChange.bind(this));
+    // }
 
     // _handleSortChange(evt) {
     //     // Add and remove `active` class from buttons.

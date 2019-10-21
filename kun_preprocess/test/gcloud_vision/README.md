@@ -5,7 +5,7 @@
 ```bash
 $ pip install --upgrade google-cloud-vision
 
-$ export GOOGLE_APPLICATION_CREDENTIALS=kun-preprocess-d7592da5db6d.json
+$ export GOOGLE_APPLICATION_CREDENTIALS=credentials.json
 
 $ python doctext.py sample.png -out_file out.png
 ```

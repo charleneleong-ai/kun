@@ -3,7 +3,7 @@
 ###
 # Created Date: Wednesday, September 25th 2019, 12:09:26 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Sun Sep 29 2019
+# Last Modified: Sat Oct 12 2019
 ###
 
 import glob
@@ -14,7 +14,7 @@ import cv2
 from PIL import Image, ImageDraw
 import numpy as np
 
-from transform import downscale, resize, dilate, four_point_transform, auto_canny
+from transform import downscale, resize, dilate, perspective_transform, auto_canny
 from utils import find_border_contour, save_img
 
 def process_image(path, out_path):
@@ -34,7 +34,7 @@ def process_image(path, out_path):
     # Edge Detection
     edges = auto_canny(img)
     # save_img(edges, path='2_canny_bilateral.png', pltshow=True)
-
+    
     contours, hierarchy = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     border_xy, border_contour = find_border_contour(contours, edges)
 
@@ -46,9 +46,9 @@ def process_image(path, out_path):
     # save_img(border_img, path='3_border_contour.png', pltshow=True)
 
 
-    # apply the four point transform to obtain a top-down
+    # apply the perspective_transform to obtain a top-down
     # view of the original image
-    img = four_point_transform(np.asarray(img), border_contour.reshape(4, 2))
+    img = perspective_transform(np.asarray(img), border_contour.reshape(4, 2))
     # save_img(img, path='4_deskewed.png', pltshow=True)
 
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)   #remove contour outline

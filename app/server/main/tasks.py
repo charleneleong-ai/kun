@@ -3,7 +3,7 @@
 ###
 # Created Date: Sunday, September 15th 2019, 4:18:39 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Tue Oct 08 2019
+# Last Modified: Fri Oct 18 2019
 ###
 
 import warnings
@@ -30,7 +30,7 @@ from torchvision.utils import save_image, make_grid
 from server.__init__ import create_app
 from server.model.ae import AutoEncoder
 from server.model.som import SOM
-from server.model.utils.plt import plt_scatter
+from server.model.utils.plt import plt_scatter, plt_scatter_3D
 from server.utils.datasets.filteredMNIST import FilteredMNIST
 from server.utils.datasets.imgbucket import ImageBucket
 from server.main.models import Image
@@ -57,7 +57,7 @@ def extract_zip(zpath):
         zfname = label+'_utf8.zip'
         job.meta['progress_msg'] = 'Fixing filename encoding ...'
         job.save_meta()
-        with ZipFile(os.path.join(app.config['UPLOAD_DIR'], zfname), som_mode='w') as ztf:
+        with ZipFile(os.path.join(app.config['UPLOAD_DIR'], zfname), mode='w') as ztf:
             ztf.comment = zf.comment
             for zinfo in zf.infolist():
                 zinfo.CRC = None
@@ -82,6 +82,7 @@ def extract_zip(zpath):
 def load_MNIST(label):
     return FilteredMNIST(label=label, split=0.8, n_noise_clusters=3, download_dir=app.config['DATASET_DIR'])
     
+    
 def load_data(label, img_dir):
     clear_upload_folder(label)
     return ImageBucket(label=str(label), split=0.8, img_dir=img_dir, 
@@ -98,7 +99,7 @@ def train(dataset):
         BATCH_SIZE = 128
     
     MAX_EPOCHS = 50
-    LR = 1e-3       
+    LR = 0.001    
     N_TEST_IMGS = 8
     PATIENCE = 10
     
@@ -137,7 +138,7 @@ def cluster(label):
     ae, feat_ae, labels, imgs = load_model(OUTPUT_DIR)
     clear_output(OUTPUT_DIR)   # Clearing old output
     
-    MIN_CLUSTER_SIZE = 10
+    MIN_CLUSTER_SIZE = 15
     if len(feat_ae) > 5000:
         MIN_CLUSTER_SIZE = 15
     dim_reduce = 2
@@ -150,22 +151,31 @@ def cluster(label):
    
     print('Reducing feat from {} to {} dims with {} ...'
             .format(feat_ae.shape[1], dim_reduce, dim_reduce_method.upper()))
-            
+    import time
+    start = time.time()
     if dim_reduce_method=='tsne':
         feat = tsne(feat_ae, dim_reduce)  
+        end = time.time()
     elif   dim_reduce_method=='umap':
         feat = umap(feat_ae, dim_reduce, MIN_CLUSTER_SIZE)
-        
+        end = time.time()
+    print(end-start)
     print('Clustering' , label, 'with HDBSCAN ...')
     c_labels = hdbscan(feat, min_cluster_size=MIN_CLUSTER_SIZE)      
     c_labels = sort_c_labels(c_labels)
 
+    c_labels_set = set(c_labels)
+    if -1 in c_labels_set: c_labels_set.remove(-1) # -1 is noise
+    print('Found' , len(c_labels_set), 'clusters ...')
+    job.meta['NUM_CLUSTERS'] = len(c_labels_set)    
+    job.save_meta()
+    
     img_plt = plt_scatter(feat, c_labels, output_dir=OUTPUT_DIR, 
                 plt_name='_{}_{}.png'.format('hdbscan', dim_reduce_method), pltshow=False)
     ae.tb.add_image(tag='_{}_{}'.format('hdbscan', dim_reduce_method), 
                     img_tensor=img_plt, 
                     global_step = ae.EPOCH, dataformats='HWC')
-
+                    
     job.meta['progress_msg'] = 'Saving <b>[ {} ]</b> images ...'.format(imgs.shape[0])
     job.save_meta()
     print('Saving images to client/static/imgs...')
@@ -182,11 +192,11 @@ def cluster(label):
     
     return feat, c_labels, imgs
 
+
+
 def som(img_idx, c_label, dims, som_mode, num_refresh):
-    job = get_current_job()
-    
     img_idx = np.array(img_idx)
-    
+    job = get_current_job()
     job.meta['NUM_IMGS'] = len(img_idx)
     job.save_meta()
     
@@ -212,12 +222,12 @@ def som(img_idx, c_label, dims, som_mode, num_refresh):
         else:
             iter = 500
             lr = 0.1
-            
         som = SOM(data=data, dims=dims, n_iter = iter, lr_init=lr, job=job)
     elif som_mode == 'update': # Update net
         iter = 100
-        lr = 0.01 
-        if len(img_idx) <= (dims[0]*dims[1]):   # Get whole grid
+        lr = 0.001
+        if len(img_idx) <= (dims[0]*dims[1]):   # Get whole grid when img_idx getting sparse
+            iter = 500
             lr = 0.1
         som = SOM(data=data, dims=dims, n_iter = iter, lr_init=lr, net_path=som_path, job=job)
     elif som_mode == 'switch':
@@ -237,28 +247,31 @@ def som(img_idx, c_label, dims, som_mode, num_refresh):
     img_grd_idx = np.array([lut[i] for i in img_grd_idx])   # Remapping to img_idx indices
 
     # if not os.path.exists(som_path):  
-    # Plotting HDBSCAN SOM grid   
-    ae, feat_ae, labels, imgs = load_model(OUTPUT_DIR)  
-    img_plt = plt_scatter([feat, feat[img_grd_idx]], c_labels, colors=['blue'], 
-                            output_dir=OUTPUT_DIR, 
-                            plt_name='_{}_som_2D_{}_refresh={}_iter={}_lr={}.png'.format('hdbscan', c_label, num_refresh, iter, lr), 
-                            pltshow=False, 
-                            plt_grd_dims=dims)
-    ae.tb.add_image(tag='_{}_som_2D_{}_refresh={}_iter={}_lr={}.png'.format('hdbscan', c_label, num_refresh, iter, lr), 
-                                    img_tensor=img_plt, 
-                                    global_step = ae.EPOCH, dataformats='HWC')                        
-    # Saving image grid
-    img_grd = imgs[img_grd_idx].view(-1, 1, 28, 28)
-    save_image(img_grd, OUTPUT_DIR+'/_img_grd_som_2D_{}_refresh={}_iter={}_lr={}.png'.format(c_label, num_refresh, iter, lr), nrow=dims[1]) # nrow = num in row
-    ae.tb.add_image(tag='_img_grd_som_2D_{}_refresh={}_iter={}_lr={}.png'.format(c_label, num_refresh, iter, lr), 
-                            img_tensor=make_grid(img_grd, nrow=dims[1]), 
-                            global_step = ae.EPOCH)
+    # Plotting HDBSCAN SOM grid     
+    if som_mode != 'switch':    # don't plot if switching between clusters or filter mode
+        # ae, feat_ae, labels, imgs = load_model(OUTPUT_DIR)  
+        # img_plt = plt_scatter([feat, feat[img_grd_idx]], c_labels, colors=['blue'], 
+        #                         output_dir=OUTPUT_DIR, 
+        #                         plt_name='_{}_som_2D_{}_refresh={}_iter={}_lr={}.png'.format('hdbscan', c_label, num_refresh, iter, lr), 
+        #                         pltshow=False, 
+        #                         plt_grd_dims=dims)
+        # ae.tb.add_image(tag='_{}_som_2D_{}_refresh={}_iter={}_lr={}.png'.format('hdbscan', c_label, num_refresh, iter, lr), 
+        #                                 img_tensor=img_plt, 
+        #                                 global_step = ae.EPOCH, dataformats='HWC')                        
+        # # Saving image grid
+        # img_grd = imgs[img_grd_idx].view(-1, 1, 28, 28)
+        # save_image(img_grd, OUTPUT_DIR+'/_img_grd_som_2D_{}_refresh={}_iter={}_lr={}.png'.format(c_label, num_refresh, iter, lr), nrow=dims[1]) # nrow = num in row
+        # ae.tb.add_image(tag='_img_grd_som_2D_{}_refresh={}_iter={}_lr={}.png'.format(c_label, num_refresh, iter, lr), 
+        #                         img_tensor=make_grid(img_grd, nrow=dims[1]), 
+        #                         global_step = ae.EPOCH)
 
-    print('Saving SOM weights ...')
-    som = {'net': net}
-    np.save(som_path, som)
+        print('Saving SOM weights ...')
+        som = {'net': net}
+        np.save(som_path, som)
                             
     return img_grd_idx, c_label
+
+
 
                             
 # Helper functions for cluster()
@@ -321,6 +334,7 @@ def test_zipfile(zfname):
     except Exception as e:
         raise IOError(e)
     return zf
+
 
 # TODO: Test for allowed file ext 
 def allowed_file(filename):

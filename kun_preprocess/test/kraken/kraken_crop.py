@@ -3,7 +3,7 @@
 ###
 # Created Date: Tuesday, September 24th 2019, 8:31:41 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Wed Sep 25 2019
+# Last Modified: Fri Oct 11 2019
 ###
 
 
@@ -11,7 +11,7 @@ from PIL import Image
 import pprint
 import codecs, json
 
-img = Image.open('bw.tif')
+img = Image.open('bw.tif').convert('RGB')
 
 line_crops = json.loads((codecs.open('lines.json', 'r', encoding='utf-8').read()))
 pprint.pprint(line_crops)

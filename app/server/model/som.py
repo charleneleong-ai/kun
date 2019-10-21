@@ -3,7 +3,7 @@
 ###
 # Created Date: Thursday, September 12th 2019, 9:53:52 pm
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Oct 07 2019
+# Last Modified: Tue Oct 08 2019
 ###
 
 import numpy as np
@@ -74,12 +74,12 @@ class SOM(object):
 
     def train(self):
         for i in range(self.N_ITER):
+            if self.job!=None:
+                self.job.meta['NUM_ITER'] = i
+                self.job.save_meta()
             if i % self.update_interval == 0: 
                 print('Num iterations {}'.format(i))
-                if self.job!=None:
-                    self.job.meta['NUM_ITER'] = i
-                    self.job.save_meta()
-            
+
             # select a training example at random
             t = self.data[np.random.randint(0, self.N), :].reshape(np.array([self.M, 1]))
    

@@ -3,7 +3,7 @@
 ###
 # Created Date: Friday, September 27th 2019, 2:20:58 am
 # Author: Charlene Leong leongchar@myvuw.ac.nz
-# Last Modified: Mon Sep 30 2019
+# Last Modified: Sun Oct 13 2019
 ###
 
 import numpy as np
@@ -15,11 +15,11 @@ import cv2
 
 def auto_canny(image, sigma=0.33):
 	# compute the median of the single channel pixel intensities
-	v = np.median(image)
+	x = np.median(image)
 
 	# apply automatic Canny edge detection using the computed median
-	lower = int(max(0, (1.0 - sigma) * v))
-	upper = int(min(255, (1.0 + sigma) * v))
+	lower = int(max(0, (1.0 - sigma) * x))
+	upper = int(min(255, (1.0 + sigma) * x))
 	edged = cv2.Canny(image, lower, upper)
 
 	# return the edged image
@@ -95,7 +95,7 @@ def order_points(pts):
 	# return the ordered coordinates
 	return rect
 
-def four_point_transform(img, pts):
+def perspective_transform(img, pts):
 	# obtain a consistent order of the points and unpack them
 	# individually
 	rect = order_points(pts)
@@ -141,7 +141,7 @@ def resize(img, width=None, height=None):
     else:
         r = width / float(w)
         dim = (width, int(h * r))
-    resized = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
+    resized = cv2.resize(img, dim, interpolation=cv2.INTER_LINEAR)
     return resized
 
 def downscale(img, max_dim=2048):
@@ -151,7 +151,7 @@ def downscale(img, max_dim=2048):
     if max(height, width) <= max_dim:
         return 1.0, img
     scale = 1.0 * max_dim / max(height, width)
-    new_img = cv2.resize(img, (int(width * scale), int(height * scale)))
+    new_img = cv2.resize(img, (int(width * scale), int(height * scale)), interpolation=cv2.INTER_LINEAR)
     
     return scale, new_img
 
