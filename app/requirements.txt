@@ -10,7 +10,7 @@ Flask_Migrate==2.5.2
 Flask_SQLAlchemy==2.4.0
 numpy==1.17.0
 matplotlib==3.1.1
-Pillow==6.2.0
+Pillow==7.1.0
 flask_socketio==4.2.1
 scikit_learn==0.21.3
 umap==0.1.1
