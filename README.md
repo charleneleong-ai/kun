@@ -4,7 +4,7 @@ A shape-shifter – a giant fish that can transform into a bird, a good omen
 
 
 
-![kun](imgs/kun.jpg)
+![kun](docs/imgs/app_demo_3.gif)
 
 
 
